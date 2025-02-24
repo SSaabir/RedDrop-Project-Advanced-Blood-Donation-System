@@ -6,6 +6,10 @@ import Footer from './components/Footer'
 import DonorD from './pages/DonorD'
 import AppointmentD from './pages/AppointmentD'
 import HospitalD from './pages/HospitalD'
+import Hospital_signup from'./pages/Hospital_signup'
+import Hospital_login from'./pages/Hospital_login'
+import EmergencyBloodRequest from'./pages/EBR'
+import DonorAppointment from'./pages/DonorAppointment'
 
 
 export default function App() {
@@ -17,8 +21,14 @@ export default function App() {
     <Route path="/donord" element={<DonorD />}/>
     <Route path="/hospitald" element={<HospitalD />}/>
     <Route path="/appointmentd" element={<AppointmentD />}/>
+    <Route path="/hospital_signup" element={<Hospital_signup />} />
+    <Route path="/Hospital_login" element={<Hospital_login />} />
+    <Route path="/EBR" element={<EmergencyBloodRequest />} />
+    <Route path="/DonorAppointment" element={<DonorAppointment />} />
     </Routes>
     <Footer/>
     </BrowserRouter>
   )
 }
+
+
