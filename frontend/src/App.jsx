@@ -18,6 +18,9 @@ import Hospital_login from'./pages/Hospital_login'
 import EmergencyBloodRequest from'./pages/EBR'
 import DonorAppointment from'./pages/DonorAppointment'
 import ContactUs from './ContactUs'
+import Terms from './Terms'
+import Home from './Home'
+import FAQ from './FAQ'
 
 
 
@@ -42,6 +45,11 @@ export default function App() {
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
     <Route path="/DonorAppointment" element={<DonorAppointment />} />
     <Route path="/ContactUs" element={<ContactUs />} />
+    <Route path="/Terms" element={<Terms />} />
+    <Route path="/Home" element={<Home />} />
+    <Route path="/FAQ" element={<FAQ />} />
+
+
 
 
     </Routes>
