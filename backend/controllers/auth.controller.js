@@ -50,7 +50,7 @@ export const signinD = async(req, res, next) => {
         //const image = user.image;
         const id = user._id;
 
-        res.status(200).json({ id, role, email, token, /image, name/ });
+        res.status(200).json({ id, role, email, token, /*image, name*/ });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -74,7 +74,7 @@ export const signinH = async(req, res, next) => {
         //const image = user.image;
         const id = user._id;
 
-        res.status(200).json({ id, role, email, token, /image, name/ });
+        res.status(200).json({ id, role, email, token, /*image, name*/ });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
