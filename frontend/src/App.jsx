@@ -18,6 +18,10 @@ import Hospital_login from'./pages/Hospital_login'
 import EmergencyBloodRequest from'./pages/EBR'
 import DonorAppointment from'./pages/DonorAppointment'
 
+import DonorProfile from './pages/DonorProfile'
+
+
+
 
 
 export default function App() {
@@ -40,6 +44,10 @@ export default function App() {
     <Route path="/Hospital_login" element={<Hospital_login />} />
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
     <Route path="/DonorAppointment" element={<DonorAppointment />} />
+
+    <Route path="/Profile" element={<DonorProfile/>}/>
+
+    
 
     </Routes>
     <Footer/>
