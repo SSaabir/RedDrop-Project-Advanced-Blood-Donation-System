@@ -1,30 +1,49 @@
-import React from "react";
-import { Card, Button } from "flowbite-react";
-import { FaUser, FaTint, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaHeartbeat, FaNotesMedical } from "react-icons/fa";
+import React, { useState } from "react";
+import { Card, Button, TextInput, Label } from "flowbite-react";
+import { FaUser, FaTint, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaHeartbeat, FaNotesMedical, FaEnvelope, FaIdCard, FaEdit, FaSave } from "react-icons/fa";
 
 export default function DonorProfile() {
-  const donor = {
+  const [isEditing, setIsEditing] = useState(false);
+  const [donor, setDonor] = useState({
     name: "John Doe",
-    bloodType: "O+",
-    age: 28,
+    email: "johndoe@example.com",
     phone: "+1 234 567 890",
     location: "New York, USA",
+    bloodType: "O+",
+    age: 28,
+    dob: "1996-04-15",
+    nic: "123456789V",
     lastDonation: "January 15, 2025",
     totalDonations: 5,
     eligibility: "Eligible for next donation on March 15, 2025",
     healthStatus: "Excellent",
     notes: "No recent illnesses or medications."
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setDonor({ ...donor, [name]: value });
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-red-400 to-red-600 p-6">
       <Card className="w-full max-w-4xl p-10 shadow-2xl rounded-3xl bg-white bg-opacity-90">
-        <h2 className="text-5xl font-bold text-center text-red-700 mb-8">Donor Profile</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
+        <div className="flex justify-between items-center">
+          <h2 className="text-5xl font-bold text-red-700">Donor Profile</h2>
+          <Button onClick={() => setIsEditing(!isEditing)} className="bg-red-700 text-white px-4 py-2 rounded-lg flex items-center">
+            {isEditing ? <FaSave className="mr-2" /> : <FaEdit className="mr-2" />} {isEditing ? "Save" : "Edit Profile"}
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700 mt-6">
           <div className="flex flex-col items-center space-y-4">
             <FaUser className="text-8xl text-red-700" />
-            <h3 className="text-3xl font-semibold">{donor.name}</h3>
-            <p className="text-xl">Age: {donor.age}</p>
+            {isEditing ? (
+              <TextInput name="name" value={donor.name} onChange={handleChange} className="text-center" />
+            ) : (
+              <h3 className="text-3xl font-semibold">{donor.name}</h3>
+            )}
+            <div className="text-lg">Age: {donor.age}</div>
+            <div className="text-lg">Date of Birth: {donor.dob}</div>
           </div>
           <div className="space-y-4 text-lg">
             <div className="flex items-center gap-2">
@@ -32,12 +51,32 @@ export default function DonorProfile() {
               <span className="font-medium">Blood Type: {donor.bloodType}</span>
             </div>
             <div className="flex items-center gap-2">
+              <FaEnvelope className="text-red-700" />
+              {isEditing ? (
+                <TextInput name="email" value={donor.email} onChange={handleChange} />
+              ) : (
+                <span>{donor.email}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <FaPhone className="text-red-700" />
-              <span>{donor.phone}</span>
+              {isEditing ? (
+                <TextInput name="phone" value={donor.phone} onChange={handleChange} />
+              ) : (
+                <span>{donor.phone}</span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <FaMapMarkerAlt className="text-red-700" />
-              <span>{donor.location}</span>
+              {isEditing ? (
+                <TextInput name="location" value={donor.location} onChange={handleChange} />
+              ) : (
+                <span>{donor.location}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <FaIdCard className="text-red-700" />
+              <span>NIC: {donor.nic}</span>
             </div>
             <div className="flex items-center gap-2">
               <FaCalendarAlt className="text-red-700" />
