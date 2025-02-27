@@ -17,6 +17,7 @@ import Hospital_signup from'./pages/Hospital_signup'
 import Hospital_login from'./pages/Hospital_login'
 import EmergencyBloodRequest from'./pages/EBR'
 import DonorAppointment from'./pages/DonorAppointment'
+import ContactUs from './ContactUs'
 
 
 
@@ -40,6 +41,8 @@ export default function App() {
     <Route path="/Hospital_login" element={<Hospital_login />} />
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
     <Route path="/DonorAppointment" element={<DonorAppointment />} />
+    <Route path="/ContactUs" element={<ContactUs />} />
+
 
     </Routes>
     <Footer/>
