@@ -50,9 +50,9 @@ export default function ContactUs () {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Our Location</h2>
             <p className="text-gray-600 mb-4">
-              123 Tylac Street, Paintville, PV 12345
+                BOC Merchant Tower,28 St Michaels Rd
             </p>
-            <p className="text-gray-600 mb-4">Email: info@tylac.com</p>
+            <p className="text-gray-600 mb-4">Email: redDrop@gmail.com</p>
             <p className="text-gray-600 mb-4">Phone: +1 (123) 456-7890</p>
             {/* Map Placeholder */}
             <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">

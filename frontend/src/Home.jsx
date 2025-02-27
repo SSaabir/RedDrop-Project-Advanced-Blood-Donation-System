@@ -28,17 +28,18 @@ export default function Home () {
       <section className="relative h-[80vh] flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
         {/* Background Image */}
         <div
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center opacity-30"
+          className="absolute inset-0 bg-[('C:\Users\Lenovo\Desktop\Y2S2-Project-Advanced-Blood-Donation-System\frontend\src\assets\Homebg.jpg')] bg-cover bg-center opacity-30"
         ></div>
         <div className="text-center text-white px-4 z-10">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">
-            Waterproof Paint for the Outdoors
+             "Save Lives, One Drop at a Time!"
           </h1>
           <p className="text-xl md:text-2xl mb-8 animate-fade-in-up">
-            Protect and beautify your outdoor spaces with Tylac's premium waterproof paint.
+          Your blood donation can give someone a second chance at life. Sign up today, find a nearby donation center, and become a hero in just a few minutes. Every drop counts!
           </p>
+          
           <Button gradientDuoTone="cyanToBlue" pill size="lg" className="animate-bounce">
-            Explore Products
+            Sign 
           </Button>
         </div>
       </section>
@@ -104,60 +105,6 @@ export default function Home () {
           <Button gradientDuoTone="cyanToBlue" pill size="lg">
             Shop Now
           </Button>
-        </div>
-      </section>
-
-      {/* Feedbacks Display Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            Customer Feedbacks
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {feedbacks.map((fb, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{fb.name}</h3>
-                <p className="text-gray-600 mb-2">{fb.email}</p>
-                <div className="flex mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar key={i} className={i < fb.rating ? "text-yellow-400" : "text-gray-300"} />
-                  ))}
-                </div>
-                <p className="text-gray-600">{fb.feedback}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Feedback Form Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-            We'd Love to Hear From You
-          </h2>
-          <form className="max-w-2xl mx-auto" onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <TextInput id="name" type="text" placeholder="Your Name" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div className="mb-6">
-              <TextInput id="email" type="email" placeholder="Your Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="mb-6">
-              <Textarea id="feedback" placeholder="Your Feedback" rows={5} value={feedback} onChange={(e) => setFeedback(e.target.value)} required />
-            </div>
-            {/* Star Rating */}
-            <div className="mb-6 flex justify-center">
-              {[...Array(5)].map((_, i) => (
-                <FaStar key={i} className={i < rating ? "text-yellow-400 cursor-pointer" : "text-gray-300 cursor-pointer"} onClick={() => setRating(i + 1)} />
-              ))}
-            </div>
-            <div className="text-center">
-              <Button gradientDuoTone="cyanToBlue" pill size="lg" type="submit">
-                Submit Feedback
-              </Button>
-            </div>
-          </form>
         </div>
       </section>
     </div>
