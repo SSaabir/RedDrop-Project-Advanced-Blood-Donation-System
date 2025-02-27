@@ -10,6 +10,8 @@ import Hospital_signup from'./pages/Hospital_signup'
 import Hospital_login from'./pages/Hospital_login'
 import EmergencyBloodRequest from'./pages/EBR'
 import DonorAppointment from'./pages/DonorAppointment'
+import HospitalAdminSignup from'./pages/HospitalAdminSignup'
+import HospitalAdminLogin from'./pages/HospitalAdminLogin'
 
 
 export default function App() {
@@ -25,6 +27,8 @@ export default function App() {
     <Route path="/Hospital_login" element={<Hospital_login />} />
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
     <Route path="/DonorAppointment" element={<DonorAppointment />} />
+    <Route path="/HospitalAdminSignup" element={<HospitalAdminSignup />} />
+    <Route path="/HospitalAdminLogin" element={<HospitalAdminLogin />} />
     </Routes>
     <Footer/>
     </BrowserRouter>
