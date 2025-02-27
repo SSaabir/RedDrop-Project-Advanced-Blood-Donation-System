@@ -22,6 +22,9 @@ import Terms from './Terms'
 import Home from './Home'
 import FAQ from './FAQ'
 
+import HospitalAdminSignup from'./pages/HospitalAdminSignup'
+import HospitalAdminLogin from'./pages/HospitalAdminLogin'
+
 
 
 export default function App() {
@@ -44,6 +47,7 @@ export default function App() {
     <Route path="/Hospital_login" element={<Hospital_login />} />
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
     <Route path="/DonorAppointment" element={<DonorAppointment />} />
+      
     <Route path="/ContactUs" element={<ContactUs />} />
     <Route path="/Terms" element={<Terms />} />
     <Route path="/Home" element={<Home />} />
@@ -51,6 +55,9 @@ export default function App() {
 
 
 
+
+    <Route path="/HospitalAdminSignup" element={<HospitalAdminSignup />} />
+    <Route path="/HospitalAdminLogin" element={<HospitalAdminLogin />} />
 
     </Routes>
     <Footer/>
