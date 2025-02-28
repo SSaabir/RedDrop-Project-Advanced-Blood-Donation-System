@@ -1,10 +1,19 @@
 import React from 'react';
 import { Button } from 'flowbite-react';
+import map from '../assets/map.jpg'; 
+import contactus from '../assets/contactus.jpg'; 
 
-export default function ContactUs () {
+export default function ContactUs() {
   return (
-    <div className="py-16 bg-gray-50">
-      <div className="container mx-auto px-6">
+    <div className="py-16 bg-gray-50 relative">
+      {/* Background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-50 z-0"
+        style={{ backgroundImage: `url(${contactus})` }}
+      ></div>
+
+      {/* Content */}
+      <div className="container mx-auto px-6 relative z-10">
         {/* Page Title */}
         <h1 className="text-4xl font-bold text-center text-gray-800 mb-12">
           Contact Us
@@ -50,17 +59,22 @@ export default function ContactUs () {
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Our Location</h2>
             <p className="text-gray-600 mb-4">
-                BOC Merchant Tower,28 St Michaels Rd
+              BOC Merchant Tower, 28 St Michaels Rd
             </p>
             <p className="text-gray-600 mb-4">Email: redDrop@gmail.com</p>
             <p className="text-gray-600 mb-4">Phone: +1 (123) 456-7890</p>
-            {/* Map Placeholder */}
-            <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-              <span className="text-gray-500">Map will go here</span>
+            
+            {/* Map Image */}
+            <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+              <img
+                src={map} // Replace with the correct image path
+                alt="Location Map"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
