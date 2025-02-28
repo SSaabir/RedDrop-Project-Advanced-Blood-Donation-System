@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.route.js';
 //import  donorRoutes from './routes/donor.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
+import hospitalRoutes from "./routes/hospital.routes.js";
+import donorRoutes from "./routes/donor.routes.js";
+
 
 
 // import multer from 'multer';
@@ -46,6 +49,9 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/healthEvaluation', healthEvaluationRoutes);
+app.use('/api/hospital', hospitalRoutes);
+app.use('/api/donor', donorRoutes);
+
 
 // ✅ Error handling middleware (should be last)
 app.use((err, req, res, next) => {

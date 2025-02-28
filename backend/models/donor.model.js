@@ -1,69 +1,81 @@
-import mongoose from 'mongoose';
-//import bcryptjs, { compare } from 'bcryptjs';
-import validator from 'validator';
-//import moment from 'moment'; // For DOB validation
+import mongoose from "mongoose";
+import validator from "validator";
+import moment from "moment"; // For DOB validation
 
 const donorSchema = new mongoose.Schema({
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    password: {
-        type: String,
-        required: true,
-    },
-    /*
     firstName: {
         type: String,
         required: true,
+        trim: true,
     },
     lastName: {
         type: String,
         required: true,
+        trim: true,
     },
-
     phoneNumber: {
         type: String,
         required: true,
         unique: true,
         validate: {
-            validator: function (value) {
-                // Simple phone number validation
-                return /^\d{10}$/.test(value); // Assumes 10 digit phone numbers
+            validator: function(value) {
+                return /^\d{10}$/.test(value); // Ensures a valid 10-digit phone number
             },
-            message: props => `${props.value} is not a valid phone number!`
+            message: (props) => `${props.value} is not a valid phone number!`,
         },
     },
-
-    
-    address: {
+    email: {
         type: String,
         required: true,
+        unique: true,
+        validate: {
+            validator: validator.isEmail,
+            message: "Invalid email format",
+        },
     },
-    image: {
-        type: String,  // URL or file path for the image
-        required: false,
+    password: {
+        type: String,
+        required: true,
     },
     dob: {
         type: Date,
         required: true,
         validate: {
-            validator: function (value) {
-                // Ensure DOB is at least 18 years ago
-                const age = moment().diff(value, 'years');
-                return age >= 18; // User must be 18 or older
+            validator: function(value) {
+                // Ensure the donor is at least 18 years old
+                return moment().diff(value, "years") >= 18;
             },
-            message: props => `User must be at least 18 years old!`
-        }
-            
-    }*/
-}, {timestamps: true});
+            message: "Donor must be at least 18 years old!",
+        },
+    },
+    bloodType: {
+        type: String,
+        required: true,
+        enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"], // Restrict to valid blood types
+    },
+    image: {
+        type: String, // URL or file path for the profile picture
+        required: false,
+    },
+    activeStatus: {
+        type: Boolean,
+        default: true, // Default to active
+    },
+}, { timestamps: true });
 
 // Signup method
-donorSchema.statics.signup = async function (email, password, /*firstName, lastName,  phoneNumber,  address, image, dob*/) {
+donorSchema.statics.signup = async function(
+    firstName,
+    lastName,
+    phoneNumber,
+    email,
+    password,
+    dob,
+    bloodType,
+    image
+) {
     // Validation
-    if (!email || !password/* || !firstName || !lastName || !phoneNumber  || !address || !dob*/) {
+    if (!firstName || !lastName || !phoneNumber || !email || !password || !dob || !bloodType) {
         throw new Error("All Fields are Required");
     }
 
@@ -78,28 +90,25 @@ donorSchema.statics.signup = async function (email, password, /*firstName, lastN
     const exists = await this.findOne({ email });
 
     if (exists) {
-        throw new Error('Email Already Exists');
+        throw new Error("Email Already Exists");
     }
 
-  //  const hashPassword = bcryptjs.hashSync(password, 10);
-
     const donor = await this.create({
-        email,
-        password
-       /* firstName,
+        firstName,
         lastName,
         phoneNumber,
-        address,
+        email,
+        password,
+        dob,
+        bloodType,
         image,
-        dob
-        */
     });
 
     return donor;
-}
+};
 
 // Signin method
-donorSchema.statics.signin = async function (email, password) {
+donorSchema.statics.signin = async function(email, password) {
     if (!email || !password) {
         throw new Error("All Fields are Required");
     }
@@ -107,18 +116,18 @@ donorSchema.statics.signin = async function (email, password) {
     const donor = await this.findOne({ email });
 
     if (!donor) {
-        throw new Error('Incorrect Email');
+        throw new Error("Incorrect Email");
     }
 
-    const match = (password === donor.password);
+    const match = password === donor.password;
 
     if (!match) {
-        throw new Error('Incorrect Password');
+        throw new Error("Incorrect Password");
     }
 
-    return Donor;
-}
+    return donor;
+};
 
-const Donor = mongoose.model('Donor', donorSchema);
+const Donor = mongoose.model("Donor", donorSchema);
 
 export default Donor;
