@@ -79,3 +79,30 @@ export const signinH = async(req, res, next) => {
         res.status(400).json({ error: error.message })
     }
 };
+
+
+export const signinA = async (req, res, next) => {
+    const {email, password} = req.body;
+ 
+    if (!email || !password || email === '' || password === '') {
+       next(errorHandler(400, 'All Fields are Required'));
+    }
+ 
+    try {
+     let user, role, name;
+       user = await Admin.signin(email, password);
+       console.log('Email is valid for admin domain');
+        //name = user.firstName +' '+ user.lastName;
+       role = 'Admin';
+     
+       const token = createToken(user._id);
+       //const image = user.image;
+       const id = user._id;
+       
+       res.status(200).json({id, role, email, token, /*image, name*/});
+    } catch (error) {
+     res.status(400).json({error: error.message})
+  }
+ };
+
+
