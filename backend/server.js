@@ -2,7 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.route.js';
-import  donorRoutes from './routes/donor.route.js';
+//import  donorRoutes from './routes/donor.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 
 
@@ -45,7 +45,6 @@ app.get('/', (req, res) => {
 // ✅ Routes
 
 app.use('/api/auth', authRoutes);
-app.use('/api/donor', donorRoutes);
 app.use('/api/healthEvaluation', healthEvaluationRoutes);
 
 // ✅ Error handling middleware (should be last)
