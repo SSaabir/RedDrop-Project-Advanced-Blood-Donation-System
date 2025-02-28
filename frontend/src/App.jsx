@@ -17,14 +17,15 @@ import Hospital_signup from'./pages/Hospital_signup'
 import Hospital_login from'./pages/Hospital_login'
 import EmergencyBloodRequest from'./pages/EBR'
 import DonorAppointment from'./pages/DonorAppointment'
-import ContactUs from './ContactUs'
-import Terms from './Terms'
-import Home from './Home'
-import FAQ from './FAQ'
+import ContactUs from './pages/ContactUs'
+import Terms from './pages/Terms'
+import Home from './pages/Home'
+import FAQ from './pages/FAQ'
 
 import HospitalAdminSignup from'./pages/HospitalAdminSignup'
 import HospitalAdminLogin from'./pages/HospitalAdminLogin'
-
+import HealthEvaluation from './pages/healthEvaluation'
+import HealthEvaluationD from './pages/HealthEvaluationD'
 import DonorProfile from './pages/DonorProfile'
 
 
@@ -54,12 +55,12 @@ export default function App() {
       
     <Route path="/ContactUs" element={<ContactUs />} />
     <Route path="/Terms" element={<Terms />} />
-    <Route path="/Home" element={<Home />} />
+    <Route path="/" element={<Home />} />
     <Route path="/FAQ" element={<FAQ />} />
 
 
-
-
+    <Route path="/healthEvaluationD" element={<HealthEvaluationD />} />
+    <Route path="/healthEF" element={<HealthEvaluation />} />
     <Route path="/HospitalAdminSignup" element={<HospitalAdminSignup />} />
     <Route path="/HospitalAdminLogin" element={<HospitalAdminLogin />} />
 
