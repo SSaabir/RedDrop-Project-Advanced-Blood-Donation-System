@@ -1,5 +1,5 @@
 import React from 'react';
-
+import Homebg from '../assets/Homebg.jpg'
 export default function AboutPageBody () {
   return (
     <div>
@@ -11,10 +11,10 @@ export default function AboutPageBody () {
         ></div>
         <div className="text-center text-white px-4 z-10">
           <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">
-            About Tylac
+            About RedDrop
           </h1>
           <p className="text-xl md:text-2xl mb-8 animate-fade-in-up">
-            Pioneering waterproof paint solutions for a brighter, more durable future.
+            DOANTE YOUR BLOOD AND INSPIRE OTHERS TO DOANTE
           </p>
         </div>
       </section>
@@ -26,7 +26,7 @@ export default function AboutPageBody () {
             {/* Image */}
             <div className="animate-fade-in-left">
               <img
-                src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+                src={Homebg}
                 alt="Our Story"
                 className="w-full h-auto rounded-lg shadow-lg"
               />
@@ -34,17 +34,20 @@ export default function AboutPageBody () {
             {/* Content */}
             <div className="animate-fade-in-right">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">Our Story</h2>
+              
               <p className="text-gray-600 mb-4">
-                Tylac was founded in 2010 with a simple mission: to create the most durable and
-                environmentally friendly waterproof paint for outdoor spaces. Our journey began in a
-                small garage, where our founders experimented with innovative formulas to combat the
-                challenges of weathering and fading.
+              At RedDrop, we are dedicated to saving lives by connecting donors with those in urgent need. 
+              Our mission is to create a seamless and efficient platform where individuals can donate blood, find nearby donation centers, 
+              and request urgent blood support. We believe that every drop counts, and through technology, we aim to make the donation process simple, accessible, and impactful.
+
+
               </p>
               <p className="text-gray-600">
-                Today, Tylac is a trusted name in the industry, known for its vibrant colors,
-                superior protection, and commitment to sustainability. We continue to push
-                boundaries, ensuring our products meet the highest standards of quality and
-                performance.
+              With a commitment to transparency and reliability, our platform ensures real-time updates, secure data handling, 
+              and a user-friendly experience. Whether you are a donor looking to give the gift of life or a recipient in need, 
+              we are here to bridge the gap and strengthen the life-saving network of blood donation. Together, we can make a difference—one donation at a time.
+
+
               </p>
             </div>
           </div>

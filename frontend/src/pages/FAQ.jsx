@@ -3,86 +3,83 @@ import { Card, List } from 'flowbite-react';
 
 export default function FAQ() {
   return (
-    <div className="py-16 bg-gray-50">
+    <div className="py-16 bg-gray-50" style={{
+      backgroundImage: "url('/images/blood-donation-bg.jpg')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }}>
       <div className="container mx-auto px-6">
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">
+        <h1 className="text-4xl font-bold text-center text-red-700 mb-8">
           Frequently Asked Questions (FAQ)
         </h1>
 
         {/* FAQ List */}
-        <Card>
-          <h2 className="text-2xl font-bold mb-4">General Questions</h2>
-          <List>
+        <Card className="bg-white shadow-lg rounded-lg p-6">
+          <h2 className="text-2xl font-bold mb-4 text-red-600">General Questions</h2>
+          <List className="list-disc pl-5">
             <List.Item>
-              <strong>What surfaces can I use Tylac Waterproof Paint on?</strong>
+              <strong>Who can donate blood?</strong>
               <p className="text-gray-600">
-                Tylac Waterproof Paint is suitable for outdoor surfaces such as wood, concrete,
-                metal, and masonry. It is not recommended for use on flexible surfaces like rubber
-                or vinyl.
+                Most healthy adults aged 18-65 can donate blood. Eligibility depends on factors such as weight,
+                recent travel, and medical history.
               </p>
             </List.Item>
             <List.Item>
-              <strong>How long does the paint take to dry?</strong>
+              <strong>How often can I donate blood?</strong>
               <p className="text-gray-600">
-                The paint typically dries to the touch in 1-2 hours, but it is recommended to wait
-                24 hours before exposing it to moisture or heavy use.
+                Whole blood donations can be made every 8 weeks (56 days), while platelet donations can be made every 2 weeks.
               </p>
             </List.Item>
             <List.Item>
-              <strong>Can I apply the paint in cold weather?</strong>
+              <strong>Is blood donation safe?</strong>
               <p className="text-gray-600">
-                For best results, apply the paint in temperatures between 50°F and 90°F. Avoid
-                painting in freezing or extremely hot conditions.
+                Yes, donating blood is a safe process. New, sterile equipment is used for each donor, ensuring no risk of infection.
               </p>
             </List.Item>
           </List>
 
-          <h2 className="text-2xl font-bold mt-8 mb-4">Application Questions</h2>
-          <List>
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-red-600">Donation Process</h2>
+          <List className="list-disc pl-5">
             <List.Item>
-              <strong>Do I need to prime the surface before painting?</strong>
+              <strong>How long does the donation process take?</strong>
               <p className="text-gray-600">
-                Priming is optional but recommended for best results, especially on porous or uneven
-                surfaces.
+                The entire process takes about 45-60 minutes, but the actual blood donation only takes about 10 minutes.
               </p>
             </List.Item>
             <List.Item>
-              <strong>How many coats should I apply?</strong>
+              <strong>What should I do before donating blood?</strong>
               <p className="text-gray-600">
-                For optimal protection, apply at least two thin, even coats. Allow the first coat to
-                dry completely before applying the second.
+                Stay hydrated, eat a healthy meal, and avoid alcohol or caffeine before donating.
               </p>
             </List.Item>
             <List.Item>
-              <strong>Can I use a sprayer to apply the paint?</strong>
+              <strong>What happens after I donate blood?</strong>
               <p className="text-gray-600">
-                Yes, Tylac Waterproof Paint can be applied using a brush, roller, or sprayer. Ensure
-                the sprayer is compatible with water-based paints.
+                You will be given refreshments and asked to rest for a few minutes before resuming normal activities.
+                Avoid heavy exercise for the rest of the day.
               </p>
             </List.Item>
           </List>
 
-          <h2 className="text-2xl font-bold mt-8 mb-4">Safety Questions</h2>
-          <List>
+          <h2 className="text-2xl font-bold mt-8 mb-4 text-red-600">Health & Safety</h2>
+          <List className="list-disc pl-5">
             <List.Item>
-              <strong>Is the paint safe for children and pets?</strong>
+              <strong>Are there any side effects of donating blood?</strong>
               <p className="text-gray-600">
-                Once fully dried, the paint is safe. However, keep children and pets away from wet
-                paint and ensure proper ventilation during application.
+                Some donors may experience mild dizziness or bruising at the injection site, but these effects are temporary.
               </p>
             </List.Item>
             <List.Item>
-              <strong>What should I do if I get paint on my skin?</strong>
+              <strong>Can I donate blood if I have a cold or flu?</strong>
               <p className="text-gray-600">
-                Wash the affected area immediately with soap and water. Avoid contact with eyes and
-                mucous membranes.
+                No, you must be in good health and free of infections to donate blood.
               </p>
             </List.Item>
             <List.Item>
-              <strong>How should I dispose of leftover paint?</strong>
+              <strong>How is donated blood used?</strong>
               <p className="text-gray-600">
-                Dispose of leftover paint and containers according to local regulations. Do not pour
-                paint down drains or into the environment.
+                Donated blood is used for surgeries, accident victims, cancer treatments, and patients with blood disorders.
               </p>
             </List.Item>
           </List>
@@ -91,3 +88,4 @@ export default function FAQ() {
     </div>
   );
 }
+  
