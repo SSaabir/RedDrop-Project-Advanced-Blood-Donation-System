@@ -6,6 +6,8 @@ import authRoutes from './routes/auth.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 import hospitalRoutes from "./routes/hospital.routes.js";
 import donorRoutes from "./routes/donor.routes.js";
+import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
+import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.routes.js";
 
 
 
@@ -51,6 +53,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/healthEvaluation', healthEvaluationRoutes);
 app.use('/api/hospital', hospitalRoutes);
 app.use('/api/donor', donorRoutes);
+app.use('/api/Blood-inventory', BloodInventoryRoutes);
+app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
 
 
 // ✅ Error handling middleware (should be last)
