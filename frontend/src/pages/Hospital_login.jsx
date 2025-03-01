@@ -2,8 +2,26 @@ import React from "react";
 import { Button, Card, Label, TextInput } from "flowbite-react";
 import { Link } from "react-router-dom";
 import background from '../assets/bg2.jpg'; // Ensure this path is correct
+import { useNavigate } from "react-router-dom";
+import { useSignin } from "../hooks/useSignin";
 
 export default function HospitalLogin() {
+  const navigate = useNavigate(); 
+  const [formData, setFormData] = useState({});
+  const {signinH, loading, error} = useSignin();
+
+  const HandleChange = (e) => {
+    setFormData({...formData, [e.target.id]: e.target.value.trim()});
+  };
+
+  const HandleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password) {
+      return setErrorMessage('Please fill out all fields');
+    }
+   await signinH(formData);
+}
+
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg"
@@ -13,14 +31,15 @@ export default function HospitalLogin() {
         <h2 className="text-4xl font-extrabold text-center text-red-700 mb-6 drop-shadow-md">
           Hospital Login
         </h2>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={HandleSubmit}>
           {/* Hospital Email Input */}
           <div>
             <Label htmlFor="hospitalEmail" value="Hospital Email" className="text-gray-700 font-medium" />
             <TextInput
-              id="hospitalEmail"
+              id="email"
               type="email"
               placeholder="hospital@example.com"
+              onChange={HandleChange}
               required
               className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
             />
@@ -33,6 +52,7 @@ export default function HospitalLogin() {
               id="password"
               type="password"
               placeholder="••••••••"
+              onChange={HandleChange}
               required
               className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
             />

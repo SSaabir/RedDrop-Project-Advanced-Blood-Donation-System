@@ -1,9 +1,24 @@
-import React from "react";
+import React, {useState} from "react";
 import { Button, Card, Label, TextInput, Checkbox } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useSignin } from '../hooks/useSignin';
 
 export default function DonorLogin() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
+  const [formData, setFormData] = useState({});
+  const {signinD, loading, error} = useSignin();
+
+  const HandleChange = (e) => {
+    setFormData({...formData, [e.target.id]: e.target.value.trim()});
+  };
+
+  const HandleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.email || !formData.password) {
+      return setErrorMessage('Please fill out all fields');
+    }
+   await signinD(formData);
+}
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
@@ -11,15 +26,15 @@ export default function DonorLogin() {
         <h2 className="text-4xl font-extrabold text-center text-red-700 mb-6 drop-shadow-md">
           Donor Login
         </h2>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={HandleSubmit}>
           <div>
             <Label htmlFor="donorEmail" value="Email" className="text-gray-700 font-medium" />
-            <TextInput id="donorEmail" type="email" placeholder="donor@example.com" required />
+            <TextInput id="email" type="email" placeholder="donor@example.com" onChange={HandleChange} required />
           </div>
 
           <div>
             <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
-            <TextInput id="password" type="password" placeholder="••••••••" required />
+            <TextInput id="password" type="password" placeholder="••••••••" onChange={HandleChange} required />
           </div>
 
           <div className="flex justify-between items-center">
