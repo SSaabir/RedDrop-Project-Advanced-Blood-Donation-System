@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Button, Label, TextInput, Spinner, Select, Textarea } from "flowbite-react";
-import background from '../assets/bg2.jpg'; // Ensure the image exists
+import background from '../assets/bg2.jpg';
+import { useHospital } from "../hooks/hospital";
 
 export default function HealthEvaluationForm() {
   const [loading, setLoading] = useState(false);
-  const [hospitals, setHospitals] = useState([]);
+  const { hospitals, fetchHospitals } = useHospital();
   const [formData, setFormData] = useState({
     donorId: "",
     hospitalId: "",
@@ -15,19 +16,17 @@ export default function HealthEvaluationForm() {
     notes: ""
   });
 
+  // ✅ Fetch donor ID when component mounts
   useEffect(() => {
-    // Fetch donor ID from localStorage
     const storedDonorId = localStorage.getItem("donorId");
     if (storedDonorId) {
       setFormData(prev => ({ ...prev, donorId: storedDonorId }));
     }
+  }, []);
 
-    // Fetch hospital list (mock data for now)
-    setHospitals([
-      { id: "1", name: "City Hospital" },
-      { id: "2", name: "General Medical Center" },
-      { id: "3", name: "Sunrise Clinic" }
-    ]);
+  // ✅ Fetch hospitals when component mounts
+  useEffect(() => {
+    fetchHospitals();
   }, []);
 
   const handleChange = (e) => {
@@ -67,7 +66,7 @@ export default function HealthEvaluationForm() {
             <Select id="hospitalId" required value={formData.hospitalId} onChange={handleChange}>
               <option value="" disabled>Select a hospital</option>
               {hospitals.map(hospital => (
-                <option key={hospital.id} value={hospital.id}>{hospital.name}</option>
+                <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
               ))}
             </Select>
           </div>

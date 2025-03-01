@@ -21,10 +21,10 @@ export const signinHD = async(req, res, next) => {
         role = 'HospitalAdmin';
 
         const token = createToken(user._id);
-        //const image = user.image;
-        const id = user._id;
+        const userObj = user.toObject();
+        delete userObj.password;
 
-        res.status(200).json({ id, role, email, token, /*image, name*/ });
+        res.status(200).json({ token, userObj, role });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -47,10 +47,10 @@ export const signinD = async(req, res, next) => {
         role = 'Donor';
 
         const token = createToken(user._id);
-        //const image = user.image;
-        const id = user._id;
+        const userObj = user.toObject();
+        delete userObj.password;
 
-        res.status(200).json({ id, role, email, token, /*image, name*/ });
+        res.status(200).json({ token, userObj, role });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -67,14 +67,14 @@ export const signinH = async(req, res, next) => {
         let user, role, name;
         user = await Hospital.signin(email, password);
         console.log('Email is valid for hospital domain');
-        //name = user.firstName +' '+ user.lastName;
+        
         role = 'Hospital';
 
         const token = createToken(user._id);
-        //const image = user.image;
-        const id = user._id;
+        const userObj = user.toObject();
+        delete userObj.password;
 
-        res.status(200).json({ id, role, email, token, /*image, name*/ });
+        res.status(200).json({ token, userObj, role });
     } catch (error) {
         res.status(400).json({ error: error.message })
     }
@@ -96,10 +96,10 @@ export const signinA = async (req, res, next) => {
        role = 'Admin';
      
        const token = createToken(user._id);
-       //const image = user.image;
-       const id = user._id;
-       
-       res.status(200).json({id, role, email, token, /*image, name*/});
+        const userObj = user.toObject();
+        delete userObj.password;
+
+        res.status(200).json({ token, userObj, role });
     } catch (error) {
      res.status(400).json({error: error.message})
   }
