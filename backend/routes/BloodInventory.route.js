@@ -5,7 +5,7 @@ import {
     createBloodInventory,
     updateBloodInventory,
     deleteBloodInventory
-} from ".";
+} from "../controllers/BloodInventory.controller.js";
 
 const router = express.Router();
 
