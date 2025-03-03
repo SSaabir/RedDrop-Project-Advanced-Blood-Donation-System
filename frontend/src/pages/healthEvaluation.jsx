@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Button, Label, TextInput, Spinner, Select, Textarea } from "flowbite-react";
 import background from '../assets/bg2.jpg';
 import { useHospital } from "../hooks/hospital";
+import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
+import { createEvaluation } from "../../../backend/controllers/HealthEvaluation.controller";
 
 export default function HealthEvaluationForm() {
   const [loading, setLoading] = useState(false);
   const { hospitals, fetchHospitals } = useHospital();
+  const {createEvaluation} = useHealthEvaluation();
+
   const [formData, setFormData] = useState({
     donorId: "",
     hospitalId: "",
@@ -49,7 +53,9 @@ export default function HealthEvaluationForm() {
         progressStatus: "Not Started",
         notes: ""
       });
+      createEvaluation(formData);
     }, 2000);
+
   };
 
   return (
