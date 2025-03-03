@@ -29,7 +29,12 @@ import HealthEvaluationD from './pages/HealthEvaluationD'
 import DonorProfile from './pages/DonorProfile'
 import About from './pages/About'
 
-
+import InquiryD from './pages/InquiryD'
+import FeedbackD from './pages/FeedbackD'
+import EmergencyBD from './pages/EmergencyBRD'
+import BloodInventoryD from './pages/BloodInventoryD'
+import HospitalAdminsD from './pages/HospitalAdminsD'
+import SystemManagerD from './pages/SystemManagerD'
 
 
 
@@ -59,6 +64,10 @@ export default function App() {
     <Route path="/" element={<Home />} />
     <Route path="/FAQ" element={<FAQ />} />
 
+    <Route path="/feedd" element={<FeedbackD/>}/>
+    <Route path="/inqd" element={<InquiryD/>}/>
+    <Route path="/emerbd" element={<EmergencyBD/>}/>
+    <Route path="/bloodid" element={<BloodInventoryD/>}/>
 
     <Route path="/healthEvaluationD" element={<HealthEvaluationD />} />
     <Route path="/healthEF" element={<HealthEvaluation />} />
@@ -67,8 +76,8 @@ export default function App() {
     <Route path="/Profile" element={<DonorProfile/>}/>
     <Route path="/About" element={<About/>}/>
 
-    
-
+    <Route path="/hosadd" element={<HospitalAdminsD/>}/>
+    <Route path="/sysmand" element={<SystemManagerD/>}/>
     </Routes>
     <Footer/>
     </BrowserRouter>
