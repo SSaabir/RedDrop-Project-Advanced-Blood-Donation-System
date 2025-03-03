@@ -7,13 +7,13 @@ import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
 import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.route.js";
-import  SystemManagerRoutes  from './routes/SystemManager.route.js';
+
 
 import hospitalRoutes from "./routes/hospital.route.js";
 import donorRoutes from "./routes/donor.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
 import inquiryRoutes from "./routes/inquiry.route.js";
-import EmergencyBRRoutes from './routes/EmergencyBR.route.js';
+
 // import multer from 'multer';
 
 dotenv.config();
@@ -63,8 +63,6 @@ app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
 app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
-app.use('/api/manager', SystemManagerRoutes);
-app.use("/api/emergencyBR", EmergencyBRRoutes);
 
 // ✅ Error handling middleware (should be last)
 app.use((err, req, res, next) => {
