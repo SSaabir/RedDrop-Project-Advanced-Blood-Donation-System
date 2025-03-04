@@ -61,9 +61,19 @@ const donorSchema = new mongoose.Schema({
         type: Boolean,
         default: true, // Default to active
     },
+    healthStatus: {
+        type: String,
+        enum: ["Healthy", "Pending Checkup", "Unfit"],
+        default: "Healthy",
+    },
+    appointmentStatus: {
+        type: String,
+        enum: ["Scheduled", "Completed", "Canceled", "Pending"],
+        default: "Pending",
+    },
 }, { timestamps: true });
 
-// Signup method
+// ✅ Signup method
 donorSchema.statics.signup = async function(
     firstName,
     lastName,
@@ -72,7 +82,9 @@ donorSchema.statics.signup = async function(
     password,
     dob,
     bloodType,
-    image
+    image,
+    healthStatus = "Healthy",
+    appointmentStatus = "Pending"
 ) {
     // Validation
     if (!firstName || !lastName || !phoneNumber || !email || !password || !dob || !bloodType) {
@@ -102,12 +114,14 @@ donorSchema.statics.signup = async function(
         dob,
         bloodType,
         image,
+        healthStatus,
+        appointmentStatus,
     });
 
     return donor;
 };
 
-// Signin method
+// ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
     if (!email || !password) {
         throw new Error("All Fields are Required");

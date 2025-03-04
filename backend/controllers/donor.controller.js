@@ -24,7 +24,18 @@ export const getDonorById = async(req, res) => {
 // ✅ Create a new donor
 export const createDonor = async(req, res) => {
     try {
-        const { firstName, lastName, phoneNumber, email, password, dob, bloodType, image } = req.body;
+        const {
+            firstName,
+            lastName,
+            phoneNumber,
+            email,
+            password,
+            dob,
+            bloodType,
+            image,
+            healthStatus = "Healthy",
+            appointmentStatus = "Pending"
+        } = req.body;
 
         const newDonor = new Donor({
             firstName,
@@ -35,6 +46,8 @@ export const createDonor = async(req, res) => {
             dob,
             bloodType,
             image,
+            healthStatus,
+            appointmentStatus
         });
 
         await newDonor.save();
@@ -69,5 +82,37 @@ export const deleteDonor = async(req, res) => {
         res.json({ message: "Donor deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting donor", error });
+    }
+};
+
+// ✅ Update health status
+export const updateHealthStatus = async(req, res) => {
+    try {
+        const { healthStatus } = req.body;
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            req.params.id, { healthStatus }, { new: true }
+        );
+
+        if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
+
+        res.status(200).json(updatedDonor);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating health status", error });
+    }
+};
+
+// ✅ Update appointment status
+export const updateAppointmentStatus = async(req, res) => {
+    try {
+        const { appointmentStatus } = req.body;
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            req.params.id, { appointmentStatus }, { new: true }
+        );
+
+        if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
+
+        res.status(200).json(updatedDonor);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating appointment status", error });
     }
 };

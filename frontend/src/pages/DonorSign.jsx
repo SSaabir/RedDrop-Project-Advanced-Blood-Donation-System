@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Card, Label, TextInput, Select } from "flowbite-react";
+import { Button, Card, Label, TextInput, Select, FileInput } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 
 export default function DonorSign() {
@@ -13,10 +13,12 @@ export default function DonorSign() {
         </h2>
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-6">
-            {[
-              { id: "fullName", label: "Full Name", placeholder: "John Doe" },
-              { id: "age", label: "Age", placeholder: "25", type: "number" },
-              { id: "phone", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
+            {[ 
+              { id: "firstName", label: "First Name", placeholder: "John" },
+              { id: "lastName", label: "Last Name", placeholder: "Doe" },
+              { id: "phoneNumber", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
+              { id: "email", label: "Email", placeholder: "example@example.com", type: "email" },
+              { id: "password", label: "Password", placeholder: "********", type: "password" },
             ].map((field) => (
               <div key={field.id}>
                 <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
@@ -27,9 +29,13 @@ export default function DonorSign() {
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="bloodGroup" value="Blood Group" className="text-gray-700 font-medium" />
-              <Select id="bloodGroup" required>
-                <option value="">Select Blood Group</option>
+              <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-medium" />
+              <TextInput id="dob" type="date" required />
+            </div>
+            <div>
+              <Label htmlFor="bloodType" value="Blood Type" className="text-gray-700 font-medium" />
+              <Select id="bloodType" required>
+                <option value="">Select Blood Type</option>
                 <option value="A+">A+</option>
                 <option value="A-">A-</option>
                 <option value="B+">B+</option>
@@ -52,6 +58,10 @@ export default function DonorSign() {
             <div>
               <Label htmlFor="location" value="Location" className="text-gray-700 font-medium" />
               <TextInput id="location" type="text" placeholder="City, Country" required />
+            </div>
+            <div>
+              <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
+              <FileInput id="image" required />
             </div>
           </div>
 
