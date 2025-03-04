@@ -27,19 +27,21 @@ export const createDonor = async(req, res) => {
         const {
             firstName,
             lastName,
+            gender,
             phoneNumber,
             email,
             password,
             dob,
             bloodType,
             image,
-            healthStatus = "Healthy",
-            appointmentStatus = "Pending"
+            healthStatus = true, // ✅ Default to true (healthy)
+            appointmentStatus = false // ✅ Default to false (not scheduled)
         } = req.body;
 
         const newDonor = new Donor({
             firstName,
             lastName,
+            gender,
             phoneNumber,
             email,
             password,
@@ -88,7 +90,9 @@ export const deleteDonor = async(req, res) => {
 // ✅ Update health status
 export const updateHealthStatus = async(req, res) => {
     try {
-        const { healthStatus } = req.body;
+        let { healthStatus } = req.body;
+        healthStatus = healthStatus === "true" || healthStatus === true; // ✅ Ensure Boolean value
+
         const updatedDonor = await Donor.findByIdAndUpdate(
             req.params.id, { healthStatus }, { new: true }
         );
@@ -104,7 +108,9 @@ export const updateHealthStatus = async(req, res) => {
 // ✅ Update appointment status
 export const updateAppointmentStatus = async(req, res) => {
     try {
-        const { appointmentStatus } = req.body;
+        let { appointmentStatus } = req.body;
+        appointmentStatus = appointmentStatus === "true" || appointmentStatus === true; // ✅ Ensure Boolean value
+
         const updatedDonor = await Donor.findByIdAndUpdate(
             req.params.id, { appointmentStatus }, { new: true }
         );
