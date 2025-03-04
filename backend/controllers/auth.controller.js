@@ -91,9 +91,9 @@ export const signinA = async (req, res, next) => {
     try {
      let user, role, name;
        user = await Admin.signin(email, password);
-       console.log('Email is valid for admin domain');
+       console.log('Email is valid for manager domain');
         //name = user.firstName +' '+ user.lastName;
-       role = 'Admin';
+       role = 'Manager';
      
        const token = createToken(user._id);
         const userObj = user.toObject();

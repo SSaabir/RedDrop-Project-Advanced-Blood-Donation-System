@@ -4,7 +4,7 @@ const healthEvaluationSchema = new mongoose.Schema(
     {
         receiptNumber: {
             type: String,
-            required: true,
+            required: false,
             unique: true,
         },
         passStatus: {
@@ -16,6 +16,11 @@ const healthEvaluationSchema = new mongoose.Schema(
             type: String,
             enum: ['Not Started', 'In Progress', 'Completed'],
             default: 'Not Started',
+        },
+        activeStatus: {
+            type: String,
+            enum: ['Scheduled', 'Re-Scheduled', 'Accepted', 'Cancelled'],
+            default: 'Scheduled',
         },
         hospitalId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -34,7 +39,7 @@ const healthEvaluationSchema = new mongoose.Schema(
         hospitalAdminId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'HospitalAdmin',
-            required: true,
+            required: false,
         },
         evaluationDate: {
             type: String, // Storing as a string for better readability
