@@ -16,7 +16,7 @@ const systemManagerSchema = new mongoose.Schema({
         password: {
           type: String,
           required: true,
-        },
+        }/*,
         firstName: {
           type: String,
           required: true,
@@ -65,7 +65,7 @@ const systemManagerSchema = new mongoose.Schema({
         activeStatus: {
           type: Boolean,
           default: true,
-        },
+        },*/  
 }, {timestamps: true});
 
 
@@ -87,7 +87,7 @@ systemManagerSchema.statics.signin = async function (email, password) {
         throw new Error('Incorrect Password');
     }
 
-    return Manager;
+    return manager;
 }
 
 const Manager = mongoose.model('Manager', systemManagerSchema);
