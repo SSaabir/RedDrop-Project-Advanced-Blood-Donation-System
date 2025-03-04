@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { Button, Card, Label, TextInput, Checkbox } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignin } from '../hooks/useSignin';
@@ -6,10 +6,10 @@ import { useSignin } from '../hooks/useSignin';
 export default function DonorLogin() {
   const navigate = useNavigate(); 
   const [formData, setFormData] = useState({});
-  const {signinD, loading, error} = useSignin();
+  const { signinD, loading, error } = useSignin();
 
   const HandleChange = (e) => {
-    setFormData({...formData, [e.target.id]: e.target.value.trim()});
+    setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
   };
 
   const HandleSubmit = async (e) => {
@@ -17,12 +17,20 @@ export default function DonorLogin() {
     if (!formData.email || !formData.password) {
       return setErrorMessage('Please fill out all fields');
     }
-   await signinD(formData);
-}
+    await signinD(formData);
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
-      <Card className="w-full max-w-md p-10 shadow-2xl rounded-2xl bg-white bg-opacity-90 backdrop-blur-md">
+      <Card className="relative w-full max-w-md p-10 shadow-2xl rounded-2xl bg-white bg-opacity-90 backdrop-blur-md">
+        {/* Hospital Login Button */}
+        <button
+          className="absolute top-4 right-4 text-red-600 text-sm"
+          onClick={() => navigate("/Hospital_login")}
+        >
+          Hospital Login
+        </button>
+        
         <h2 className="text-4xl font-extrabold text-center text-red-700 mb-6 drop-shadow-md">
           Donor Login
         </h2>

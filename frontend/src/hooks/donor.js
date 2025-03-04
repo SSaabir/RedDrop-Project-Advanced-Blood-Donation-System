@@ -79,6 +79,42 @@ export const useDonor = () => {
         }
     };
 
+    // ✅ Update donor's health status
+    const updateHealthStatus = async(id, healthStatus) => {
+        try {
+            const response = await fetch(`/api/donor/${id}/health-status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ healthStatus }),
+            });
+            if (!response.ok) throw new Error("Failed to update health status");
+            const updatedDonor = await response.json();
+            setDonors((prev) =>
+                prev.map((donor) => (donor._id === id ? updatedDonor : donor))
+            );
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    // ✅ Update donor's appointment status
+    const updateAppointmentStatus = async(id, appointmentStatus) => {
+        try {
+            const response = await fetch(`/api/donor/${id}/appointment-status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ appointmentStatus }),
+            });
+            if (!response.ok) throw new Error("Failed to update appointment status");
+            const updatedDonor = await response.json();
+            setDonors((prev) =>
+                prev.map((donor) => (donor._id === id ? updatedDonor : donor))
+            );
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
     // Fetch donors when the hook is used
     useEffect(() => {
         fetchDonors();
@@ -91,5 +127,9 @@ export const useDonor = () => {
         createDonor,
         updateDonor,
         deleteDonor,
+        updateHealthStatus, // ✅ New function
+        updateAppointmentStatus, // ✅ New function
+        loading,
+        error
     };
 };

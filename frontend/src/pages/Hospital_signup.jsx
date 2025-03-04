@@ -29,15 +29,15 @@ export default function HospitalSignup() {
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-6">
             {[  
-              { id: "hospitalId", label: "Hospital ID", placeholder: "HOSP-12345" },
               { id: "hospitalName", label: "Hospital Name", placeholder: "City Hospital" },
-              { id: "hospitalAddress", label: "Hospital Address", placeholder: "123 Main St, City" },
+              { id: "hospitalEmail", label: "Email", placeholder: "hospital@example.com", type: "email" },
+              { id: "password", label: "Password", placeholder: "••••••••", type: "password" },
             ].map((field) => (
               <div key={field.id} className="relative">
                 <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
                 <TextInput
                   id={field.id}
-                  type="text"
+                  type={field.type || "text"}
                   placeholder={field.placeholder}
                   required
                   className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
@@ -48,15 +48,16 @@ export default function HospitalSignup() {
 
           <div className="space-y-6">
             {[  
-              { id: "hospitalPhone", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
-              { id: "hospitalEmail", label: "Email", placeholder: "hospital@example.com", type: "email" },
-              { id: "password", label: "Password", placeholder: "••••••••", type: "password" }
+              { id: "phoneNumber", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
+              { id: "address", label: "Hospital Address", placeholder: "123 Main St, City" },
+              { id: "startTime", label: "Opening Time", type: "time" },
+              { id: "endTime", label: "Closing Time", type: "time" },
             ].map((field) => (
               <div key={field.id} className="relative">
                 <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
                 <TextInput
                   id={field.id}
-                  type={field.type}
+                  type={field.type || "text"}
                   placeholder={field.placeholder}
                   required
                   className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
