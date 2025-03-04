@@ -78,7 +78,7 @@ hospitalAdminSchema.statics.signin = async function (email, password) {
         throw new Error('Incorrect Password');
     }
 
-    return HospitalAdmin;
+    return hospitalAdmin;
 }
 
 const HospitalAdmin = mongoose.model('HospitalAdmin', hospitalAdminSchema);
