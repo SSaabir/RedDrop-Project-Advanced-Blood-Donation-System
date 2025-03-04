@@ -92,6 +92,7 @@ export default function AppointmentD() {
         <Table.Cell>{evaluation.donorId?.email || "N/A"}</Table.Cell>
         <Table.Cell>{evaluation.hospitalAdminId?.email || "N/A"}</Table.Cell>
         <Table.Cell className="space-x-2">
+          <div className="flex flex-row gap-3">
           <Button size="xs" color="warning" onClick={() => handleRescheduleClick(evaluation)}>
             Reschedule
           </Button>
@@ -101,6 +102,16 @@ export default function AppointmentD() {
           <Button size="xs" color="failure" onClick={() => deleteEvaluation(evaluation._id)}>
             Delete
           </Button>
+          <Button size="xs" color="success" >
+            Arrived
+          </Button>
+          <Button size="xs" color="lime" >
+            Upload
+          </Button>
+          <Button size="xs" color="indigo" >
+            Accept
+          </Button>
+          </div>
         </Table.Cell>
       </Table.Row>
     ))

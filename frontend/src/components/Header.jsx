@@ -5,22 +5,31 @@ import Logo from '../assets/logo.svg';
 import { useLogout } from '../hooks/useLogout';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { useHospital } from '../hooks/hospital';
+import {useHealthEvaluation} from '../hooks/useHealthEvaluation';
 
 export default function Header() {
   const path = useLocation().pathname;
   const { logout } = useLogout();
   const { user } = useAuthContext();
   const { hospitals, loading, error } = useHospital();
+  const {createEvaluation} = useHealthEvaluation();
 
   // State for modals and form data
   const [openEvalModal, setOpenEvalModal] = useState(false);
   const [openAppointmentModal, setOpenAppointmentModal] = useState(false);
+  const userId = user?.userObj?._id;
+  const Donor = user?.role === 'Donor';
+  const Hospital = user?.role === 'Hospital';
+  const Manager = user?.role === 'Manager';
+  const HospitalAdmin = user?.role === 'HospitalAdmin';
+  
   const [evalFormData, setEvalFormData] = useState({
     hospitalId: "",
     evaluationDate: "",
     evaluationTime: "",
-    notes: ""
+    donorId: userId || "",
   });
+
   const [appointmentFormData, setAppointmentFormData] = useState({
     donorName: "",
     address: "",
@@ -30,14 +39,19 @@ export default function Header() {
     file: null
   });
 
+  
+
   // Handle form field change for evaluation
   const handleEvalChange = (e) => {
-    const { id, value, type, files } = e.target;
+   
+    const { id, value } = e.target;
+
     setEvalFormData(prev => ({
       ...prev,
-      [id]: type === 'file' ? files[0] : value
+      [id]: value,
     }));
   };
+  
 
   // Handle form field change for appointment
   const handleAppointmentChange = (e) => {
@@ -56,8 +70,14 @@ export default function Header() {
   // Handle form submission for evaluation
   const handleEvalSubmit = (e) => {
     e.preventDefault();
-    // Handle the evaluation scheduling logic here
-    console.log("Evaluating health", evalFormData);
+    
+    const evaluationData = { 
+      ...evalFormData, 
+      donorId: userId || "" // Ensure donorId is included before submitting
+    };
+
+    console.log("Submitting Evaluation:", evaluationData);
+  createEvaluation(evaluationData);
     // Close modal after submission
     setOpenEvalModal(false);
   };
@@ -88,12 +108,16 @@ export default function Header() {
             <Button className='bg-red-600 hover:bg-red-800 text-white font-bold'>Get Started</Button>
           </Link>
         )}
+        {Donor && (
+          <>
         <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenEvalModal(true)}>
           Evaluation
         </Button>
         <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenAppointmentModal(true)}>
           Appointment
         </Button>
+        </>
+        )}
         {user && (
           <Dropdown
             arrowIcon={false}
@@ -150,10 +174,6 @@ export default function Header() {
             <div>
               <Label htmlFor="evaluationTime" value="Evaluation Time" className="text-gray-700 font-medium" />
               <TextInput id="evaluationTime" type="time" required value={evalFormData.evaluationTime} onChange={handleEvalChange} />
-            </div>
-            <div>
-              <Label htmlFor="notes" value="Additional Notes" className="text-gray-700 font-medium" />
-              <Textarea id="notes" placeholder="Enter any additional details" value={evalFormData.notes} onChange={handleEvalChange} />
             </div>
             <Modal.Footer>
               <Button type="submit" className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center">
