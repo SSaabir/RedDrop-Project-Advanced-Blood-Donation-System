@@ -14,6 +14,7 @@ import donorRoutes from "./routes/donor.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
 import inquiryRoutes from "./routes/inquiry.route.js";
 import EmergencyBRRoutes from './routes/EmergencyBR.route.js';
+import HospitalAdminRoutes from './routes/HospitalAdmin.route.js';
 // import multer from 'multer';
 
 dotenv.config();
@@ -64,8 +65,8 @@ app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
 app.use('/api/manager', SystemManagerRoutes);
-app.use("/api/emergencyBR", EmergencyBRRoutes);
-
+app.use('/api/emergencyBR', EmergencyBRRoutes);
+app.use('/api/healthAd', HospitalAdminRoutes);
 // ✅ Error handling middleware (should be last)
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
