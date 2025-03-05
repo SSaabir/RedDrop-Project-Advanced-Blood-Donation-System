@@ -4,20 +4,23 @@ import { useNavigate } from "react-router-dom";
 
 export const useLogout = () => {
     const { dispatch } = useAuthContext();
-    const { secondUser, logout: secondLogout } = useSecondAuth();
+    const { secondUser, dispatch: secondAuthDispatch } = useSecondAuth(); // ✅ Get secondAuthDispatch
     const navigate = useNavigate();
 
-    const logout = () => {
-      localStorage.removeItem("user");
-      dispatch({ type: "LOGOUT" });
-
+    const secondLogout = () => {
         if (localStorage.getItem("secondUser") || secondUser) {
             localStorage.removeItem("secondUser");
-            secondLogout();
-            navigate("/");
+            secondAuthDispatch({ type: "LOGOUT" }); // ✅ Dispatch logout for second user
         }
-        
-        navigate("/");
+    };
+
+    const logout = () => {
+        localStorage.removeItem("user");
+        dispatch({ type: "LOGOUT" });
+
+        secondLogout(); // ✅ Ensure second user logs out
+
+        navigate("/"); // ✅ Always navigate to home
     };
 
     return { logout };
