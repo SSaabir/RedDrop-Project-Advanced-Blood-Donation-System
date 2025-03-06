@@ -9,7 +9,7 @@ const healthEvaluationSchema = new mongoose.Schema(
         },
         passStatus: {
             type: String,
-            enum: ['Pending', 'Passed', 'Failed'],
+            enum: ['Pending', 'Passed', 'Failed', 'Cancelled'],
             default: 'Pending',
         },
         progressStatus: {

@@ -27,8 +27,7 @@ export const useHealthEvaluation = () => {
       if (!response.ok) throw new Error("Failed to fetch evaluation");
       return await response.json();
     } catch (err) {
-      setError(err.message);
-      return null;
+      return null; // Avoid setting global error
     }
   };
 
@@ -42,7 +41,7 @@ export const useHealthEvaluation = () => {
       });
       if (!response.ok) throw new Error("Failed to create evaluation");
       const newEvaluation = await response.json();
-      setEvaluations((prev) => [...prev, newEvaluation]);
+      setEvaluations((prev) => [...prev, newEvaluation.data]);
     } catch (err) {
       setError(err.message);
     }
@@ -62,7 +61,7 @@ export const useHealthEvaluation = () => {
         prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
       );
     } catch (err) {
-      console.error(err.message);
+      setError(err.message);
     }
   };
 
@@ -76,16 +75,64 @@ export const useHealthEvaluation = () => {
         prev.map((evaluation) => (evaluation._id === id ? canceledEvaluation : evaluation))
       );
     } catch (err) {
-      console.error(err.message);
+      setError(err.message);
+    }
+  };
+
+  // ✅ Accept evaluation
+  const acceptEvaluation = async (id) => {
+    try {
+      const response = await fetch(`/api/healthEvaluation/${id}/accept`, { method: "PATCH" });
+      if (!response.ok) throw new Error("Failed to accept evaluation");
+      const acceptedEvaluation = await response.json();
+      setEvaluations((prev) =>
+        prev.map((evaluation) => (evaluation._id === id ? acceptedEvaluation : evaluation))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // ✅ Mark as arrived
+  const arrivedForEvaluation = async (id, receiptNumber) => {
+    try {
+      const response = await fetch(`/api/healthEvaluation/${id}/arrived`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiptNumber }),
+      });
+      if (!response.ok) throw new Error("Failed to mark as arrived");
+      const updatedEvaluation = await response.json();
+      setEvaluations((prev) =>
+        prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // ✅ Complete evaluation
+  const completeEvaluation = async (id, result) => {
+    try {
+      const response = await fetch(`/api/healthEvaluation/${id}/complete`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ result }),
+      });
+      if (!response.ok) throw new Error("Failed to complete evaluation");
+      const updatedEvaluation = await response.json();
+      setEvaluations((prev) =>
+        prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
+      );
+    } catch (err) {
+      setError(err.message);
     }
   };
 
   // ✅ Delete an evaluation
   const deleteEvaluation = async (id) => {
     try {
-      const response = await fetch(`/api/healthEvaluation/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`/api/healthEvaluation/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete evaluation");
       setEvaluations((prev) => prev.filter((evaluation) => evaluation._id !== id));
     } catch (err) {
@@ -100,11 +147,16 @@ export const useHealthEvaluation = () => {
 
   return {
     evaluations,
+    loading,
+    error,
     fetchEvaluations,
     fetchEvaluationById,
     createEvaluation,
     updateEvaluationDateTime,
     cancelEvaluation,
+    acceptEvaluation,
+    arrivedForEvaluation,
+    completeEvaluation,
     deleteEvaluation,
   };
 };

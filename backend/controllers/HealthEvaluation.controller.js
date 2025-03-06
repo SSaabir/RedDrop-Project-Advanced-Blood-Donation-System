@@ -21,67 +21,131 @@ export const getHealthEvaluationById = async (req, res) => {
     }
 };
 
+// Create a new health evaluation
 export const createEvaluation = async (req, res) => {
     try {
-      const { hospitalId, donorId, evaluationDate, evaluationTime } = req.body;
+        const { hospitalId, donorId, evaluationDate, evaluationTime } = req.body;
 
-      if (!hospitalId || !donorId || !evaluationDate || !evaluationTime) {
-        return res.status(400).json({ error: "All fields are required." });
-      }
+        if (!hospitalId || !donorId || !evaluationDate || !evaluationTime) {
+            return res.status(400).json({ error: "All fields are required." });
+        }
 
-      const newEvaluation = new HealthEvaluation({
-        progressStatus: 'Not Started',
-        hospitalId,
-        donorId,
-        evaluationDate,
-        evaluationTime,
-      });
-  
-      await newEvaluation.save();
+        const newEvaluation = new HealthEvaluation({
+            progressStatus: 'Not Started',
+            hospitalId,
+            donorId,
+            evaluationDate,
+            evaluationTime,
+        });
 
-    // Send success response
-    res.status(201).json({ success: true, data: newEvaluation });
+        await newEvaluation.save();
 
-  } catch (err) {
-    console.error("Error creating evaluation:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
+        res.status(201).json({ success: true, data: newEvaluation });
+    } catch (err) {
+        console.error("Error creating evaluation:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 };
-  
-// Create a new health evaluation
+
+// Update Date and Time of Evaluation
 export const updateEvaluationDateTime = async (req, res) => {
     try {
-      const { evaluationDate, evaluationTime } = req.body;
-      const updatedEvaluation = await HealthEvaluation.findByIdAndUpdate(
-        req.params.id,
-        { evaluationDate, evaluationTime },
-        { new: true }
-      );
-  
-      if (!updatedEvaluation) return res.status(404).json({ error: "Evaluation not found" });
-  
-      res.status(200).json(updatedEvaluation);
+        const { evaluationDate, evaluationTime, hospitalAdminId } = req.body;
+        const updatedEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            { 
+                evaluationDate, 
+                evaluationTime, 
+                activeStatus: "Re-Scheduled", 
+                hospitalAdminId 
+            },
+            { new: true }
+        );
+
+        if (!updatedEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+
+        res.status(200).json(updatedEvaluation);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
-  };
-  
-  // ✅ Cancel an Evaluation
-  export const cancelEvaluation = async (req, res) => {
+};
+
+// Cancel an Evaluation
+export const cancelEvaluation = async (req, res) => {
     try {
-      const canceledEvaluation = await HealthEvaluation.findByIdAndUpdate(
-        req.params.id,
-        { progressStatus: "Cancelled" },
-        { new: true }
-      );
-  
-      if (!canceledEvaluation) return res.status(404).json({ error: "Evaluation not found" });
-  
-      res.status(200).json(canceledEvaluation);
+        const { hospitalAdminId } = req.body;
+        const canceledEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            {
+                passStatus: "Cancelled",
+                activeStatus: "Cancelled",
+                progressStatus: "Cancelled",
+                hospitalAdminId
+            },
+            { new: true }
+        );
+
+        if (!canceledEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+
+        res.status(200).json(canceledEvaluation);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
-  };
+};
+
+// Accept an Evaluation
+export const acceptEvaluation = async (req, res) => {
+    try {
+        const { hospitalAdminId } = req.body;
+        const acceptEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            { activeStatus: "Accepted", hospitalAdminId },
+            { new: true }
+        );
+
+        if (!acceptEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+
+        res.status(200).json(acceptEvaluation);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Arrived for an Evaluation
+export const arrivedForEvaluation = async (req, res) => {
+    try {
+        const { receiptNumber } = req.body;
+        const arrivedForEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            { receiptNumber, progressStatus: "In Progress" },
+            { new: true }
+        );
+
+        if (!arrivedForEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+
+        res.status(200).json(arrivedForEvaluation);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Complete an Evaluation
+export const completeEvaluation = async (req, res) => {
+    try {
+        const { result } = req.body;
+        const completedEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            { passStatus: result, progressStatus: "Completed" },
+            { new: true }
+        );
+
+        if (!completedEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+
+        res.status(200).json(completedEvaluation);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
 
 // Delete a health evaluation
 export const deleteHealthEvaluation = async (req, res) => {
