@@ -11,9 +11,9 @@ const feedbackSchema = new mongoose.Schema({
         ref: 'Hospital', // Reference to Hospital model
         required: true,
     },
-    systemAdminId: {
+    systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'SystemAdmin', // Reference to System Admin model
+        ref: 'SystemManager', // Reference to System Manager model
         required: true,
     },
     comments: {
@@ -29,4 +29,4 @@ const feedbackSchema = new mongoose.Schema({
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 
-export default Feedback;    
+export default Feedback;

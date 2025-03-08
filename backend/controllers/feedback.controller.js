@@ -24,12 +24,12 @@ export const getFeedbackById = async(req, res) => {
 // ✅ Create a new feedback
 export const createFeedback = async(req, res) => {
     try {
-        const { donorId, hospitalId, systemAdminId, comments, feedbackType } = req.body;
+        const { donorId, hospitalId, systemManagerId, comments, feedbackType } = req.body;
 
         const newFeedback = new Feedback({
             donorId,
             hospitalId,
-            systemAdminId,
+            systemManagerId,
             comments,
             feedbackType,
         });
@@ -65,6 +65,6 @@ export const deleteFeedback = async(req, res) => {
 
         res.json({ message: "Feedback deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting feedback", error });
-    }
+        res.status(500).json({ message: "Error deleting feedback", error });
+    }
 };
