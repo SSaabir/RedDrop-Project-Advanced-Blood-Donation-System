@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Button, Card, Label, TextInput, Select, FileInput, Alert } from "flowbite-react";
+import { Button, Card, Label, TextInput, Select, FileInput } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
+import { useDonor } from "../hooks/donor";
 
 export default function DonorSign() {
   const navigate = useNavigate();
+  const { createDonor, loading, error } = useDonor();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -14,54 +16,36 @@ export default function DonorSign() {
     bloodType: "",
     gender: "",
     location: "",
-    image: null,
+    image: null, // File input
   });
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-
-  // Handle input changes
+  // Handle Input Change
   const handleChange = (e) => {
-    const { id, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: files ? files[0] : value, // Handle file input separately
-    }));
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value.trim() }));
   };
 
-  // Handle form submission
+  // Handle File Upload
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
+  };
+
+  // Handle Form Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    // Basic validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.bloodType) {
-      setError("Please fill out all required fields.");
-      return;
+    if (Object.values(formData).some((val) => val === "" || val === null)) {
+      return setErrorMessage("Please fill out all fields");
     }
 
-    // Create FormData object for sending including image
-    const submitData = new FormData();
-    Object.keys(formData).forEach((key) => submitData.append(key, formData[key]));
+    // Convert form data to FormData object for file upload
+    const donorData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      donorData.append(key, formData[key]);
+    });
 
-    try {
-      const response = await fetch("http://localhost:5000/api/donor", {
-        method: "POST",
-        body: submitData, // Sending formData instead of JSON
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to register donor");
-      }
-
-      setSuccess(true);
-      setTimeout(() => navigate("/donor-login"), 2000); // Redirect after 2 sec
-    } catch (err) {
-      setError(err.message);
-    }
+    await createDonor(donorData);
+    navigate("/donor-login");
   };
 
   return (
@@ -71,21 +55,20 @@ export default function DonorSign() {
           Donor Registration
         </h2>
 
-        {error && <Alert color="failure">{error}</Alert>}
-        {success && <Alert color="success">Registration Successful!</Alert>}
+        {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {[ 
+            {[
               { id: "firstName", label: "First Name", placeholder: "John" },
               { id: "lastName", label: "Last Name", placeholder: "Doe" },
               { id: "phoneNumber", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
               { id: "email", label: "Email", placeholder: "example@example.com", type: "email" },
-              { id: "password", label: "Password", placeholder: "********", type: "password" },
+              { id: "password", label: "Password", placeholder: "••••••••", type: "password" },
             ].map((field) => (
               <div key={field.id}>
                 <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
-                <TextInput id={field.id} type={field.type || "text"} placeholder={field.placeholder} required onChange={handleChange} />
+                <TextInput id={field.id} type={field.type || "text"} placeholder={field.placeholder} onChange={handleChange} required />
               </div>
             ))}
           </div>
@@ -93,11 +76,11 @@ export default function DonorSign() {
           <div className="space-y-6">
             <div>
               <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-medium" />
-              <TextInput id="dob" type="date" required onChange={handleChange} />
+              <TextInput id="dob" type="date" onChange={handleChange} required />
             </div>
             <div>
               <Label htmlFor="bloodType" value="Blood Type" className="text-gray-700 font-medium" />
-              <Select id="bloodType" required onChange={handleChange}>
+              <Select id="bloodType" onChange={handleChange} required>
                 <option value="">Select Blood Type</option>
                 {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((type) => (
                   <option key={type} value={type}>
@@ -108,7 +91,7 @@ export default function DonorSign() {
             </div>
             <div>
               <Label htmlFor="gender" value="Gender" className="text-gray-700 font-medium" />
-              <Select id="gender" required onChange={handleChange}>
+              <Select id="gender" onChange={handleChange} required>
                 <option value="">Select Gender</option>
                 {["Male", "Female", "Other"].map((gender) => (
                   <option key={gender} value={gender}>
@@ -119,18 +102,19 @@ export default function DonorSign() {
             </div>
             <div>
               <Label htmlFor="location" value="Location" className="text-gray-700 font-medium" />
-              <TextInput id="location" type="text" placeholder="City, Country" required onChange={handleChange} />
+              <TextInput id="location" type="text" placeholder="City, Country" onChange={handleChange} required />
             </div>
             <div>
               <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
-              <FileInput id="image" required onChange={handleChange} />
+              <FileInput id="image" onChange={handleFileChange} required />
             </div>
           </div>
 
           <div className="md:col-span-2 flex flex-col items-center space-y-4">
-            <Button type="submit" className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">
-              Register Now
+            <Button type="submit" className="w-full bg-red-600 text-white font-bold py-3 rounded-lg" disabled={loading}>
+              {loading ? "Registering..." : "Register Now"}
             </Button>
+            {error && <p className="text-red-600">{error}</p>}
             <button onClick={() => navigate("/donor-login")} className="text-red-600 font-medium hover:underline">
               Already have an account? Login
             </button>
