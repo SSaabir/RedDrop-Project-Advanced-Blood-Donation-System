@@ -1,11 +1,12 @@
 import { useAuthContext } from "./useAuthContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useSecondAuth } from "./useSecondAuth";
 export const useSignin = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null); // ✅ Renamed for consistency
-  const { dispatch } = useAuthContext();
+  const { dispatch: authDispatch } = useAuthContext(); // Renamed to authDispatch
+    const { dispatch: secondAuthDispatch} = useSecondAuth(); // Renamed to secondAuthDispatch
   const navigate = useNavigate();
 
   const signinD = async (formData) => {
@@ -35,7 +36,7 @@ export const useSignin = () => {
       }
 
       localStorage.setItem('user', JSON.stringify(json));
-      dispatch({ type: 'LOGIN', payload: json });
+      authDispatch({ type: 'LOGIN', payload: json });
 
       setLoading(false);
       navigate('/dashboard');
@@ -73,7 +74,7 @@ export const useSignin = () => {
       }
 
       localStorage.setItem('user', JSON.stringify(json));
-      dispatch({ type: 'LOGIN', payload: json });
+      authDispatch({ type: 'LOGIN', payload: json });
 
       setLoading(false);
       navigate('/dashboard');
@@ -111,10 +112,10 @@ export const useSignin = () => {
       }
 
       localStorage.setItem('user', JSON.stringify(json));
-      dispatch({ type: 'LOGIN', payload: json });
+      authDispatch({ type: 'LOGIN', payload: json });
 
       setLoading(false);
-      navigate('/dashboard');
+      navigate('/HospitalAdminLogin');
     } catch (err) {
       setLoading(false);
       setError(err.message || "Network error. Please try again."); // ✅ Improved error handling
@@ -127,39 +128,38 @@ export const useSignin = () => {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/signinhd', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+        const res = await fetch('/api/auth/signinhd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+        });
 
-      const text = await res.text();
-      console.log("Raw response:", text);
+        const text = await res.text();
+        console.log("Raw response:", text);
 
-      if (!text) {
-        throw new Error("Empty response from server"); // ✅ Handle empty responses
-      }
+        if (!text) {
+            throw new Error("Empty response from server");
+        }
 
-      const json = JSON.parse(text);
+        const json = JSON.parse(text);
 
-      if (!res.ok) {
+        if (!res.ok) {
+            setLoading(false);
+            setError(json.error || "Sign-in failed");
+            return;
+        }
+
+        localStorage.setItem('secondUser', JSON.stringify(json)); // ✅ Store as 'secondUser'
+        secondAuthDispatch({ type: 'LOGIN', payload: json }); // ✅ Use SecondAuthContext
+
         setLoading(false);
-        setError(json.error || "Sign-in failed");
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify(json));
-      dispatch({ type: 'LOGIN', payload: json });
-
-      setLoading(false);
-      navigate('/dashboard');
+        navigate('/dashboard');
     } catch (err) {
-      setLoading(false);
-      setError(err.message || "Network error. Please try again."); // ✅ Improved error handling
-      console.error(err);
+        setLoading(false);
+        setError(err.message || "Network error. Please try again.");
+        console.error(err);
     }
-  };
-
+};
 
   return { signinD, signinA, signinH, signinHD, loading, error };
 };

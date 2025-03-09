@@ -13,6 +13,11 @@ const donorSchema = new mongoose.Schema({
         required: true,
         trim: true,
     },
+    gender: {
+        type: String,
+        required: true,
+        enum: ["Male", "Female", "Other"], // Only accept valid gender values
+    },
     phoneNumber: {
         type: String,
         required: true,
@@ -61,21 +66,32 @@ const donorSchema = new mongoose.Schema({
         type: Boolean,
         default: true, // Default to active
     },
+    healthStatus: {
+        type: Boolean,
+        default: true, // true = Healthy, false = Unfit/Pending Checkup
+    },
+    appointmentStatus: {
+        type: Boolean,
+        default: false, // true = Scheduled/Completed, false = Canceled/Pending
+    },
 }, { timestamps: true });
 
-// Signup method
+// ✅ Signup method
 donorSchema.statics.signup = async function(
     firstName,
     lastName,
+    gender,
     phoneNumber,
     email,
     password,
     dob,
     bloodType,
-    image
+    image,
+    healthStatus = true,
+    appointmentStatus = false
 ) {
     // Validation
-    if (!firstName || !lastName || !phoneNumber || !email || !password || !dob || !bloodType) {
+    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType) {
         throw new Error("All Fields are Required");
     }
 
@@ -96,18 +112,21 @@ donorSchema.statics.signup = async function(
     const donor = await this.create({
         firstName,
         lastName,
+        gender,
         phoneNumber,
         email,
         password,
         dob,
         bloodType,
         image,
+        healthStatus,
+        appointmentStatus,
     });
 
     return donor;
 };
 
-// Signin method
+// ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
     if (!email || !password) {
         throw new Error("All Fields are Required");

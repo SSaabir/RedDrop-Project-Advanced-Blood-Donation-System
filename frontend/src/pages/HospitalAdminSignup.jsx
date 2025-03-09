@@ -1,10 +1,18 @@
 import React, { useState } from "react";
 import { Button, Card, Label, TextInput } from "flowbite-react";
-import { FiUpload } from "react-icons/fi";
+// import { FiUpload } from "react-icons/fi";  // Commented out
 import background from '../assets/bg4.jpg';
 
 export default function HospitalAdminSignup() {
   const [image, setImage] = useState(null);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    dob: '',
+    phoneNumber: '',
+    email: '',
+    password: '',
+  });
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
@@ -17,6 +25,30 @@ export default function HospitalAdminSignup() {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    const { firstName, lastName, dob, phoneNumber, email, password } = formData;
+
+    if (!firstName || !lastName || !dob || !phoneNumber || !email || !password) {
+      alert("All fields are required");
+      return;
+    }
+
+    // Submit form data to the backend
+    // Example: axios.post('/api/hospital-admin/signup', formData);
+
+    alert("Form submitted!");
+  };
+
   return (
     <div
       className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg"
@@ -26,47 +58,98 @@ export default function HospitalAdminSignup() {
         <h2 className="text-4xl font-extrabold text-center text-blue-600 mb-8 drop-shadow-md">
           Hospital Admin Registration
         </h2>
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            {[  
-              { id: "firstName", label: "First Name", placeholder: "mr" },
-              { id: "lastName", label: "Last Name", placeholder: "Example" },
-              { id: "dob", label: "Date of Birth", placeholder: "YYYY-MM-DD", type: "date" },
-            ].map((field) => (
-              <div key={field.id} className="relative">
-                <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
-                <TextInput
-                  id={field.id}
-                  type={field.type || "text"}
-                  placeholder={field.placeholder}
-                  required
-                  className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
-                />
-              </div>
-            ))}
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* First Name */}
+          <div className="relative">
+            <Label htmlFor="firstName" value="First Name" className="text-gray-700 font-medium" />
+            <TextInput
+              id="firstName"
+              name="firstName"
+              type="text"
+              placeholder="John"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
           </div>
 
-          <div className="space-y-6">
-            {[  
-              { id: "phoneNumber", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
-              { id: "email", label: "Email", placeholder: "admin@example.com", type: "email" },
-              { id: "password", label: "Password", placeholder: "••••••••", type: "password" },
-            ].map((field) => (
-              <div key={field.id} className="relative">
-                <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
-                <TextInput
-                  id={field.id}
-                  type={field.type}
-                  placeholder={field.placeholder}
-                  required
-                  className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
-                />
-              </div>
-            ))}
+          {/* Last Name */}
+          <div className="relative">
+            <Label htmlFor="lastName" value="Last Name" className="text-gray-700 font-medium" />
+            <TextInput
+              id="lastName"
+              name="lastName"
+              type="text"
+              placeholder="Doe"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
           </div>
-          
-          {/* Image Upload Section (Full Width) */}
-          <div className="md:col-span-2">
+
+          {/* Date of Birth */}
+          <div className="relative">
+            <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-medium" />
+            <TextInput
+              id="dob"
+              name="dob"
+              type="date"
+              value={formData.dob}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div className="relative">
+            <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700 font-medium" />
+            <TextInput
+              id="phoneNumber"
+              name="phoneNumber"
+              type="tel"
+              placeholder="+1234567890"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Email */}
+          <div className="relative">
+            <Label htmlFor="email" value="Email" className="text-gray-700 font-medium" />
+            <TextInput
+              id="email"
+              name="email"
+              type="email"
+              placeholder="admin@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Password */}
+          <div className="relative">
+            <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
+            <TextInput
+              id="password"
+              name="password"
+              type="password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          {/* Image Upload (Commented Out) */}
+          {/* <div className="md:col-span-2">
             <Label htmlFor="adminImage" value="Upload Profile Image" className="text-gray-700 font-medium" />
             <label className="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer hover:border-blue-500 transition-all mt-2 p-4 bg-gray-50 hover:bg-gray-100">
               <input
@@ -84,9 +167,9 @@ export default function HospitalAdminSignup() {
                 <img src={image} alt="Uploaded Preview" className="w-full h-40 object-cover rounded-lg shadow-md border" />
               </div>
             )}
-          </div>
-          
-          {/* Register Button (Full Width) */}
+          </div> */}
+
+          {/* Register Button */}
           <div className="md:col-span-2">
             <Button
               type="submit"

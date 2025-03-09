@@ -2,7 +2,7 @@ import Donor from '../models/donor.model.js'
 import { errorHandler } from '../utils/error.js';
 import createToken from '../utils/token.js';
 import Hospital from '../models/hospital.model.js';
-import Admin from '../models/admin.model.js';
+import Manager from '../models/SystemManager.model.js';
 import HospitalAdmin from '../models/HospitalAdmin.model.js';
 
 
@@ -90,16 +90,15 @@ export const signinA = async (req, res, next) => {
  
     try {
      let user, role, name;
-       user = await Admin.signin(email, password);
-       console.log('Email is valid for admin domain');
+       user = await Manager.signin(email, password);
+       console.log('Email is valid for manager domain');
         //name = user.firstName +' '+ user.lastName;
-       role = 'Admin';
-     
+       role = 'Manager';
        const token = createToken(user._id);
-        const userObj = user.toObject();
-        delete userObj.password;
+       const userObj = user.toObject();
+       delete userObj.password;
 
-        res.status(200).json({ token, userObj, role });
+       res.status(200).json({ token, userObj, role });
     } catch (error) {
      res.status(400).json({error: error.message})
   }

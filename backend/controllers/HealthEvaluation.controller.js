@@ -23,25 +23,30 @@ export const getHealthEvaluationById = async (req, res) => {
 
 export const createEvaluation = async (req, res) => {
     try {
-      const { receiptNumber, passStatus, progressStatus, hospitalId, donorId, hospitalAdminId, evaluationDate, evaluationTime } = req.body;
-  
+      const { hospitalId, donorId, evaluationDate, evaluationTime } = req.body;
+
+      if (!hospitalId || !donorId || !evaluationDate || !evaluationTime) {
+        return res.status(400).json({ error: "All fields are required." });
+      }
+
       const newEvaluation = new HealthEvaluation({
-        receiptNumber,
-        passStatus,
-        progressStatus,
+        progressStatus: 'Not Started',
         hospitalId,
         donorId,
-        hospitalAdminId,
         evaluationDate,
         evaluationTime,
       });
   
       await newEvaluation.save();
-      res.status(201).json(newEvaluation);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
-  };
+
+    // Send success response
+    res.status(201).json({ success: true, data: newEvaluation });
+
+  } catch (err) {
+    console.error("Error creating evaluation:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
   
 // Create a new health evaluation
 export const updateEvaluationDateTime = async (req, res) => {

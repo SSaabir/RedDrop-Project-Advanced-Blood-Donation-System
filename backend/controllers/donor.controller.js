@@ -24,17 +24,32 @@ export const getDonorById = async(req, res) => {
 // ✅ Create a new donor
 export const createDonor = async(req, res) => {
     try {
-        const { firstName, lastName, phoneNumber, email, password, dob, bloodType, image } = req.body;
-
-        const newDonor = new Donor({
+        const {
             firstName,
             lastName,
+            gender,
             phoneNumber,
             email,
             password,
             dob,
             bloodType,
             image,
+            healthStatus = true, // ✅ Default to true (healthy)
+            appointmentStatus = false // ✅ Default to false (not scheduled)
+        } = req.body;
+
+        const newDonor = new Donor({
+            firstName,
+            lastName,
+            gender,
+            phoneNumber,
+            email,
+            password,
+            dob,
+            bloodType,
+            image,
+            healthStatus,
+            appointmentStatus
         });
 
         await newDonor.save();
@@ -69,5 +84,41 @@ export const deleteDonor = async(req, res) => {
         res.json({ message: "Donor deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting donor", error });
+    }
+};
+
+// ✅ Update health status
+export const updateHealthStatus = async(req, res) => {
+    try {
+        let { healthStatus } = req.body;
+        healthStatus = healthStatus === "true" || healthStatus === true; // ✅ Ensure Boolean value
+
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            req.params.id, { healthStatus }, { new: true }
+        );
+
+        if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
+
+        res.status(200).json(updatedDonor);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating health status", error });
+    }
+};
+
+// ✅ Update appointment status
+export const updateAppointmentStatus = async(req, res) => {
+    try {
+        let { appointmentStatus } = req.body;
+        appointmentStatus = appointmentStatus === "true" || appointmentStatus === true; // ✅ Ensure Boolean value
+
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            req.params.id, { appointmentStatus }, { new: true }
+        );
+
+        if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
+
+        res.status(200).json(updatedDonor);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating appointment status", error });
     }
 };
