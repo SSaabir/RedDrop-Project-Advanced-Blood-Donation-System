@@ -2,7 +2,6 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.route.js';
-//import  donorRoutes from './routes/donor.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
@@ -15,7 +14,7 @@ import feedbackRoutes from "./routes/feedback.route.js";
 import inquiryRoutes from "./routes/inquiry.route.js";
 import EmergencyBRRoutes from './routes/EmergencyBR.route.js';
 import HospitalAdminRoutes from './routes/HospitalAdmin.route.js';
-// import multer from 'multer';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -24,7 +23,7 @@ const app = express();
 
 // ✅ Middleware (before routes)
 app.use(express.json());
-/*
+
 // ✅ Multer Configuration for File Uploads
 const storage = multer.diskStorage({
     destination: './uploads/', // Directory where files will be stored
@@ -45,7 +44,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 
 // ✅ Serve Uploaded Files Statically
 app.use('/uploads', express.static('uploads'));
-*/
+
 // Default route for homepage
 app.get('/', (req, res) => {
     res.send('Welcome to the API');

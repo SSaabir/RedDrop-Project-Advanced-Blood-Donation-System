@@ -1,40 +1,82 @@
 import React, { useEffect, useState } from "react";
-import { Button, Table, Modal, Label, TextInput } from "flowbite-react";
+import { Button, Table, Modal, Label, TextInput, FileInput } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
+import { useSecondAuth } from "../hooks/useSecondAuth";
+import { acceptEvaluation, arrivedForEvaluation } from "../../../backend/controllers/HealthEvaluation.controller";
 
 export default function AppointmentD() {
-  const { evaluations, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, cancelEvaluation } =
-    useHealthEvaluation();
+  const { evaluations, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, uploadEvaluationFile } = useHealthEvaluation();
 
-  const [openModal, setOpenModal] = useState(false);
+  const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
+  const [openArrivedModal, setOpenArrivedModal] = useState(false);
+  const [receiptNumber, setReceiptNumber] = useState("");
+
+  const [openUploadModal, setOpenUploadModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [evaluationResult, setEvaluationResult] = useState("");
+
+  const { secondUser } = useSecondAuth();
+  const userId = secondUser?.userObj?._id;
+  const [hospitalAdminId, sethospitalAdminId] = useState(userId);
   useEffect(() => {
     fetchEvaluations();
   }, []);
 
-  // Handle Reschedule Button Click
+  // Handle Reschedule Click
   const handleRescheduleClick = (evaluation) => {
     setSelectedEvaluation(evaluation);
-    setNewDate(evaluation.evaluationDate || ""); // Pre-fill with existing date
-    setNewTime(evaluation.evaluationTime || ""); // Pre-fill with existing time
-    setOpenModal(true);
+    setNewDate(evaluation.evaluationDate || ""); 
+    setNewTime(evaluation.evaluationTime || "");
+    setOpenRescheduleModal(true);
   };
 
-  // Handle Rescheduling Submission
+  // Handle Reschedule Submit
   const handleRescheduleSubmit = async () => {
     if (selectedEvaluation) {
-      await updateEvaluationDateTime(selectedEvaluation._id, newDate, newTime);
-      setOpenModal(false);
+      await updateEvaluationDateTime(selectedEvaluation._id, newDate, newTime, hospitalAdminId);
+      setOpenRescheduleModal(false);
     }
+  };
+
+    // Handle Arrived Button Click
+    const handleArrivedClick = (evaluation) => {
+      setSelectedEvaluation(evaluation);
+      setReceiptNumber(evaluation.receiptNumber || "");
+      setOpenArrivedModal(true);
+    };
+
+    // Submit Arrived Status
+    const handleArrivedSubmit = async () => {
+      if (selectedEvaluation) {
+        await arrivedForEvaluation(selectedEvaluation._id, receiptNumber);
+        setOpenArrivedModal(false);
+      }
+    };
+
+  // Handle File Upload Click
+  const handleUploadClick = (evaluation) => {
+    setSelectedEvaluation(evaluation);
+    setOpenUploadModal(true);
+  };
+
+  // Submit File Upload
+  const handleUploadSubmit = async () => {
+    if (!selectedEvaluation || !selectedFile || !evaluationResult) {
+      alert("Please select a file and an evaluation result before uploading.");
+      return;
+    }
+      await uploadEvaluationFile(selectedEvaluation._id, selectedFile, evaluationResult);
+      setOpenUploadModal(false);
+    
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <DashboardSidebar />
 
       <div className="flex-1 p-6">
@@ -44,73 +86,77 @@ export default function AppointmentD() {
         </div>
 
         <Table hoverable>
-        <Table.Head>
-  <Table.HeadCell>Receipt No.</Table.HeadCell>
-  <Table.HeadCell>Date</Table.HeadCell> {/* Added */}
-  <Table.HeadCell>Time</Table.HeadCell> {/* Added */}
-  <Table.HeadCell>Pass Status</Table.HeadCell>
-  <Table.HeadCell>Progress Status</Table.HeadCell>
-  <Table.HeadCell>Hospital</Table.HeadCell>
-  <Table.HeadCell>Donor</Table.HeadCell>
-  <Table.HeadCell>Admin</Table.HeadCell>
-  <Table.HeadCell>Actions</Table.HeadCell>
-</Table.Head>
-<Table.Body>
+          <Table.Head>
+            <Table.HeadCell>Receipt No.</Table.HeadCell>
+            <Table.HeadCell>Date</Table.HeadCell>
+            <Table.HeadCell>Time</Table.HeadCell>
+            <Table.HeadCell>Pass Status</Table.HeadCell>
+            <Table.HeadCell>Progress Status</Table.HeadCell>
+            <Table.HeadCell>Hospital</Table.HeadCell>
+            <Table.HeadCell>Donor</Table.HeadCell>
+            <Table.HeadCell>Admin</Table.HeadCell>
+            <Table.HeadCell>Actions</Table.HeadCell>
+          </Table.Head>
+          <Table.Body>
   {evaluations.length > 0 ? (
     evaluations.map((evaluation) => (
       <Table.Row key={evaluation._id}>
         <Table.Cell>{evaluation.receiptNumber}</Table.Cell>
-        <Table.Cell>{evaluation.evaluationDate || "N/A"}</Table.Cell> {/* Added */}
-        <Table.Cell>{evaluation.evaluationTime || "N/A"}</Table.Cell> {/* Added */}
+        <Table.Cell>{new Date(evaluation.evaluationDate).toLocaleDateString()}</Table.Cell>
+        <Table.Cell>{evaluation.evaluationTime}</Table.Cell>
         <Table.Cell>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              evaluation.passStatus === "Passed"
-                ? "bg-green-100 text-green-700"
-                : evaluation.passStatus === "Failed"
-                ? "bg-red-100 text-red-700"
-                : "bg-yellow-100 text-yellow-700"
-            }`}
-          >
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            evaluation.passStatus === "Passed" ? "bg-green-100 text-green-700" :
+            evaluation.passStatus === "Failed" ? "bg-red-100 text-red-700" :
+            "bg-yellow-100 text-yellow-700"
+          }`}>
             {evaluation.passStatus}
           </span>
         </Table.Cell>
         <Table.Cell>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              evaluation.progressStatus === "Completed"
-                ? "bg-green-100 text-green-700"
-                : evaluation.progressStatus === "In Progress"
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-700"
-            }`}
-          >
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            evaluation.progressStatus === "Completed" ? "bg-green-100 text-green-700" :
+            evaluation.progressStatus === "In Progress" ? "bg-blue-100 text-blue-700" :
+            "bg-gray-100 text-gray-700"
+          }`}>
             {evaluation.progressStatus}
           </span>
         </Table.Cell>
-        <Table.Cell>{evaluation.hospitalId?.email || "N/A"}</Table.Cell>
-        <Table.Cell>{evaluation.donorId?.email || "N/A"}</Table.Cell>
-        <Table.Cell>{evaluation.hospitalAdminId?.email || "N/A"}</Table.Cell>
+        <Table.Cell>{evaluation.hospitalId?.name || "N/A"}</Table.Cell>
+        <Table.Cell>{evaluation.donorId?.fullName || "N/A"}</Table.Cell>
+        <Table.Cell>{evaluation.hospitalAdminId?.fullName || "N/A"}</Table.Cell>
         <Table.Cell className="space-x-2">
           <div className="flex flex-row gap-3">
-          <Button size="xs" color="warning" onClick={() => handleRescheduleClick(evaluation)}>
-            Reschedule
-          </Button>
-          <Button size="xs" color="gray" onClick={() => cancelEvaluation(evaluation._id)}>
-            Cancel
-          </Button>
-          <Button size="xs" color="failure" onClick={() => deleteEvaluation(evaluation._id)}>
-            Delete
-          </Button>
-          <Button size="xs" color="success" >
-            Arrived
-          </Button>
-          <Button size="xs" color="lime" >
-            Upload
-          </Button>
-          <Button size="xs" color="indigo" >
-            Accept
-          </Button>
+            {(evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus !== "Re-Scheduled" && evaluation.activeStatus !== "Accepted") && (
+              <Button size="xs" color="warning" onClick={() => handleRescheduleClick(evaluation)}>
+                Reschedule
+              </Button>
+            )}
+            {(evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus !== "Accepted") && (
+              <Button size="xs" color="gray" onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId)}>
+                Cancel
+              </Button>
+            )}
+            {(evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus !== "Accepted" && evaluation.activeStatus !== "Re-Scheduled") && (
+              <Button size="xs" color="gray" onClick={() => acceptEvaluation(evaluation._id, hospitalAdminId)}>
+                Accept
+              </Button>
+            )}
+            {(evaluation.activeStatus === "Accepted" && evaluation.progressStatus === "Completed") || (evaluation.progressStatus === "Cancelled" && evaluation.activeStatus === "Cancelled") && (
+              <Button size="xs" color="failure" onClick={() => deleteEvaluation(evaluation._id)}>
+                Delete
+              </Button>
+            )}
+            {(evaluation.progressStatus === "Not Started" && evaluation.activeStatus === "Accepted") && (
+              <Button size="xs" color="success" onClick={() => handleArrivedClick(evaluation)}>
+                Arrived
+              </Button>
+            )}
+            {(evaluation.progressStatus === "In Progress" && evaluation.passStatus === "Pending" && evaluation.activeStatus === "Accepted") && (
+              <Button size="xs" color="lime" onClick={() => handleUploadClick(evaluation)}>
+                Upload
+              </Button>
+            )}
           </div>
         </Table.Cell>
       </Table.Row>
@@ -123,44 +169,76 @@ export default function AppointmentD() {
     </Table.Row>
   )}
 </Table.Body>
-  
+
         </Table>
       </div>
 
       {/* Reschedule Modal */}
-      <Modal show={openModal} onClose={() => setOpenModal(false)}>
-        <Modal.Header>Reschedule Health Evaluation</Modal.Header>
+      <Modal show={openRescheduleModal} onClose={() => setOpenRescheduleModal(false)}>
+        <Modal.Header>Reschedule Evaluation</Modal.Header>
         <Modal.Body>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="date" value="New Date" />
-              <TextInput
-                id="date"
-                type="date"
-                value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="time" value="New Time" />
-              <TextInput
-                id="time"
-                type="time"
-                value={newTime}
-                onChange={(e) => setNewTime(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <Label value="New Date" />
+          <TextInput type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} required />
+          <Label value="New Time" />
+          <TextInput type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} required />
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={handleRescheduleSubmit}>Save Changes</Button>
-          <Button color="gray" onClick={() => setOpenModal(false)}>
-            Cancel
-          </Button>
+          <Button onClick={handleRescheduleSubmit}>Save</Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Arrived Modal */}
+      <Modal show={openArrivedModal} onClose={() => setOpenArrivedModal(false)}>
+        <Modal.Header>Confirm Arrival</Modal.Header>
+        <Modal.Body>
+          <Label value="Receipt Number" />
+          <TextInput value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} required />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleArrivedSubmit}>Confirm</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Upload File Modal */}
+      <Modal show={openUploadModal} onClose={() => setOpenUploadModal(false)}>
+  <Modal.Header>Upload Evaluation File</Modal.Header>
+  <Modal.Body>
+    <FileInput 
+      accept=".pdf,.docx,.xlsx" 
+      id="file"
+      onChange={(e) => setSelectedFile(e.target.files[0])} 
+    />
+
+    {/* Pass/Fail Radio Group */}
+    <div className="mt-4">
+      <label className="font-semibold">Evaluation Result:</label>
+      <div className="flex gap-4 mt-2">
+        <label className="flex items-center gap-2">
+          <input 
+            type="radio" 
+            name="evaluationResult" 
+            value="Passed" 
+            onChange={(e) => setEvaluationResult(e.target.value)}
+          />
+          Pass
+        </label>
+        <label className="flex items-center gap-2">
+          <input 
+            type="radio" 
+            name="evaluationResult" 
+            value="Failed" 
+            onChange={(e) => setEvaluationResult(e.target.value)}
+          />
+          Fail
+        </label>
+      </div>
+    </div>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button onClick={handleUploadSubmit}>Upload</Button>
+  </Modal.Footer>
+</Modal>
+
     </div>
   );
 }
