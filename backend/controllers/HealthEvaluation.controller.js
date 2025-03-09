@@ -32,10 +32,10 @@ export const createEvaluation = async (req, res) => {
 
         const newEvaluation = new HealthEvaluation({
             progressStatus: 'Not Started',
-            hospitalId,
-            donorId,
-            evaluationDate,
-            evaluationTime,
+            hospitalId: hospitalId,
+            donorId: donorId,
+            evaluationDate: evaluationDate,
+            evaluationTime: evaluationTime,
         });
 
         await newEvaluation.save();
@@ -54,10 +54,10 @@ export const updateEvaluationDateTime = async (req, res) => {
         const updatedEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
             { 
-                evaluationDate, 
-                evaluationTime, 
+                evaluationDate: evaluationDate, 
+                evaluationTime: evaluationTime, 
                 activeStatus: "Re-Scheduled", 
-                hospitalAdminId 
+                hospitalAdminId: hospitalAdminId
             },
             { new: true }
         );
@@ -80,7 +80,7 @@ export const cancelEvaluation = async (req, res) => {
                 passStatus: "Cancelled",
                 activeStatus: "Cancelled",
                 progressStatus: "Cancelled",
-                hospitalAdminId
+                hospitalAdminId: hospitalAdminId
             },
             { new: true }
         );
@@ -99,7 +99,8 @@ export const acceptEvaluation = async (req, res) => {
         const { hospitalAdminId } = req.body;
         const acceptEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
-            { activeStatus: "Accepted", hospitalAdminId },
+            { activeStatus: "Accepted", 
+              hospitalAdminId: hospitalAdminId },
             { new: true }
         );
 
@@ -117,7 +118,8 @@ export const arrivedForEvaluation = async (req, res) => {
         const { receiptNumber } = req.body;
         const arrivedForEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
-            { receiptNumber, progressStatus: "In Progress" },
+            { receiptNumber: receiptNumber,
+              progressStatus: "In Progress" },
             { new: true }
         );
 
@@ -133,19 +135,33 @@ export const arrivedForEvaluation = async (req, res) => {
 export const completeEvaluation = async (req, res) => {
     try {
         const { result } = req.body;
+        const file = req.file ? req.file.path : null ; // Get uploaded file
+
+        if (!result) {
+            return res.status(400).json({ error: "Result is required" });
+        }
+
+        // Find evaluation and update status
         const completedEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
-            { passStatus: result, progressStatus: "Completed" },
+            { 
+                passStatus: result, 
+                progressStatus: "Completed",
+                evaluationFile: file // Store file as buffer (or file path if saving to disk)
+            },
             { new: true }
         );
 
-        if (!completedEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+        if (!completedEvaluation) {
+            return res.status(404).json({ error: "Evaluation not found" });
+        }
 
         res.status(200).json(completedEvaluation);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // Delete a health evaluation
 export const deleteHealthEvaluation = async (req, res) => {

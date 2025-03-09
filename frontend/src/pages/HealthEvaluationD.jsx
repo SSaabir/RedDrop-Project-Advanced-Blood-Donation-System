@@ -18,7 +18,8 @@ export default function AppointmentD() {
 
   const [openUploadModal, setOpenUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  
+  const [evaluationResult, setEvaluationResult] = useState("");
+
   const { secondUser } = useSecondAuth();
   const userId = secondUser?.userObj?._id;
   const [hospitalAdminId, sethospitalAdminId] = useState(userId);
@@ -65,10 +66,13 @@ export default function AppointmentD() {
 
   // Submit File Upload
   const handleUploadSubmit = async () => {
-    if (selectedEvaluation && selectedFile) {
-      await uploadEvaluationFile(selectedEvaluation._id, selectedFile);
-      setOpenUploadModal(false);
+    if (!selectedEvaluation || !selectedFile || !evaluationResult) {
+      alert("Please select a file and an evaluation result before uploading.");
+      return;
     }
+      await uploadEvaluationFile(selectedEvaluation._id, selectedFile, evaluationResult);
+      setOpenUploadModal(false);
+    
   };
 
   return (
@@ -197,14 +201,44 @@ export default function AppointmentD() {
 
       {/* Upload File Modal */}
       <Modal show={openUploadModal} onClose={() => setOpenUploadModal(false)}>
-        <Modal.Header>Upload Evaluation File</Modal.Header>
-        <Modal.Body>
-          <FileInput onChange={(e) => setSelectedFile(e.target.files[0])} />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleUploadSubmit}>Upload</Button>
-        </Modal.Footer>
-      </Modal>
+  <Modal.Header>Upload Evaluation File</Modal.Header>
+  <Modal.Body>
+    <FileInput 
+      accept=".pdf,.docx,.xlsx" 
+      id="file"
+      onChange={(e) => setSelectedFile(e.target.files[0])} 
+    />
+
+    {/* Pass/Fail Radio Group */}
+    <div className="mt-4">
+      <label className="font-semibold">Evaluation Result:</label>
+      <div className="flex gap-4 mt-2">
+        <label className="flex items-center gap-2">
+          <input 
+            type="radio" 
+            name="evaluationResult" 
+            value="Passed" 
+            onChange={(e) => setEvaluationResult(e.target.value)}
+          />
+          Pass
+        </label>
+        <label className="flex items-center gap-2">
+          <input 
+            type="radio" 
+            name="evaluationResult" 
+            value="Failed" 
+            onChange={(e) => setEvaluationResult(e.target.value)}
+          />
+          Fail
+        </label>
+      </div>
+    </div>
+  </Modal.Body>
+  <Modal.Footer>
+    <Button onClick={handleUploadSubmit}>Upload</Button>
+  </Modal.Footer>
+</Modal>
+
     </div>
   );
 }

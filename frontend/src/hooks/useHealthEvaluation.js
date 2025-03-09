@@ -66,9 +66,16 @@ export const useHealthEvaluation = () => {
   };
 
   // ✅ Cancel evaluation
-  const cancelEvaluation = async (id) => {
+  const cancelEvaluation = async (id, hospitalAdminId) => {
     try {
-      const response = await fetch(`/api/healthEvaluation/${id}/cancel`, { method: "PATCH" });
+      const response = await fetch(`/api/healthEvaluation/${id}/cancel`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+      });
+  
       if (!response.ok) throw new Error("Failed to cancel evaluation");
       const canceledEvaluation = await response.json();
       setEvaluations((prev) =>
@@ -78,11 +85,19 @@ export const useHealthEvaluation = () => {
       setError(err.message);
     }
   };
+  
 
   // ✅ Accept evaluation
-  const acceptEvaluation = async (id) => {
+  const acceptEvaluation = async (id, hospitalAdminId) => {
     try {
-      const response = await fetch(`/api/healthEvaluation/${id}/accept`, { method: "PATCH" });
+      const response = await fetch(`/api/healthEvaluation/${id}/accept`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+      });
+  
       if (!response.ok) throw new Error("Failed to accept evaluation");
       const acceptedEvaluation = await response.json();
       setEvaluations((prev) =>
@@ -92,7 +107,7 @@ export const useHealthEvaluation = () => {
       setError(err.message);
     }
   };
-
+  
   // ✅ Mark as arrived
   const arrivedForEvaluation = async (id, receiptNumber) => {
     try {
@@ -128,6 +143,33 @@ export const useHealthEvaluation = () => {
       setError(err.message);
     }
   };
+//upload Evaluation File
+  const uploadEvaluationFile = async (id, file, result) => {
+    try {
+      const formData = new FormData();
+      formData.append("evaluationFile", file);
+      formData.append("result", result); // Pass/Fail result
+  
+      const response = await fetch(`/api/healthEvaluation/${id}/complete`, {
+        method: "PATCH",
+        body: formData,
+      });
+  
+      if (!response.ok) throw new Error("Failed to upload evaluation file");
+  
+      const updatedEvaluation = await response.json();
+  
+      // Update the evaluation list
+      setEvaluations((prev) =>
+        prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
+      );
+  
+      return updatedEvaluation;
+    } catch (err) {
+      setError(err.message);
+      return null;
+    }
+  };
 
   // ✅ Delete an evaluation
   const deleteEvaluation = async (id) => {
@@ -149,6 +191,7 @@ export const useHealthEvaluation = () => {
     evaluations,
     loading,
     error,
+    uploadEvaluationFile,
     fetchEvaluations,
     fetchEvaluationById,
     createEvaluation,

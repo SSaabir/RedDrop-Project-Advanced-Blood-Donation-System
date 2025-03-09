@@ -1,4 +1,6 @@
 import express from "express";
+import upload from "../utils/multer.js";
+
 import {
   getHealthEvaluations,
   getHealthEvaluationById,
@@ -21,6 +23,6 @@ router.patch("/:id/cancel", cancelEvaluation);
 router.delete("/:id", deleteHealthEvaluation);
 router.patch("/:id/accept", acceptEvaluation);
 router.patch("/:id/arrived", arrivedForEvaluation);
-router.patch("/:id/complete", completeEvaluation);
+router.patch("/:id/complete", upload.single('evaluationFile'), completeEvaluation);
 
 export default router;
