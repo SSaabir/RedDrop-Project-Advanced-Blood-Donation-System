@@ -1,4 +1,5 @@
 import express from "express";
+import upload from '../utils/multer.js';
 import {
     getDonors,
     getDonorById,
@@ -13,7 +14,7 @@ const router = express.Router();
 
 router.get("/", getDonors); // Get all donors
 router.get("/:id", getDonorById); // Get a single donor by ID
-router.post("/", createDonor); // Create a new donor
+router.post("/", upload.single('image'), createDonor); // Create a new donor
 router.patch("/:id", updateDonor); // Update donor details
 router.delete("/:id", deleteDonor); // Delete donor
 

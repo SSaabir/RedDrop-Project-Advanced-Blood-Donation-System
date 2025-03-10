@@ -58,9 +58,15 @@ const donorSchema = new mongoose.Schema({
         required: true,
         enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"], // Restrict to valid blood types
     },
-    location: {
+    city: {
         type: String,
-        required: true, // Ensures location is provided
+        required: true, // Ensures city is provided
+        trim: true,
+    },
+    nic: {
+        type: String,
+        required: true,
+        unique: true,
         trim: true,
     },
     image: {
@@ -91,13 +97,14 @@ donorSchema.statics.signup = async function(
     password,
     dob,
     bloodType,
-    location,
+    city,
+    nic,
     image,
     healthStatus = true,
     appointmentStatus = false
 ) {
     // Validation
-    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !location) {
+    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
         throw new Error("All Fields are Required");
     }
 
@@ -110,7 +117,6 @@ donorSchema.statics.signup = async function(
     }
 
     const exists = await this.findOne({ email });
-
     if (exists) {
         throw new Error("Email Already Exists");
     }
@@ -124,10 +130,12 @@ donorSchema.statics.signup = async function(
         password,
         dob,
         bloodType,
-        location,
+        city,
+        nic,
         image,
         healthStatus,
         appointmentStatus,
+        activeStatus: true, // Default to active
     });
 
     return donor;
@@ -140,13 +148,11 @@ donorSchema.statics.signin = async function(email, password) {
     }
 
     const donor = await this.findOne({ email });
-
     if (!donor) {
         throw new Error("Incorrect Email");
     }
 
     const match = password === donor.password;
-
     if (!match) {
         throw new Error("Incorrect Password");
     }

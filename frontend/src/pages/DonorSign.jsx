@@ -15,8 +15,9 @@ export default function DonorSign() {
     dob: "",
     bloodType: "",
     gender: "",
-    location: "",
-    image: null, // File input
+    city: "",
+    nic: "",
+    image: null,
   });
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -35,7 +36,8 @@ export default function DonorSign() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (Object.values(formData).some((val) => val === "" || val === null)) {
-      return setErrorMessage("Please fill out all fields");
+      setErrorMessage("Please fill out all fields");
+      return;
     }
 
     // Convert form data to FormData object for file upload
@@ -51,59 +53,47 @@ export default function DonorSign() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
       <Card className="w-full max-w-4xl p-10 shadow-2xl rounded-2xl bg-white bg-opacity-80 backdrop-blur-lg">
-        <h2 className="text-4xl font-extrabold text-center text-red-600 mb-8 drop-shadow-md">
-          Donor Registration
-        </h2>
+        <h2 className="text-4xl font-extrabold text-center text-red-600 mb-8 drop-shadow-md">Donor Registration</h2>
 
         {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
           <div className="space-y-6">
-            {[
-              { id: "firstName", label: "First Name", placeholder: "John" },
-              { id: "lastName", label: "Last Name", placeholder: "Doe" },
-              { id: "phoneNumber", label: "Phone Number", placeholder: "+1234567890", type: "tel" },
-              { id: "email", label: "Email", placeholder: "example@example.com", type: "email" },
-              { id: "password", label: "Password", placeholder: "••••••••", type: "password" },
-            ].map((field) => (
-              <div key={field.id}>
-                <Label htmlFor={field.id} value={field.label} className="text-gray-700 font-medium" />
-                <TextInput id={field.id} type={field.type || "text"} placeholder={field.placeholder} onChange={handleChange} required />
+            {["firstName", "lastName", "phoneNumber", "email", "password"].map((id, index) => (
+              <div key={index}>
+                <Label htmlFor={id} value={id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
+                <TextInput
+                  id={id}
+                  type={id === "password" ? "password" : id === "email" ? "email" : "text"}
+                  placeholder={id === "password" ? "••••••••" : "Enter " + id}
+                  onChange={handleChange}
+                  required
+                />
               </div>
             ))}
           </div>
 
           <div className="space-y-6">
-            <div>
-              <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-medium" />
-              <TextInput id="dob" type="date" onChange={handleChange} required />
-            </div>
-            <div>
-              <Label htmlFor="bloodType" value="Blood Type" className="text-gray-700 font-medium" />
-              <Select id="bloodType" onChange={handleChange} required>
-                <option value="">Select Blood Type</option>
-                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="gender" value="Gender" className="text-gray-700 font-medium" />
-              <Select id="gender" onChange={handleChange} required>
-                <option value="">Select Gender</option>
-                {["Male", "Female", "Other"].map((gender) => (
-                  <option key={gender} value={gender}>
-                    {gender}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="location" value="Location" className="text-gray-700 font-medium" />
-              <TextInput id="location" type="text" placeholder="City, Country" onChange={handleChange} required />
-            </div>
+            {["dob", "city", "nic"].map((id, index) => (
+              <div key={index}>
+                <Label htmlFor={id} value={id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
+                <TextInput id={id} type={id === "dob" ? "date" : "text"} onChange={handleChange} required />
+              </div>
+            ))}
+            {[
+              { id: "bloodType", options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] },
+              { id: "gender", options: ["Male", "Female", "Other"] },
+            ].map((field, index) => (
+              <div key={index}>
+                <Label htmlFor={field.id} value={field.id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
+                <Select id={field.id} onChange={handleChange} required>
+                  <option value="">Select {field.id.replace(/([A-Z])/g, ' $1').trim()}</option>
+                  {field.options.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </Select>
+              </div>
+            ))}
             <div>
               <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
               <FileInput id="image" onChange={handleFileChange} required />
