@@ -21,33 +21,55 @@ export const getHospitalAdminById = async (req, res) => {
     }
 };
 
-// ✅ Create a new hospital admin
 export const createHospitalAdmin = async (req, res) => {
     try {
-        const { email, password, firstName, lastName, phoneNumber, dob, hospitalId, activeStatus } = req.body;
+        console.log('Request Body:', req.body);
+        const { email, firstName, lastName, phoneNumber, dob, hospitalId, address, nic, password } = req.body;
+        
+        // Check if email or phone number already exists
+        const existingAdmin = await HospitalAdmin.findOne({
+            $or: [{ email }, { phoneNumber }]
+        });
+
+        if (existingAdmin) {
+            return res.status(400).json({ message: 'Email or Phone Number already in use' });
+        }
+
+        // Set image URL if an image is uploaded
+        const image = req.file ? req.file.path : null;
 
         const newAdmin = new HospitalAdmin({
-            email,
-            password,
-            firstName,
-            lastName,
-            phoneNumber,
-            dob,
-            hospitalId,
-            activeStatus,
+            email: email,
+            firstName: firstName,
+            lastName: lastName,
+            phoneNumber: phoneNumber,
+            dob: dob,
+            hospitalId: hospitalId,
+            address: address,
+            nic: nic,
+            image: image, // Include the image path
+            password: password,
+            activeStatus: true // Default to active
         });
 
         await newAdmin.save();
         res.status(201).json(newAdmin);
     } catch (error) {
-        res.status(400).json({ message: 'Error creating hospital admin', error });
-    }
+       // Log the error for debugging
+       console.error('Error in createHospitalAdmin:', error);
+       res.status(400).json({ message: 'Error creating hospital admin', error: error.message });
+        }
 };
 
-// ✅ Update hospital admin details
+// ✅ Update hospital admin details (Fixed)
 export const updateHospitalAdmin = async (req, res) => {
     try {
-        const updatedAdmin = await HospitalAdmin.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const updates = { ...req.body };
+        if (req.file) {
+            updates.image = req.file.path;
+        }
+
+        const updatedAdmin = await HospitalAdmin.findByIdAndUpdate(req.params.id, updates, { new: true });
 
         if (!updatedAdmin) return res.status(404).json({ message: 'Hospital Admin not found' });
 
@@ -57,7 +79,6 @@ export const updateHospitalAdmin = async (req, res) => {
     }
 };
 
-// ✅ Delete a hospital admin
 export const deleteHospitalAdmin = async (req, res) => {
     try {
         const deletedAdmin = await HospitalAdmin.findByIdAndDelete(req.params.id);
