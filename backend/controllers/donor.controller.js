@@ -33,9 +33,10 @@ export const createDonor = async(req, res) => {
             password,
             dob,
             bloodType,
+            location, // ✅ Include location
             image,
-            healthStatus = true, // ✅ Default to true (healthy)
-            appointmentStatus = false // ✅ Default to false (not scheduled)
+            healthStatus = true,
+            appointmentStatus = false
         } = req.body;
 
         const newDonor = new Donor({
@@ -47,6 +48,7 @@ export const createDonor = async(req, res) => {
             password,
             dob,
             bloodType,
+            location, // ✅ Save location
             image,
             healthStatus,
             appointmentStatus

@@ -58,6 +58,11 @@ const donorSchema = new mongoose.Schema({
         required: true,
         enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"], // Restrict to valid blood types
     },
+    location: {
+        type: String,
+        required: true, // Ensures location is provided
+        trim: true,
+    },
     image: {
         type: String, // URL or file path for the profile picture
         required: false,
@@ -86,12 +91,13 @@ donorSchema.statics.signup = async function(
     password,
     dob,
     bloodType,
+    location,
     image,
     healthStatus = true,
     appointmentStatus = false
 ) {
     // Validation
-    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType) {
+    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !location) {
         throw new Error("All Fields are Required");
     }
 
@@ -118,6 +124,7 @@ donorSchema.statics.signup = async function(
         password,
         dob,
         bloodType,
+        location,
         image,
         healthStatus,
         appointmentStatus,
