@@ -3,7 +3,7 @@ import { Button, Table, Modal, Label, TextInput, FileInput } from "flowbite-reac
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
 import { useSecondAuth } from "../hooks/useSecondAuth";
-import { acceptEvaluation, arrivedForEvaluation } from "../../../backend/controllers/HealthEvaluation.controller";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function AppointmentD() {
   const { evaluations, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, uploadEvaluationFile } = useHealthEvaluation();
@@ -20,9 +20,17 @@ export default function AppointmentD() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [evaluationResult, setEvaluationResult] = useState("");
 
+  const { user } = useAuthContext();
+
   const { secondUser } = useSecondAuth();
   const userId = secondUser?.userObj?._id;
   const [hospitalAdminId, sethospitalAdminId] = useState(userId);
+
+  const Donor = user?.role === 'Donor';
+  const Hospital = user?.role === 'Hospital';
+  const Manager = user?.role === 'Manager';
+  const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
+
   useEffect(() => {
     fetchEvaluations();
   }, []);
@@ -100,6 +108,7 @@ export default function AppointmentD() {
           <Table.Body>
   {evaluations.length > 0 ? (
     evaluations.map((evaluation) => (
+
       <Table.Row key={evaluation._id}>
         <Table.Cell>{evaluation.receiptNumber}</Table.Cell>
         <Table.Cell>{new Date(evaluation.evaluationDate).toLocaleDateString()}</Table.Cell>
@@ -127,6 +136,8 @@ export default function AppointmentD() {
         <Table.Cell>{evaluation.hospitalAdminId?.fullName || "N/A"}</Table.Cell>
         <Table.Cell className="space-x-2">
           <div className="flex flex-row gap-3">
+          {Hospital && HospitalAdmin && (
+    <>
             {(evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus !== "Re-Scheduled" && evaluation.activeStatus !== "Accepted") && (
               <Button size="xs" color="warning" onClick={() => handleRescheduleClick(evaluation)}>
                 Reschedule
@@ -156,6 +167,22 @@ export default function AppointmentD() {
               <Button size="xs" color="lime" onClick={() => handleUploadClick(evaluation)}>
                 Upload
               </Button>
+            )}
+</>
+  )}
+            {Donor && (
+              <>
+                         {(evaluation.activeStatus === "Re-Sheduled" && evaluation.activeStatus != "Cancelled") && (
+                          <Button size="xs" color="gray" onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId)}>
+                            Cancel
+                          </Button>
+                        )}
+                        {(evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus !== "Accepted" && evaluation.activeStatus !== "Re-Scheduled") && (
+                          <Button size="xs" color="gray" onClick={() => acceptEvaluation(evaluation._id, hospitalAdminId)}>
+                            Accept
+                          </Button>
+                          )}
+            </>
             )}
           </div>
         </Table.Cell>

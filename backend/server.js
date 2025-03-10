@@ -60,7 +60,7 @@ app.use('/api/donor', donorRoutes);
 app.use('/api/Blood-inventory', BloodInventoryRoutes);
 app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
 
-app.use('/api/inquiry',  inquiryRoutes);
+app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
 app.use('/api/manager', SystemManagerRoutes);

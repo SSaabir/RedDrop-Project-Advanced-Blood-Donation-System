@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import axios from 'axios';
 
 const useHospitalAdmin = () => {
     const [hospitalAdmins, setHospitalAdmins] = useState([]);
@@ -8,52 +7,68 @@ const useHospitalAdmin = () => {
 
     // Fetch all hospital admins
     const fetchHospitalAdmins = async () => {
-        setLoading(true);
         try {
-            const response = await axios.get('/api/hospitaladmins');
-            setHospitalAdmins(response.data);
-            setLoading(false);
+            const response = await fetch('/api/healthAd');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Something went wrong');
+            setHospitalAdmins(data);
         } catch (err) {
-            setError('Error fetching hospital admins');
-            setLoading(false);
+            setError(err.message);
         }
     };
 
     // Fetch a single hospital admin by ID
     const fetchHospitalAdminById = async (id) => {
         setLoading(true);
+        setError(null);
         try {
-            const response = await axios.get(`/api/hospitaladmins/${id}`);
-            setHospitalAdmins([response.data]); // Assuming you want to overwrite the state with single hospital admin
-            setLoading(false);
+            const response = await fetch(`/api/healthAd/${id}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Something went wrong');
+            setHospitalAdmins([data]);
         } catch (err) {
-            setError('Error fetching hospital admin');
+            setError(err.message);
+        } finally {
             setLoading(false);
         }
     };
 
     // Create a new hospital admin
-    const createHospitalAdmin = async (adminData) => {
+    const createHospitalAdmin = async (formData) => {
         setLoading(true);
+        setError(null);
         try {
-            const response = await axios.post('/api/hospitaladmins', adminData);
-            setHospitalAdmins([...hospitalAdmins, response.data]); // Append the new admin
-            setLoading(false);
+            const response = await fetch('/api/healthAd', {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data?.message || 'Failed to create admin');
+            setHospitalAdmins(prevAdmins => [...prevAdmins, data]);
         } catch (err) {
-            setError('Error creating hospital admin');
+            setError(err?.message || 'Something went wrong');
+        } finally {
             setLoading(false);
         }
     };
 
     // Update hospital admin details
-    const updateHospitalAdmin = async (id, adminData) => {
+    const updateHospitalAdmin = async (id, formData) => {
         setLoading(true);
+        setError(null);
         try {
-            const response = await axios.put(`/api/hospitaladmins/${id}`, adminData);
-            setHospitalAdmins(hospitalAdmins.map(admin => admin._id === id ? response.data : admin));
-            setLoading(false);
+            const response = await fetch(`/api/healthAd/${id}`, {
+                method: 'PUT',
+                body: formData,
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data?.message || 'Failed to update admin');
+            setHospitalAdmins(prevAdmins =>
+                prevAdmins.map(admin => (admin._id === id ? data : admin))
+            );
         } catch (err) {
-            setError('Error updating hospital admin');
+            setError(err.message);
+        } finally {
             setLoading(false);
         }
     };
@@ -61,12 +76,14 @@ const useHospitalAdmin = () => {
     // Delete a hospital admin
     const deleteHospitalAdmin = async (id) => {
         setLoading(true);
+        setError(null);
         try {
-            await axios.delete(`/api/hospitaladmins/${id}`);
-            setHospitalAdmins(hospitalAdmins.filter(admin => admin._id !== id)); // Remove the deleted admin
-            setLoading(false);
+            const response = await fetch(`/api/healthAd/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to delete admin');
+            setHospitalAdmins(prevAdmins => prevAdmins.filter(admin => admin._id !== id));
         } catch (err) {
-            setError('Error deleting hospital admin');
+            setError(err.message);
+        } finally {
             setLoading(false);
         }
     };
