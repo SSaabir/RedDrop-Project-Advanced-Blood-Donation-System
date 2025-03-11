@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const useHospitalAdmin = () => {
+export const useHospitalAdmin = () => {
     const [hospitalAdmins, setHospitalAdmins] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -19,8 +19,6 @@ const useHospitalAdmin = () => {
 
     // Fetch a single hospital admin by ID
     const fetchHospitalAdminById = async (id) => {
-        setLoading(true);
-        setError(null);
         try {
             const response = await fetch(`/api/healthAd/${id}`);
             const data = await response.json();
@@ -28,15 +26,11 @@ const useHospitalAdmin = () => {
             setHospitalAdmins([data]);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+        } 
     };
 
     // Create a new hospital admin
     const createHospitalAdmin = async (formData) => {
-        setLoading(true);
-        setError(null);
         try {
             const response = await fetch('/api/healthAd', {
                 method: 'POST',
@@ -47,15 +41,11 @@ const useHospitalAdmin = () => {
             setHospitalAdmins(prevAdmins => [...prevAdmins, data]);
         } catch (err) {
             setError(err?.message || 'Something went wrong');
-        } finally {
-            setLoading(false);
         }
     };
 
     // Update hospital admin details
     const updateHospitalAdmin = async (id, formData) => {
-        setLoading(true);
-        setError(null);
         try {
             const response = await fetch(`/api/healthAd/${id}`, {
                 method: 'PUT',
@@ -68,25 +58,38 @@ const useHospitalAdmin = () => {
             );
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
     // Delete a hospital admin
     const deleteHospitalAdmin = async (id) => {
-        setLoading(true);
-        setError(null);
         try {
             const response = await fetch(`/api/healthAd/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete admin');
             setHospitalAdmins(prevAdmins => prevAdmins.filter(admin => admin._id !== id));
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
         }
     };
+
+    const activateDeactivateHospitalAdmin = async (id) => {
+        try {
+          console.log('Toggling status for hospital admin ID:', id);
+          const response = await fetch(`/api/healthAd/${id}/toggle-status`, {
+            method: 'PATCH',
+          });
+          const result = await response.json();
+          console.log('Toggle response:', response.status, result);
+          if (!response.ok) throw new Error(result.message || "Failed to toggle hospital admin status");
+          setHospitalAdmins((prev) =>
+            prev.map((admin) =>
+              admin._id === id ? { ...admin, activeStatus: !admin.activeStatus } : admin
+            )
+          );
+        } catch (err) {
+          console.error('ToggleHospitalAdmin error:', err.message);
+        }
+      };
 
     return {
         hospitalAdmins,
@@ -97,7 +100,6 @@ const useHospitalAdmin = () => {
         createHospitalAdmin,
         updateHospitalAdmin,
         deleteHospitalAdmin,
+        activateDeactivateHospitalAdmin
     };
 };
-
-export default useHospitalAdmin;
