@@ -23,7 +23,7 @@ export const useBloodInventory = () => {
     //  Fetch a single blood inventory record by ID
     const fetchBloodInventoryById = async (id) => {
         try {
-            const response = await fetch(/api/blood-inventory/ $ ,{id});
+            const response = await fetch(`/api/blood-inventory/${id}`);  // ✅ Fixed URL
             if (!response.ok) throw new Error("Failed to fetch blood inventory record");
             return await response.json();
         } catch (err) {
@@ -51,7 +51,7 @@ export const useBloodInventory = () => {
     //  Update a blood inventory record
     const updateBloodInventory = async (id, inventoryData) => {
         try {
-            const response = await fetch(/api/blood-inventory/$ ,{id}, {
+            const response = await fetch(`/api/blood-inventory/${id}`, {  // ✅ Fixed URL
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(inventoryData),
@@ -69,7 +69,7 @@ export const useBloodInventory = () => {
     //  Delete a blood inventory record
     const deleteBloodInventory = async (id) => {
         try {
-            const response = await fetch(/api/blood-inventory/$,{id}, {
+            const response = await fetch(`/api/blood-inventory/${id}`, {  // ✅ Fixed URL
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete blood inventory record");
