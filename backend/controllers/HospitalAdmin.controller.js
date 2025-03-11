@@ -56,8 +56,7 @@ export const createHospitalAdmin = async (req, res) => {
         res.status(201).json(newAdmin);
     } catch (error) {
        // Log the error for debugging
-       console.error('Error in createHospitalAdmin:', error);
-       res.status(400).json({ message: 'Error creating hospital admin', error: error.message });
+           res.status(400).json({ message: 'Error creating hospital admin', error: error.message });
         }
 };
 
@@ -89,3 +88,32 @@ export const deleteHospitalAdmin = async (req, res) => {
         res.status(500).json({ message: 'Error deleting hospital admin', error });
     }
 };
+
+export const activateDeactivateHospitalAdmin = async (req, res) => {
+    try {
+      const { id } = req.params;
+  
+      const admin = await HospitalAdmin.findById(id);
+      if (!admin) {
+        return res.status(404).json({ message: "Hospital Admin not found" });
+      }
+  
+      const newStatus = !admin.activeStatus;
+      const updatedAdmin = await HospitalAdmin.findByIdAndUpdate(
+        id,
+        { $set: { activeStatus: newStatus } },
+        { new: true }
+      );
+  
+      res.status(200).json({
+        message: `Hospital Admin ${newStatus ? 'activated' : 'deactivated'} successfully`,
+        admin: updatedAdmin,
+      });
+    } catch (error) {
+      console.error('Activate/Deactivate error:', error);
+      res.status(500).json({
+        message: "Error toggling hospital admin status",
+        error: error.message,
+      });
+    }
+  };
