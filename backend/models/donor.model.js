@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcryptjs from "bcryptjs"; // Password hashing
 import validator from "validator";
 import moment from "moment"; // For DOB validation
 
@@ -121,13 +122,15 @@ donorSchema.statics.signup = async function(
         throw new Error("Email Already Exists");
     }
 
+    const hashedPassword = await bcryptjs.hash(password, 10);
+
     const donor = await this.create({
         firstName,
         lastName,
         gender,
         phoneNumber,
         email,
-        password,
+        password: hashedPassword,
         dob,
         bloodType,
         city,
@@ -152,10 +155,32 @@ donorSchema.statics.signin = async function(email, password) {
         throw new Error("Incorrect Email");
     }
 
-    const match = password === donor.password;
+    const match = await bcryptjs.compare(password, donor.password);
     if (!match) {
         throw new Error("Incorrect Password");
     }
+
+    return donor;
+};
+
+// ✅ Update method (for profile and status update)
+donorSchema.statics.updateProfile = async function(id, updateData) {
+    const updatedDonor = await this.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedDonor) {
+        throw new Error("Donor not found");
+    }
+    return updatedDonor;
+};
+
+// ✅ Deactivate method (for active status toggle)
+donorSchema.statics.toggleActiveStatus = async function(id) {
+    const donor = await this.findById(id);
+    if (!donor) {
+        throw new Error("Donor not found");
+    }
+
+    donor.activeStatus = !donor.activeStatus;
+    await donor.save();
 
     return donor;
 };
