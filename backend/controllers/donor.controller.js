@@ -35,19 +35,13 @@ export const createDonor = async(req, res) => {
             dob,
             bloodType,
             city, // ✅ Changed location to city
-            nic, // ✅ Added NIC
-            healthStatus = true,
-            appointmentStatus = false
+            nic
         } = req.body;
 
         // ✅ Ensure all required fields are provided
         if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
             return res.status(400).json({ message: "All fields are required" });
         }
-
-        // ✅ Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
 
         const image = req.file ? req.file.path : null;
 
@@ -57,14 +51,13 @@ export const createDonor = async(req, res) => {
             gender,
             phoneNumber,
             email,
-            password: hashedPassword, // ✅ Store hashed password
+            password, // ✅ Store hashed password
             dob,
             bloodType,
             city, // ✅ Changed location to city
             nic, // ✅ Added NIC
             image,
-            healthStatus,
-            appointmentStatus
+
         });
 
         await newDonor.save();

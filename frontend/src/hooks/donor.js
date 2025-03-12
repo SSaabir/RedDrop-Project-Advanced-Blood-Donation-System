@@ -37,28 +37,17 @@ export const useDonor = () => {
 
     // Create a new donor
     const createDonor = async(donorData) => {
-        setLoading(true);
         try {
-            const formData = new FormData();
-            for (const key in donorData) {
-                formData.append(key, donorData[key]);
-            }
-
             const response = await fetch("/api/donor", {
                 method: "POST",
-                body: formData,
+                body: donorData,
             });
 
-            if (!response.ok) {
-                throw new Error("Failed to create donor");
-            }
-
             const newDonor = await response.json();
+            if (!response.ok) throw new Error(newDonor ?.message || 'Failed to create admin');
             setDonors((prev) => [...prev, newDonor]);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
