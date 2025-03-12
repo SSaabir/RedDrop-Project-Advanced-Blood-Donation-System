@@ -11,11 +11,7 @@ const bloodInventorySchema = new mongoose.Schema({
         enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
         required: true,
     },
-    rhFactor: {
-        type: String,
-        enum: ['Rh+', 'Rh-'],
-        required: true,
-    },
+   
     availableStocks: {
         type: Number,
         required: true,
