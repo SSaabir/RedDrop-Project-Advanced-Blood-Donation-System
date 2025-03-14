@@ -80,7 +80,7 @@ const donorSchema = new mongoose.Schema({
     },
     healthStatus: {
         type: Boolean,
-        default: true, // true = Healthy, false = Unfit/Pending Checkup
+        default: false, // true = Healthy, false = Unfit/Pending Checkup
     },
     appointmentStatus: {
         type: Boolean,
@@ -88,61 +88,6 @@ const donorSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Signup method
-donorSchema.statics.signup = async function(
-    firstName,
-    lastName,
-    gender,
-    phoneNumber,
-    email,
-    password,
-    dob,
-    bloodType,
-    city,
-    nic,
-    image,
-    healthStatus = true,
-    appointmentStatus = false
-) {
-    // Validation
-    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
-        throw new Error("All Fields are Required");
-    }
-
-    if (!validator.isEmail(email)) {
-        throw new Error("Email is Not Valid");
-    }
-
-    if (!validator.isStrongPassword(password)) {
-        throw new Error("Password is Not Strong Enough");
-    }
-
-    const exists = await this.findOne({ email });
-    if (exists) {
-        throw new Error("Email Already Exists");
-    }
-
-    const hashedPassword = await bcryptjs.hash(password, 10);
-
-    const donor = await this.create({
-        firstName,
-        lastName,
-        gender,
-        phoneNumber,
-        email,
-        password: hashedPassword,
-        dob,
-        bloodType,
-        city,
-        nic,
-        image,
-        healthStatus,
-        appointmentStatus,
-        activeStatus: true, // Default to active
-    });
-
-    return donor;
-};
 
 // ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
