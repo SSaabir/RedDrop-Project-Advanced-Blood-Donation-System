@@ -66,8 +66,8 @@ export default function App() {
     <Route path="/FAQ" element={<FAQ />} />
     <Route path='/Feedback' element={<Feedback />} />
 
-    <Route path="/feedbackD" element={<FeedbackD/>}/>
-    <Route path="/inquiryD" element={<InquiryD/>}/>
+    <Route path="/feedd" element={<FeedbackD/>}/>
+    <Route path="/inqd" element={<InquiryD/>}/>
     <Route path="/emerbd" element={<EmergencyBD/>}/>
     <Route path="/bloodid" element={<BloodInventoryD/>}/>
 
