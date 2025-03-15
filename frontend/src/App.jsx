@@ -21,6 +21,7 @@ import ContactUs from './pages/ContactUs'
 import Terms from './pages/Terms'
 import Home from './pages/Home'
 import FAQ from './pages/FAQ'
+import Feedback from './pages/Feedback'
 
 import HospitalAdminSignup from'./pages/HospitalAdminSignup'
 import HospitalAdminLogin from'./pages/HospitalAdminLogin'
@@ -63,6 +64,7 @@ export default function App() {
     <Route path="/Terms" element={<Terms />} />
     <Route path="/" element={<Home />} />
     <Route path="/FAQ" element={<FAQ />} />
+    <Route path='/Feedback' element={<Feedback />} />
 
     <Route path="/feedd" element={<FeedbackD/>}/>
     <Route path="/inqd" element={<InquiryD/>}/>
