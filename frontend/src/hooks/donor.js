@@ -44,7 +44,7 @@ export const useDonor = () => {
             });
 
             const newDonor = await response.json();
-            if (!response.ok) throw new Error(newDonor ?.message || 'Failed to create admin');
+            if (!response.ok) throw new Error(newDonor ? .message || 'Failed to create admin');
             setDonors((prev) => [...prev, newDonor]);
         } catch (err) {
             setError(err.message);
