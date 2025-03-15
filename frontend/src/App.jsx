@@ -27,7 +27,7 @@ import HospitalAdminSignup from'./pages/HospitalAdminSignup'
 import HospitalAdminLogin from'./pages/HospitalAdminLogin'
 import HealthEvaluation from './pages/healthEvaluation'
 import HealthEvaluationD from './pages/HealthEvaluationD'
-import DonorProfile from './pages/DonorProfile'
+import Profile from './pages/Profile'
 import About from './pages/About'
 
 import InquiryD from './pages/InquiryD'
@@ -75,7 +75,7 @@ export default function App() {
     <Route path="/healthEF" element={<HealthEvaluation />} />
     <Route path="/HospitalAdminSignup" element={<HospitalAdminSignup />} />
     <Route path="/HospitalAdminLogin" element={<HospitalAdminLogin />} />
-    <Route path="/Profile" element={<DonorProfile/>}/>
+    <Route path="/Profile" element={<Profile/>}/>
     <Route path="/About" element={<About/>}/>
 
     <Route path="/hosadd" element={<HospitalAdminsD/>}/>

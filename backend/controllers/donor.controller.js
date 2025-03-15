@@ -1,4 +1,5 @@
 import Donor from "../models/donor.model.js";
+import bcrypt from "bcryptjs";
 
 // ✅ Get all donors
 export const getDonors = async(req, res) => {
@@ -33,10 +34,16 @@ export const createDonor = async(req, res) => {
             password,
             dob,
             bloodType,
-            image,
-            healthStatus = true, // ✅ Default to true (healthy)
-            appointmentStatus = false // ✅ Default to false (not scheduled)
+            city, // ✅ Changed location to city
+            nic
         } = req.body;
+
+        // ✅ Ensure all required fields are provided
+        if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        const image = req.file ? req.file.path : null;
 
         const newDonor = new Donor({
             firstName,
@@ -44,18 +51,19 @@ export const createDonor = async(req, res) => {
             gender,
             phoneNumber,
             email,
-            password,
+            password, // ✅ Store hashed password
             dob,
             bloodType,
+            city, // ✅ Changed location to city
+            nic, // ✅ Added NIC
             image,
-            healthStatus,
-            appointmentStatus
+
         });
 
         await newDonor.save();
         res.status(201).json(newDonor);
     } catch (error) {
-        res.status(400).json({ message: "Error creating donor", error });
+        res.status(400).json({ message: "Error creating donor", error: error.message });
     }
 };
 
@@ -64,14 +72,14 @@ export const updateDonor = async(req, res) => {
     try {
         const updatedDonor = await Donor.findByIdAndUpdate(
             req.params.id,
-            req.body, { new: true }
+            req.body, { new: true, runValidators: true } // ✅ Ensure validation on update
         );
 
         if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
 
         res.status(200).json(updatedDonor);
     } catch (error) {
-        res.status(500).json({ message: "Error updating donor", error });
+        res.status(500).json({ message: "Error updating donor", error: error.message });
     }
 };
 
@@ -83,7 +91,7 @@ export const deleteDonor = async(req, res) => {
 
         res.json({ message: "Donor deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting donor", error });
+        res.status(500).json({ message: "Error deleting donor", error: error.message });
     }
 };
 
@@ -101,7 +109,7 @@ export const updateHealthStatus = async(req, res) => {
 
         res.status(200).json(updatedDonor);
     } catch (error) {
-        res.status(500).json({ message: "Error updating health status", error });
+        res.status(500).json({ message: "Error updating health status", error: error.message });
     }
 };
 
@@ -119,6 +127,34 @@ export const updateAppointmentStatus = async(req, res) => {
 
         res.status(200).json(updatedDonor);
     } catch (error) {
-        res.status(500).json({ message: "Error updating appointment status", error });
+        res.status(500).json({ message: "Error updating appointment status", error: error.message });
+    }
+};
+
+// ✅ Activate/Deactivate donor status
+export const activateDeactivateDonor = async(req, res) => {
+    try {
+        const { id } = req.params;
+
+        const donor = await Donor.findById(id);
+        if (!donor) {
+            return res.status(404).json({ message: "Donor not found" });
+        }
+
+        const newStatus = !donor.activeStatus;
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            id, { $set: { activeStatus: newStatus } }, { new: true }
+        );
+
+        res.status(200).json({
+            message: `Donor ${newStatus ? 'activated' : 'deactivated'} successfully`,
+            donor: updatedDonor,
+        });
+    } catch (error) {
+        console.error('Activate/Deactivate error:', error);
+        res.status(500).json({
+            message: "Error toggling donor status",
+            error: error.message,
+        });
     }
 };

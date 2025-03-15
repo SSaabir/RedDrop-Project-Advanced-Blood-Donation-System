@@ -1,8 +1,14 @@
 import React, { useState } from "react";
 import { Card, Button, TextInput, Label } from "flowbite-react";
 import { FaUser, FaTint, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaHeartbeat, FaNotesMedical, FaEnvelope, FaIdCard, FaEdit, FaSave } from "react-icons/fa";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function DonorProfile() {
+
+  const {user} = useAuthContext();
+  const userId = user?.userObj?._id || null;
+
+  const [UserId, setUserId] = useState(userId);
   const [isEditing, setIsEditing] = useState(false);
   const [donor, setDonor] = useState({
     name: "John Doe",

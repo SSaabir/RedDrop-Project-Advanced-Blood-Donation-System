@@ -16,7 +16,7 @@ const systemManagerSchema = new mongoose.Schema({
         password: {
           type: String,
           required: true,
-        }/*,
+        },
         firstName: {
           type: String,
           required: true,
@@ -65,7 +65,7 @@ const systemManagerSchema = new mongoose.Schema({
         activeStatus: {
           type: Boolean,
           default: true,
-        },*/  
+        }, 
 }, {timestamps: true});
 
 

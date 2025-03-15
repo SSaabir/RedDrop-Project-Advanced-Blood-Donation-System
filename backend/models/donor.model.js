@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcryptjs from "bcryptjs"; // Password hashing
 import validator from "validator";
 import moment from "moment"; // For DOB validation
 
@@ -58,6 +59,17 @@ const donorSchema = new mongoose.Schema({
         required: true,
         enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"], // Restrict to valid blood types
     },
+    city: {
+        type: String,
+        required: true, // Ensures city is provided
+        trim: true,
+    },
+    nic: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+    },
     image: {
         type: String, // URL or file path for the profile picture
         required: false,
@@ -68,7 +80,7 @@ const donorSchema = new mongoose.Schema({
     },
     healthStatus: {
         type: Boolean,
-        default: true, // true = Healthy, false = Unfit/Pending Checkup
+        default: false, // true = Healthy, false = Unfit/Pending Checkup
     },
     appointmentStatus: {
         type: Boolean,
@@ -76,55 +88,6 @@ const donorSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Signup method
-donorSchema.statics.signup = async function(
-    firstName,
-    lastName,
-    gender,
-    phoneNumber,
-    email,
-    password,
-    dob,
-    bloodType,
-    image,
-    healthStatus = true,
-    appointmentStatus = false
-) {
-    // Validation
-    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType) {
-        throw new Error("All Fields are Required");
-    }
-
-    if (!validator.isEmail(email)) {
-        throw new Error("Email is Not Valid");
-    }
-
-    if (!validator.isStrongPassword(password)) {
-        throw new Error("Password is Not Strong Enough");
-    }
-
-    const exists = await this.findOne({ email });
-
-    if (exists) {
-        throw new Error("Email Already Exists");
-    }
-
-    const donor = await this.create({
-        firstName,
-        lastName,
-        gender,
-        phoneNumber,
-        email,
-        password,
-        dob,
-        bloodType,
-        image,
-        healthStatus,
-        appointmentStatus,
-    });
-
-    return donor;
-};
 
 // ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
@@ -133,16 +96,36 @@ donorSchema.statics.signin = async function(email, password) {
     }
 
     const donor = await this.findOne({ email });
-
     if (!donor) {
         throw new Error("Incorrect Email");
     }
 
-    const match = password === donor.password;
-
+    const match = await bcryptjs.compare(password, donor.password);
     if (!match) {
         throw new Error("Incorrect Password");
     }
+
+    return donor;
+};
+
+// ✅ Update method (for profile and status update)
+donorSchema.statics.updateProfile = async function(id, updateData) {
+    const updatedDonor = await this.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedDonor) {
+        throw new Error("Donor not found");
+    }
+    return updatedDonor;
+};
+
+// ✅ Deactivate method (for active status toggle)
+donorSchema.statics.toggleActiveStatus = async function(id) {
+    const donor = await this.findById(id);
+    if (!donor) {
+        throw new Error("Donor not found");
+    }
+
+    donor.activeStatus = !donor.activeStatus;
+    await donor.save();
 
     return donor;
 };

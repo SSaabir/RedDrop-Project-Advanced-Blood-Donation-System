@@ -132,8 +132,9 @@ export default function Header() {
               <Link to="/profile">Profile</Link>
             </Dropdown.Item>
             <Dropdown.Item>
-              <Link to="/settings">Settings</Link>
+              <Link to="/dashboard">Dashboard</Link>
             </Dropdown.Item>
+            
             <Dropdown.Divider />
             <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
           </Dropdown>

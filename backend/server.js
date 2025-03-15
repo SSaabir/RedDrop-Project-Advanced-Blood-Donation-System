@@ -17,7 +17,7 @@ import HospitalAdminRoutes from './routes/HospitalAdmin.route.js';
 import multer from 'multer';
 
 dotenv.config();
-
+//
 // ✅ Initialize Express
 const app = express();
 
@@ -60,7 +60,7 @@ app.use('/api/donor', donorRoutes);
 app.use('/api/Blood-inventory', BloodInventoryRoutes);
 app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
 
-app.use('/api/inquiry',  inquiryRoutes);
+app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
 app.use('/api/manager', SystemManagerRoutes);

@@ -38,6 +38,14 @@ const hospitalAdminSchema = new mongoose.Schema({
         type: String, // URL or file path for the image
         required: false,
     },
+    nic: {
+        type: String, // URL or file path for the image
+        required: true,
+    },
+    address: {
+        type: String, // URL or file path for the image
+        required: false,
+    },
     dob: {
         type: Date,
         required: true,

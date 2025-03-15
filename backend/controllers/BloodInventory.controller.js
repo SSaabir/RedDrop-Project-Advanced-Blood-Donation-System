@@ -24,12 +24,11 @@ export const getBloodInventoryById = async (req, res) => {
 //  Create a new blood inventory record
 export const createBloodInventory = async (req, res) => {
     try {
-        const { hospitalId, bloodType, rhFactor, availableStocks, expirationDate } = req.body;
+        const { hospitalId, bloodType,availableStocks, expirationDate } = req.body;
 
         const newInventory = new BloodInventory({
             hospitalId,
             bloodType,
-            rhFactor,
             availableStocks,
             expirationDate,
         });
