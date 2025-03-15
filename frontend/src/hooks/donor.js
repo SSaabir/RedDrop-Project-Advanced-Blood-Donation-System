@@ -7,7 +7,7 @@ export const useDonor = () => {
 
     // Fetch all donors
     const fetchDonors = async() => {
-        setLoading(true);
+        setLoading(false);
         try {
             const response = await fetch("/api/donor");
             if (!response.ok) throw new Error("Failed to fetch donors");
@@ -22,7 +22,7 @@ export const useDonor = () => {
 
     // Fetch a single donor by ID
     const fetchDonorById = async(id) => {
-        setLoading(true);
+        setLoading(false);
         try {
             const response = await fetch(`/api/donor/${id}`);
             if (!response.ok) throw new Error("Failed to fetch donor");
@@ -44,7 +44,7 @@ export const useDonor = () => {
             });
 
             const newDonor = await response.json();
-            if (!response.ok) throw new Error(newDonor ? .message || 'Failed to create admin');
+            if (!response.ok) throw new Error(newDonor.message || 'Failed to create admin');
             setDonors((prev) => [...prev, newDonor]);
         } catch (err) {
             setError(err.message);

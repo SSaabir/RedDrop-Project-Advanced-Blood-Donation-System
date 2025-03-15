@@ -7,7 +7,7 @@ export const useHospital = () => {
 
     // Fetch all hospitals
     const fetchHospitals = async() => {
-        setLoading(true);
+        setLoading(false);
         try {
             const response = await fetch("/api/hospital");
             if (!response.ok) throw new Error("Failed to fetch hospitals");
@@ -22,7 +22,7 @@ export const useHospital = () => {
 
     // Fetch a single hospital by ID
     const fetchHospitalById = async(id) => {
-        setLoading(true);
+        setLoading(false);
         try {
             const response = await fetch(`/api/hospital/${id}`);
             if (!response.ok) throw new Error("Failed to fetch hospital");

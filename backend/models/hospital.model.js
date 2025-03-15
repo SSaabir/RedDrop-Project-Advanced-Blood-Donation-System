@@ -1,11 +1,11 @@
-import mongoose from 'mongoose';
-import validator from 'validator';
+import mongoose from "mongoose";
+import validator from "validator";
 import bcryptjs from "bcryptjs";
 
 const hospitalSchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'SystemManager',
+        ref: "SystemManager",
         required: true,
     },
     name: {
@@ -40,7 +40,7 @@ const hospitalSchema = new mongoose.Schema({
         unique: true,
         validate: {
             validator: validator.isEmail,
-            message: 'Invalid email format',
+            message: "Invalid email format",
         },
     },
     password: {
@@ -65,47 +65,25 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Signin method
+// Hash password before saving
+hospitalSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) return next();
+    this.password = await bcryptjs.hash(this.password, 10);
+    next();
+});
+
+// ✅ Hospital Sign-in Method
 hospitalSchema.statics.signin = async function(email, password) {
-    if (!email || !password) {
-        throw new Error("All Fields are Required");
-    }
+    if (!email || !password) throw new Error("All Fields are Required");
 
     const hospital = await this.findOne({ email });
-    if (!hospital) {
-        throw new Error("Incorrect Email");
-    }
+    if (!hospital) throw new Error("Incorrect Email");
 
     const match = await bcryptjs.compare(password, hospital.password);
-    if (!match) {
-        throw new Error("Incorrect Password");
-    }
+    if (!match) throw new Error("Incorrect Password");
 
     return hospital;
 };
 
-// ✅ Update hospital details
-hospitalSchema.statics.updateHospital = async function(id, updateData) {
-    const updatedHospital = await this.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedHospital) {
-        throw new Error("Hospital not found");
-    }
-    return updatedHospital;
-};
-
-// ✅ Toggle active status
-hospitalSchema.statics.toggleActiveStatus = async function(id) {
-    const hospital = await this.findById(id);
-    if (!hospital) {
-        throw new Error("Hospital not found");
-    }
-
-    hospital.activeStatus = !hospital.activeStatus;
-    await hospital.save();
-
-    return hospital;
-};
-
-const Hospital = mongoose.model('Hospital', hospitalSchema);
-
+const Hospital = mongoose.model("Hospital", hospitalSchema);
 export default Hospital;
