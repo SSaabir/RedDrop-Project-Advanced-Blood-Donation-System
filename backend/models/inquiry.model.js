@@ -1,39 +1,40 @@
 import mongoose from 'mongoose';
 
 const inquirySchema = new mongoose.Schema({
-    systemAdminId: {
+    inquiryId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'SystemAdmin',
+        auto: true, // Automatically generated unique ID
+    },
+    systemManagerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'SystemManager', // Reference to System Manager model
         required: true,
     },
-    donorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Donor',
-        required: true,
-    },
-    enroll: {
+    email: {
         type: String,
         required: true,
+        match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'], // Email validation
     },
     subject: {
         type: String,
         required: true,
     },
-    description: {
+    message: {
         type: String,
         required: true,
-    },
-    dateSubmitted: {
-        type: Date,
-        default: Date.now,
     },
     category: {
         type: String,
         required: true,
         enum: ['General', 'Technical', 'Complaint', 'Other'], // Example categories
     },
+    attentiveStatus: {
+        type: String,
+        enum: ['Pending', 'In Progress', 'Resolved'], // Example statuses
+        default: 'Pending',
+    },
 }, { timestamps: true });
 
 const Inquiry = mongoose.model('Inquiry', inquirySchema);
 
-export default Inquiry;
+export default Inquiry;
