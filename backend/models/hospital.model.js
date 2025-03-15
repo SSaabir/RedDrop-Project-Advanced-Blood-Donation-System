@@ -1,27 +1,27 @@
-import mongoose from 'mongoose';
-import validator from 'validator';
-import moment from 'moment'; // Uncomment for date validation if needed
+import mongoose from "mongoose";
+import validator from "validator";
+import bcryptjs from "bcryptjs";
 
 const hospitalSchema = new mongoose.Schema({
-    hospitalId: {
+    systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'HospitalAdmin', // Reference to HospitalAdmin model
+        ref: "SystemManager",
         required: true,
     },
-    hospitalName: {
+    name: {
         type: String,
         required: true,
     },
-    email: {
+    city: {
+        type: String,
+        required: true,
+    },
+    identificationNumber: {
         type: String,
         required: true,
         unique: true,
-        validate: {
-            validator: validator.isEmail,
-            message: 'Invalid email format',
-        },
     },
-    password: {
+    address: {
         type: String,
         required: true,
     },
@@ -30,58 +30,60 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
         unique: true,
         validate: {
-            validator: (value) => /^\d{10}$/.test(value), // Assumes 10-digit phone numbers
+            validator: (value) => /^\d{10}$/.test(value),
             message: (props) => `${props.value} is not a valid phone number!`,
         },
     },
-    address: {
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: validator.isEmail,
+            message: "Invalid email format",
+        },
+    },
+    password: {
         type: String,
         required: true,
     },
     image: {
-        type: String, // URL or file path for the image
+        type: String,
         required: false,
     },
     startTime: {
-        type: String, // Assuming you store as string (e.g., "09:00 AM")
+        type: String,
         required: true,
     },
     endTime: {
-        type: String, // Assuming you store as string (e.g., "05:00 PM")
-        required: true,
-    },
-    adminId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'HospitalAdmin', // Reference to HospitalAdmin model
+        type: String,
         required: true,
     },
     activeStatus: {
         type: Boolean,
-        default: true, // Default to active
+        default: false,
     },
 }, { timestamps: true });
 
-// Signin method (example implementation, adjust as needed)
+// Hash password before saving
+hospitalSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) return next();
+    this.password = await bcryptjs.hash(this.password, 10);
+    next();
+});
+
+// ✅ Hospital Sign-in Method
 hospitalSchema.statics.signin = async function(email, password) {
-    if (!email || !password) {
-        throw new Error("All Fields are Required");
-    }
+    if (!email || !password) throw new Error("All Fields are Required");
 
     const hospital = await this.findOne({ email });
+    if (!hospital) throw new Error("Incorrect Email");
 
-    if (!hospital) {
-        throw new Error('Incorrect Email');
-    }
-
-    const match = (password === hospital.password);
-
-    if (!match) {
-        throw new Error('Incorrect Password');
-    }
+    const match = await bcryptjs.compare(password, hospital.password);
+    if (!match) throw new Error("Incorrect Password");
 
     return hospital;
-}
+};
 
-const Hospital = mongoose.model('Hospital', hospitalSchema);
-
+const Hospital = mongoose.model("Hospital", hospitalSchema);
 export default Hospital;

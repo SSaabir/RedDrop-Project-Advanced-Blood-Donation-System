@@ -1,18 +1,20 @@
 import express from "express";
+import upload from "../utils/multer.js";
 import {
     getHospitals,
     getHospitalById,
     createHospital,
     updateHospital,
-    deleteHospital
+    signinHospital
 } from "../controllers/hospital.controller.js";
 
 const router = express.Router();
 
+// ✅ Hospital Routes
 router.get("/", getHospitals); // Get all hospitals
 router.get("/:id", getHospitalById); // Get a single hospital by ID
-router.post("/", createHospital); // Create a new hospital
-router.patch("/:id", updateHospital); // Update hospital details
-router.delete("/:id", deleteHospital); // Delete hospital
+router.post("/", upload.single("image"), createHospital); // Sign up (Create Hospital)
+router.post("/signin", signinHospital); // Sign in (Login)
+router.put("/:id", upload.single("image"), updateHospital); // Update hospital
 
 export default router;
