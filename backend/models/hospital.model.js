@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import moment from "moment"; // For time validation
+import bcryptjs from "bcryptjs"; // Import bcryptjs for password comparison
+import moment from "moment"; // For time validation (if needed)
+
+// Helper function to validate time format
+const validateTime = (time) => {
+    return moment(time, "HH:mm", true).isValid(); // Validates time in 24-hour format (HH:mm)
+};
 
 const hospitalSchema = new mongoose.Schema({
     systemManagerId: {
@@ -50,14 +56,31 @@ const hospitalSchema = new mongoose.Schema({
     image: {
         type: String,
         required: false, // Image is optional
+        validate: {
+            validator: (value) => {
+                if (value) {
+                    return /\.(jpg|jpeg|png|gif|bmp)$/i.test(value); // Basic image extension validation
+                }
+                return true;
+            },
+            message: "Invalid image format",
+        },
     },
     startTime: {
         type: String,
         required: true,
+        validate: {
+            validator: (value) => validateTime(value),
+            message: "Invalid start time format. Please use HH:mm.",
+        },
     },
     endTime: {
         type: String,
         required: true,
+        validate: {
+            validator: (value) => validateTime(value),
+            message: "Invalid end time format. Please use HH:mm.",
+        },
     },
     activeStatus: {
         type: Boolean,
@@ -78,28 +101,12 @@ hospitalSchema.statics.signin = async function(email, password) {
     return hospital;
 };
 
-// ✅ Update method (for profile and status update)
-hospitalSchema.statics.updateProfile = async function(id, updateData) {
-    const updatedHospital = await this.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedHospital) {
-        throw new Error("Hospital not found");
+hospitalSchema.pre("save", async function(next) {
+    if (this.isModified("password")) {
+        const salt = await bcryptjs.genSalt(10);
+        this.password = await bcryptjs.hash(this.password, salt);
     }
-    return updatedHospital;
-};
+    next();
+});
 
-// ✅ Deactivate method (for active status toggle)
-hospitalSchema.statics.toggleActiveStatus = async function(id) {
-    const hospital = await this.findById(id);
-    if (!hospital) {
-        throw new Error("Hospital not found");
-    }
-
-    hospital.activeStatus = !hospital.activeStatus;
-    await hospital.save();
-
-    return hospital;
-};
-
-const Hospital = mongoose.model("Hospital", hospitalSchema);
-
-export default Hospital;
+export default mongoose.model("Hospital", hospitalSchema);

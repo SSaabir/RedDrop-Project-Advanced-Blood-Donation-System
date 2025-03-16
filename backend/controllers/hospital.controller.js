@@ -1,4 +1,5 @@
 import Hospital from "../models/hospital.model.js";
+import bcrypt from 'bcryptjs'; // Ensure bcrypt is imported if it's used for password comparison
 
 // ✅ Get all hospitals
 export const getHospitals = async(req, res) => {
@@ -6,7 +7,8 @@ export const getHospitals = async(req, res) => {
         const hospitals = await Hospital.find();
         res.json(hospitals);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching hospitals", error });
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Error fetching hospitals", error: error.message });
     }
 };
 
@@ -17,7 +19,8 @@ export const getHospitalById = async(req, res) => {
         if (!hospital) return res.status(404).json({ message: "Hospital not found" });
         res.json(hospital);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching hospital", error });
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Error fetching hospital", error: error.message });
     }
 };
 
@@ -52,9 +55,10 @@ export const createHospital = async(req, res) => {
         });
 
         await newHospital.save();
-        res.status(201).json(newHospital);
+        res.status(201).json({ message: "Hospital created successfully", hospital: newHospital });
     } catch (error) {
-        res.status(400).json({ message: "Error creating hospital", error });
+        console.error(error); // Logging the error for debugging
+        res.status(400).json({ message: "Error creating hospital", error: error.message });
     }
 };
 
@@ -68,9 +72,10 @@ export const updateHospital = async(req, res) => {
 
         if (!updatedHospital) return res.status(404).json({ message: "Hospital not found" });
 
-        res.status(200).json(updatedHospital);
+        res.status(200).json({ message: "Hospital updated successfully", hospital: updatedHospital });
     } catch (error) {
-        res.status(500).json({ message: "Error updating hospital", error });
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Error updating hospital", error: error.message });
     }
 };
 
@@ -80,9 +85,10 @@ export const deleteHospital = async(req, res) => {
         const deletedHospital = await Hospital.findByIdAndDelete(req.params.id);
         if (!deletedHospital) return res.status(404).json({ message: "Hospital not found" });
 
-        res.json({ message: "Hospital deleted successfully" });
+        res.status(200).json({ message: "Hospital deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting hospital", error });
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Error deleting hospital", error: error.message });
     }
 };
 
@@ -94,9 +100,10 @@ export const updateOperatingHours = async(req, res) => {
             req.params.id, { startTime, endTime }, { new: true }
         );
         if (!updatedHospital) return res.status(404).json({ message: "Hospital not found" });
-        res.status(200).json(updatedHospital);
+        res.status(200).json({ message: "Hospital operating hours updated successfully", hospital: updatedHospital });
     } catch (error) {
-        res.status(500).json({ message: "Error updating operating hours", error });
+        console.error(error); // Logging the error for debugging
+        res.status(500).json({ message: "Error updating operating hours", error: error.message });
     }
 };
 
@@ -120,6 +127,7 @@ export const activateDeactivateHospital = async(req, res) => {
             hospital: updatedHospital,
         });
     } catch (error) {
+        console.error(error); // Logging the error for debugging
         res.status(500).json({
             message: "Error toggling hospital status",
             error: error.message,
@@ -147,6 +155,7 @@ export const signinHospital = async(req, res) => {
 
         res.status(200).json(hospital);
     } catch (error) {
+        console.error(error); // Logging the error for debugging
         res.status(400).json({ message: error.message });
     }
 };

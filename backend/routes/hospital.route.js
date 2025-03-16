@@ -24,7 +24,7 @@ router.post("/", upload.single("image"), createHospital);
 // Hospital sign-in (login)
 router.post("/signin", signinHospital);
 
-// Update hospital details
+// Update hospital details (with optional image upload)
 router.put("/:id", upload.single("image"), updateHospital);
 
 // Delete a hospital

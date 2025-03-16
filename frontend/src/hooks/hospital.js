@@ -7,14 +7,14 @@ export const useHospital = () => {
 
     // Fetch all hospitals
     const fetchHospitals = async() => {
-        setLoading(false);
+        setLoading(true); // Fix: Loading should be set to true when fetching
         try {
             const response = await fetch("/api/hospital");
             if (!response.ok) throw new Error("Failed to fetch hospitals");
             const data = await response.json();
             setHospitals(data);
         } catch (err) {
-            setError(err.message);
+            setError(`Error fetching hospitals: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -29,7 +29,7 @@ export const useHospital = () => {
             const data = await response.json();
             return data;
         } catch (err) {
-            setError(err.message);
+            setError(`Error fetching hospital with ID ${id}: ${err.message}`);
             return null;
         } finally {
             setLoading(false);
@@ -55,7 +55,7 @@ export const useHospital = () => {
             const newHospital = await response.json();
             setHospitals((prev) => [...prev, newHospital]);
         } catch (err) {
-            setError(err.message);
+            setError(`Error creating hospital: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -71,10 +71,13 @@ export const useHospital = () => {
                 body: JSON.stringify(hospitalData),
             });
             if (!response.ok) throw new Error("Failed to update hospital");
+
             const updatedHospital = await response.json();
-            setHospitals((prev) => prev.map((hospital) => hospital._id === id ? updatedHospital : hospital));
+            setHospitals((prev) =>
+                prev.map((hospital) => (hospital._id === id ? updatedHospital : hospital))
+            );
         } catch (err) {
-            setError(err.message);
+            setError(`Error updating hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -87,12 +90,11 @@ export const useHospital = () => {
             const response = await fetch(`/api/hospital/${id}`, {
                 method: "DELETE",
             });
-            if (!response.ok) {
-                throw new Error("Failed to delete hospital");
-            }
+            if (!response.ok) throw new Error("Failed to delete hospital");
+
             setHospitals((prev) => prev.filter((hospital) => hospital._id !== id));
         } catch (err) {
-            setError(err.message);
+            setError(`Error deleting hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -105,7 +107,6 @@ export const useHospital = () => {
             const response = await fetch(`/api/hospital/${id}/toggle-status`, {
                 method: "PATCH",
             });
-
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || "Failed to toggle hospital status");
 
@@ -115,7 +116,7 @@ export const useHospital = () => {
                 )
             );
         } catch (err) {
-            setError(err.message);
+            setError(`Error toggling status for hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
