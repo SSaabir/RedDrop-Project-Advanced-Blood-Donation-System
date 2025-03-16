@@ -5,17 +5,15 @@ import { useHospital } from '../hooks/hospital'; // Assuming you have hooks for 
 import { useAuthContext } from '../hooks/useAuthContext';
 
 export default function HospitalDashboard() {
-    const { hospitals, loading, error, fetchHospitals, createHospital, updateHospital, deleteHospital } = useHospital();
-    const [openCreateModal, setOpenCreateModal] = useState(false);
+    const { hospitals, loading, error, fetchHospitals, updateHospital, deleteHospital } = useHospital();
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [selectedHospital, setSelectedHospital] = useState(null);
-    const { user } = useAuthContext();
 
     const initialHospitalData = {
         name: '',
-        location: '',
-        contact: '',
+        city: '',
+        phoneNumber: '',  // Changed from 'phone' to 'phoneNumber'
         email: '',
         establishedYear: ''
     };
@@ -36,22 +34,12 @@ export default function HospitalDashboard() {
         setHospitalData(prev => ({ ...prev, [id]: value }));
     };
 
-    const handleCreate = async () => {
-        try {
-            await createHospital(hospitalData);
-            setOpenCreateModal(false);
-            resetHospitalData();
-        } catch (err) {
-            console.error('Error creating hospital:', err);
-        }
-    };
-
     const handleEdit = (hospital) => {
         setSelectedHospital(hospital);
         setHospitalData({
             name: hospital.name || '',
-            location: hospital.location || '',
-            contact: hospital.contact || '',
+            city: hospital.city || '',
+            phoneNumber: hospital.phoneNumber || '',  // Make sure to use phoneNumber here
             email: hospital.email || '',
             establishedYear: hospital.establishedYear || ''
         });
@@ -63,7 +51,6 @@ export default function HospitalDashboard() {
         try {
             await updateHospital(selectedHospital._id, hospitalData);
             setOpenEditModal(false);
-            resetHospitalData();
         } catch (err) {
             console.error('Error updating hospital:', err);
         }
@@ -84,18 +71,11 @@ export default function HospitalDashboard() {
         }
     };
 
-    const resetHospitalData = () => {
-        setHospitalData(initialHospitalData);
-    };
-
     return (
         <div className='flex min-h-screen'>
             <DashboardSidebar />
             <div className="flex-1 p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-                    <Button onClick={() => setOpenCreateModal(true)}>Add New Hospital</Button>
-                </div>
+                <h1 className="text-2xl font-bold mb-4">Hospital Dashboard</h1>
 
                 {loading && <Spinner />}
                 {error && <p className="text-red-500">{error}</p>}
@@ -105,7 +85,8 @@ export default function HospitalDashboard() {
                         <Table.HeadCell>ID</Table.HeadCell>
                         <Table.HeadCell>Name</Table.HeadCell>
                         <Table.HeadCell>Email</Table.HeadCell>
-                        <Table.HeadCell>Location</Table.HeadCell>
+                        <Table.HeadCell>City</Table.HeadCell>
+                        <Table.HeadCell>Phone Number</Table.HeadCell>  {/* Changed from 'Phone' to 'Phone Number' */}
                         <Table.HeadCell>Established Year</Table.HeadCell>
                         <Table.HeadCell>Actions</Table.HeadCell>
                     </Table.Head>
@@ -115,7 +96,8 @@ export default function HospitalDashboard() {
                                 <Table.Cell>{hospital._id}</Table.Cell>
                                 <Table.Cell>{hospital.name}</Table.Cell>
                                 <Table.Cell>{hospital.email}</Table.Cell>
-                                <Table.Cell>{hospital.location}</Table.Cell>
+                                <Table.Cell>{hospital.city}</Table.Cell>
+                                <Table.Cell>{hospital.phoneNumber}</Table.Cell> {/* Display phone number */}
                                 <Table.Cell>{hospital.establishedYear}</Table.Cell>
                                 <Table.Cell>
                                     <Button size="xs" className="mr-2" onClick={() => handleEdit(hospital)}>Edit</Button>
@@ -126,30 +108,14 @@ export default function HospitalDashboard() {
                     </Table.Body>
                 </Table>
 
-                {/* Create Modal */}
-                <Modal show={openCreateModal} onClose={() => setOpenCreateModal(false)}>
-                    <Modal.Header>Add New Hospital</Modal.Header>
-                    <Modal.Body>
-                        <TextInput id="name" placeholder="Hospital Name" value={hospitalData.name} onChange={handleChange} />
-                        <TextInput id="email" placeholder="Email" value={hospitalData.email} onChange={handleChange} />
-                        <TextInput id="location" placeholder="Location" value={hospitalData.location} onChange={handleChange} />
-                        <TextInput id="contact" placeholder="Contact Number" value={hospitalData.contact} onChange={handleChange} />
-                        <TextInput id="establishedYear" type="number" placeholder="Established Year" value={hospitalData.establishedYear} onChange={handleChange} />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={handleCreate}>Create</Button>
-                        <Button color="gray" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-                    </Modal.Footer>
-                </Modal>
-
                 {/* Edit Modal */}
                 <Modal show={openEditModal} onClose={() => setOpenEditModal(false)}>
                     <Modal.Header>Edit Hospital</Modal.Header>
                     <Modal.Body>
                         <TextInput id="name" placeholder="Hospital Name" value={hospitalData.name} onChange={handleChange} />
                         <TextInput id="email" placeholder="Email" value={hospitalData.email} onChange={handleChange} />
-                        <TextInput id="location" placeholder="Location" value={hospitalData.location} onChange={handleChange} />
-                        <TextInput id="contact" placeholder="Contact Number" value={hospitalData.contact} onChange={handleChange} />
+                        <TextInput id="city" placeholder="City" value={hospitalData.city} onChange={handleChange} />
+                        <TextInput id="phoneNumber" placeholder="Phone Number" value={hospitalData.phoneNumber} onChange={handleChange} /> {/* Changed to phoneNumber */}
                         <TextInput id="establishedYear" type="number" placeholder="Established Year" value={hospitalData.establishedYear} onChange={handleChange} />
                     </Modal.Body>
                     <Modal.Footer>

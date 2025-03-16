@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export const useHospital = () => {
     const [hospitals, setHospitals] = useState([]);
@@ -22,7 +22,7 @@ export const useHospital = () => {
 
     // Fetch a single hospital by ID
     const fetchHospitalById = async(id) => {
-        setLoading(false);
+        setLoading(true);
         try {
             const response = await fetch(`/api/hospital/${id}`);
             if (!response.ok) throw new Error("Failed to fetch hospital");
@@ -36,16 +36,22 @@ export const useHospital = () => {
         }
     };
 
-    // Create a new hospital
+    // Create a new hospital with file upload
     const createHospital = async(hospitalData) => {
         setLoading(true);
         try {
+            const formData = new FormData();
+            Object.keys(hospitalData).forEach((key) => {
+                formData.append(key, hospitalData[key]);
+            });
+
             const response = await fetch("/api/hospital", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(hospitalData),
+                body: formData, // Send FormData instead of JSON
             });
+
             if (!response.ok) throw new Error("Failed to create hospital");
+
             const newHospital = await response.json();
             setHospitals((prev) => [...prev, newHospital]);
         } catch (err) {
@@ -66,9 +72,7 @@ export const useHospital = () => {
             });
             if (!response.ok) throw new Error("Failed to update hospital");
             const updatedHospital = await response.json();
-            setHospitals((prev) =>
-                prev.map((hospital) => (hospital._id === id ? updatedHospital : hospital))
-            );
+            setHospitals((prev) => prev.map((hospital) => hospital._id === id ? updatedHospital : hospital));
         } catch (err) {
             setError(err.message);
         } finally {
@@ -83,7 +87,9 @@ export const useHospital = () => {
             const response = await fetch(`/api/hospital/${id}`, {
                 method: "DELETE",
             });
-            if (!response.ok) throw new Error("Failed to delete hospital");
+            if (!response.ok) {
+                throw new Error("Failed to delete hospital");
+            }
             setHospitals((prev) => prev.filter((hospital) => hospital._id !== id));
         } catch (err) {
             setError(err.message);
@@ -92,13 +98,14 @@ export const useHospital = () => {
         }
     };
 
-    // Activate/Deactivate a hospital
+    // Activate/Deactivate hospital status
     const activateDeactivateHospital = async(id) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/hospital/${id}/toggle-status`, {
                 method: "PATCH",
             });
+
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || "Failed to toggle hospital status");
 
@@ -113,10 +120,6 @@ export const useHospital = () => {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchHospitals();
-    }, []);
 
     return {
         hospitals,

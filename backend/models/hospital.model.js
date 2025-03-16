@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import bcryptjs from "bcryptjs";
+import moment from "moment"; // For time validation
 
 const hospitalSchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "SystemManager",
+        ref: "SystemManager", // Refers to a SystemManager model (must be created)
         required: true,
     },
     name: {
@@ -49,7 +49,7 @@ const hospitalSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: false,
+        required: false, // Image is optional
     },
     startTime: {
         type: String,
@@ -61,18 +61,11 @@ const hospitalSchema = new mongoose.Schema({
     },
     activeStatus: {
         type: Boolean,
-        default: false,
+        default: true,
     },
 }, { timestamps: true });
 
-// Hash password before saving
-hospitalSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) return next();
-    this.password = await bcryptjs.hash(this.password, 10);
-    next();
-});
-
-// ✅ Hospital Sign-in Method
+// ✅ Signin method
 hospitalSchema.statics.signin = async function(email, password) {
     if (!email || !password) throw new Error("All Fields are Required");
 
@@ -85,5 +78,28 @@ hospitalSchema.statics.signin = async function(email, password) {
     return hospital;
 };
 
+// ✅ Update method (for profile and status update)
+hospitalSchema.statics.updateProfile = async function(id, updateData) {
+    const updatedHospital = await this.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedHospital) {
+        throw new Error("Hospital not found");
+    }
+    return updatedHospital;
+};
+
+// ✅ Deactivate method (for active status toggle)
+hospitalSchema.statics.toggleActiveStatus = async function(id) {
+    const hospital = await this.findById(id);
+    if (!hospital) {
+        throw new Error("Hospital not found");
+    }
+
+    hospital.activeStatus = !hospital.activeStatus;
+    await hospital.save();
+
+    return hospital;
+};
+
 const Hospital = mongoose.model("Hospital", hospitalSchema);
+
 export default Hospital;

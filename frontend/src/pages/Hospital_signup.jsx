@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Button, Card, Label, TextInput, FileInput } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
+import { useHospital } from "../hooks/hospital"; // You can define a custom hook for handling hospital registration.
 
 export default function HospitalSignup() {
   const navigate = useNavigate();
+  const { createHospital, loading, error } = useHospital(); // Assuming you have a hook for hospital creation
   const [formData, setFormData] = useState({
     name: "",
     city: "",
@@ -17,7 +19,7 @@ export default function HospitalSignup() {
     image: null,
   });
   const [errorMessage, setErrorMessage] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // Image preview for hospital logo
 
   // Handle Input Change
   const handleChange = (e) => {
@@ -25,7 +27,7 @@ export default function HospitalSignup() {
     setFormData((prev) => ({ ...prev, [id]: value.trim() }));
   };
 
-  // Handle File Upload (Image)
+  // Handle File Upload (Hospital Image)
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setFormData((prev) => ({ ...prev, image: file }));
@@ -51,8 +53,12 @@ export default function HospitalSignup() {
     Object.keys(formData).forEach((key) => {
       hospitalData.append(key, formData[key]);
     });
-    
-    navigate("/Hospital_login");
+
+    // Log data to inspect before sending
+    console.log("Hospital Data to be sent:", hospitalData);
+
+    await createHospital(hospitalData); // Assuming you have a custom hook to handle hospital registration.
+    navigate("/hospital-login");
   };
 
   return (
@@ -61,13 +67,19 @@ export default function HospitalSignup() {
         <h2 className="text-4xl font-extrabold text-center text-red-600 mb-8 drop-shadow-md">Hospital Registration</h2>
 
         {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
+        {error && <p className="text-red-600 text-center">{error}</p>}
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
           <div className="space-y-6">
             {["name", "city", "identificationNumber", "email", "password", "phoneNumber"].map((id, index) => (
               <div key={index}>
-                <Label htmlFor={id} value={id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
-                <TextInput id={id} type={id === "email" ? "email" : id === "password" ? "password" : "text"} onChange={handleChange} required />
+                <Label htmlFor={id} value={id.replace(/([A-Z])/g, " $1").trim()} className="text-gray-700 font-medium" />
+                <TextInput
+                  id={id}
+                  type={id === "email" ? "email" : id === "password" ? "password" : "text"}
+                  onChange={handleChange}
+                  required
+                />
               </div>
             ))}
           </div>
@@ -75,20 +87,26 @@ export default function HospitalSignup() {
           <div className="space-y-6">
             {["address", "startTime", "endTime"].map((id, index) => (
               <div key={index}>
-                <Label htmlFor={id} value={id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
+                <Label htmlFor={id} value={id.replace(/([A-Z])/g, " $1").trim()} className="text-gray-700 font-medium" />
                 <TextInput id={id} type={id.includes("Time") ? "time" : "text"} onChange={handleChange} required />
               </div>
             ))}
             <div>
               <Label htmlFor="image" value="Hospital Image" className="text-gray-700 font-medium" />
               <FileInput id="image" onChange={handleFileChange} required />
-              {imagePreview && <img src={imagePreview} alt="Hospital Preview" className="mt-4 w-32 h-32 object-cover rounded-lg border-2 border-gray-400" />}
+              {imagePreview && (
+                <img src={imagePreview} alt="Hospital Preview" className="mt-4 w-32 h-32 object-cover rounded-lg border-2 border-gray-400" />
+              )}
             </div>
           </div>
 
           <div className="md:col-span-2 flex flex-col items-center space-y-4">
-            <Button type="submit" className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Register Now</Button>
-            <button onClick={() => navigate("/hospital-login")} className="text-red-600 font-medium hover:underline">Already have an account? Login</button>
+            <Button type="submit" className="w-full bg-red-600 text-white font-bold py-3 rounded-lg" disabled={loading}>
+              {loading ? "Registering..." : "Register Now"}
+            </Button>
+            <button onClick={() => navigate("/hospital-login")} className="text-red-600 font-medium hover:underline">
+              Already have an account? Login
+            </button>
           </div>
         </form>
       </Card>

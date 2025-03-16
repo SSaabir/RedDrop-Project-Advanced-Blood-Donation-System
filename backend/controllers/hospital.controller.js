@@ -26,6 +26,17 @@ export const createHospital = async(req, res) => {
     try {
         const { systemManagerId, name, city, identificationNumber, email, password, phoneNumber, address, image, startTime, endTime } = req.body;
 
+        // ✅ Check for required fields
+        if (!systemManagerId || !name || !city || !identificationNumber || !email || !password || !phoneNumber || !address || !startTime || !endTime) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // ✅ Check for duplicate hospital based on identificationNumber or phoneNumber
+        const existingHospital = await Hospital.findOne({ $or: [{ identificationNumber }, { phoneNumber }] });
+        if (existingHospital) {
+            return res.status(400).json({ message: "Hospital with this identification number or phone number already exists" });
+        }
+
         const newHospital = new Hospital({
             systemManagerId,
             name,
@@ -75,17 +86,6 @@ export const deleteHospital = async(req, res) => {
     }
 };
 
-// ✅ Signin hospital
-export const signinHospital = async(req, res) => {
-    try {
-        const { email, password } = req.body;
-        const hospital = await Hospital.signin(email, password);
-        res.status(200).json(hospital);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
-    }
-};
-
 // ✅ Update hospital operating hours
 export const updateOperatingHours = async(req, res) => {
     try {
@@ -100,12 +100,15 @@ export const updateOperatingHours = async(req, res) => {
     }
 };
 
-// ✅ Activate/Deactivate hospital
+// ✅ Activate/Deactivate hospital status
 export const activateDeactivateHospital = async(req, res) => {
     try {
         const { id } = req.params;
+
         const hospital = await Hospital.findById(id);
-        if (!hospital) return res.status(404).json({ message: "Hospital not found" });
+        if (!hospital) {
+            return res.status(404).json({ message: "Hospital not found" });
+        }
 
         const newStatus = !hospital.activeStatus;
         const updatedHospital = await Hospital.findByIdAndUpdate(
@@ -117,6 +120,33 @@ export const activateDeactivateHospital = async(req, res) => {
             hospital: updatedHospital,
         });
     } catch (error) {
-        res.status(500).json({ message: "Error toggling hospital status", error });
+        res.status(500).json({
+            message: "Error toggling hospital status",
+            error: error.message,
+        });
+    }
+};
+
+// ✅ Hospital Sign-in
+export const signinHospital = async(req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            throw new Error("All fields are required");
+        }
+
+        const hospital = await Hospital.findOne({ email });
+        if (!hospital) {
+            throw new Error("Incorrect email");
+        }
+
+        const match = await bcrypt.compare(password, hospital.password);
+        if (!match) {
+            throw new Error("Incorrect password");
+        }
+
+        res.status(200).json(hospital);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
     }
 };
