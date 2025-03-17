@@ -11,20 +11,39 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
         ref: 'Hospital', // Reference to Hospital model
         required: true,
     },
+     hospitalAdminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'HospitalAdmin',
+        required: false,
+     },
     appointmentDate: {
         type: Date, // Assuming you want to store the exact date and time
         required: true,
     },
-    timeSlot: {
-        type: String, // You can store the time slot as a string (e.g., "09:00 AM - 10:00 AM")
+    appointmentTime: {
+        type: String, // Storing as a string in AM/PM format
         required: true,
+        default: function () {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12; // Convert 24-hour to 12-hour format
+
+            return `${hours}:${minutes < 10 ? '0' : ''}${minutes} ${ampm}`;
+        },
     },
     receiptNumber: {
         type: String, // Unique receipt number for the appointment
         required: true,
         unique: true,
     },
-    status: {
+    passStatus: {
+        type: String,
+        enum: ['Pending', 'Passed', 'Failed', 'Cancelled'],
+        default: 'Pending',
+    },
+    acceptStatus: {
         type: String,
         enum: ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'], // Only these values are allowed
         default: 'Pending', // Default to Pending if no status is provided
@@ -32,16 +51,17 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Method for appointment status update (example implementation)
-bloodDonationAppointmentSchema.methods.updateStatus = async function(newStatus) {
+bloodDonationAppointmentSchema.methods.updateStatus = async function (newStatus) {
     const validStatuses = ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'];
 
     if (!validStatuses.includes(newStatus)) {
         throw new Error('Invalid Status');
     }
 
-    this.status = newStatus;
+    this.acceptStatus = newStatus;
     await this.save();
 };
+
 
 const BloodDonationAppointment = mongoose.model('BloodDonationAppointment', bloodDonationAppointmentSchema);
 

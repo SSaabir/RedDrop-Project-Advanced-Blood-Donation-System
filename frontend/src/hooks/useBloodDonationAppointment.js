@@ -23,7 +23,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Fetch a single blood donation appointment by ID
     const fetchAppointmentById = async (id) => {
         try {
-            const response = await fetch(/api/BloodDonationAppointment/$,{id});
+            const response = await fetch(`/api/BloodDonationAppointment/${id}`);
             if (!response.ok) throw new Error("Failed to fetch appointment");
             return await response.json();
         } catch (err) {
@@ -49,14 +49,15 @@ export const useBloodDonationAppointment = () => {
     };
 
     // ✅ Update blood donation appointment details
-    const updateAppointment = async (id, appointmentData) => {
+    const updateAppointment = async (id, appointmentDate, appointmentTime) => {
         try {
-            const response = await fetch(/api/BloodDonationAppointment/$,{id}, {
+            const response = await fetch(`/api/BloodDonationAppointment/${id}`,{
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(appointmentData),
+                body: JSON.stringify({ appointmentDate, appointmentTime }),
             });
-            if (!response.ok) throw new Error("Failed to update appointment");
+            if (!response.ok) throw new Error("Failed to update appointment date/time");
+    
             const updatedAppointment = await response.json();
             setAppointments((prev) =>
                 prev.map((appointment) =>
@@ -64,14 +65,14 @@ export const useBloodDonationAppointment = () => {
                 )
             );
         } catch (err) {
-            console.error(err.message);
+            setError(err.message);
         }
     };
 
     // ✅ Delete a blood donation appointment
     const deleteAppointment = async (id) => {
         try {
-            const response = await fetch(/api/BloodDonationAppointment/$,{id}, {
+            const response = await fetch(`/api/BloodDonationAppointment/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete appointment");
