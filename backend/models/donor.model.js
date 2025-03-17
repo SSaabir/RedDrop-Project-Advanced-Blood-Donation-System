@@ -91,16 +91,18 @@ const donorSchema = new mongoose.Schema({
 
 // ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
+    
     if (!email || !password) {
         throw new Error("All Fields are Required");
     }
 
     const donor = await this.findOne({ email });
+    console.log(donor);
     if (!donor) {
         throw new Error("Incorrect Email");
     }
 
-    const match = await bcryptjs.compare(password, donor.password);
+    const match = (password === donor.password);
     if (!match) {
         throw new Error("Incorrect Password");
     }
