@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export const useHospital = () => {
     const [hospitals, setHospitals] = useState([]);
@@ -7,14 +7,14 @@ export const useHospital = () => {
 
     // Fetch all hospitals
     const fetchHospitals = async() => {
-        setLoading(false);
+        setLoading(true); // Fix: Loading should be set to true when fetching
         try {
             const response = await fetch("/api/hospital");
             if (!response.ok) throw new Error("Failed to fetch hospitals");
             const data = await response.json();
             setHospitals(data);
         } catch (err) {
-            setError(err.message);
+            setError(`Error fetching hospitals: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -22,34 +22,40 @@ export const useHospital = () => {
 
     // Fetch a single hospital by ID
     const fetchHospitalById = async(id) => {
-        setLoading(false);
+        setLoading(true);
         try {
             const response = await fetch(`/api/hospital/${id}`);
             if (!response.ok) throw new Error("Failed to fetch hospital");
             const data = await response.json();
             return data;
         } catch (err) {
-            setError(err.message);
+            setError(`Error fetching hospital with ID ${id}: ${err.message}`);
             return null;
         } finally {
             setLoading(false);
         }
     };
 
-    // Create a new hospital
+    // Create a new hospital with file upload
     const createHospital = async(hospitalData) => {
         setLoading(true);
         try {
+            const formData = new FormData();
+            Object.keys(hospitalData).forEach((key) => {
+                formData.append(key, hospitalData[key]);
+            });
+
             const response = await fetch("/api/hospital", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(hospitalData),
+                body: formData, // Send FormData instead of JSON
             });
+
             if (!response.ok) throw new Error("Failed to create hospital");
+
             const newHospital = await response.json();
             setHospitals((prev) => [...prev, newHospital]);
         } catch (err) {
-            setError(err.message);
+            setError(`Error creating hospital: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -65,12 +71,13 @@ export const useHospital = () => {
                 body: JSON.stringify(hospitalData),
             });
             if (!response.ok) throw new Error("Failed to update hospital");
+
             const updatedHospital = await response.json();
             setHospitals((prev) =>
                 prev.map((hospital) => (hospital._id === id ? updatedHospital : hospital))
             );
         } catch (err) {
-            setError(err.message);
+            setError(`Error updating hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -84,15 +91,16 @@ export const useHospital = () => {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete hospital");
+
             setHospitals((prev) => prev.filter((hospital) => hospital._id !== id));
         } catch (err) {
-            setError(err.message);
+            setError(`Error deleting hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
     };
 
-    // Activate/Deactivate a hospital
+    // Activate/Deactivate hospital status
     const activateDeactivateHospital = async(id) => {
         setLoading(true);
         try {
@@ -108,15 +116,11 @@ export const useHospital = () => {
                 )
             );
         } catch (err) {
-            setError(err.message);
+            setError(`Error toggling status for hospital with ID ${id}: ${err.message}`);
         } finally {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchHospitals();
-    }, []);
 
     return {
         hospitals,
