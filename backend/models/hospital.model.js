@@ -65,12 +65,6 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// Hash password before saving
-hospitalSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) return next();
-    this.password = await bcryptjs.hash(this.password, 10);
-    next();
-});
 
 // ✅ Hospital Sign-in Method
 hospitalSchema.statics.signin = async function(email, password) {
@@ -79,7 +73,7 @@ hospitalSchema.statics.signin = async function(email, password) {
     const hospital = await this.findOne({ email });
     if (!hospital) throw new Error("Incorrect Email");
 
-    const match = await bcryptjs.compare(password, hospital.password);
+    const match = (password === hospital.password);
     if (!match) throw new Error("Incorrect Password");
 
     return hospital;
