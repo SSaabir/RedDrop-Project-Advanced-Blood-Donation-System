@@ -28,16 +28,16 @@ export const getAppointmentById = async (req, res) => {
 //  Create a new blood donation appointment
 export const createAppointment = async (req, res) => {
     try {
-        const { donorId, hospitalId, appointmentDate, timeSlot, receiptNumber, status } = req.body;
+        const { donorId, hospitalId, appointmentDate, appointmentTime, receiptNumber } = req.body;
 
         const newAppointment = new BloodDonationAppointment({
             donorId,
             hospitalId,
             appointmentDate,
-            timeSlot,
-            receiptNumber,
-            status,
+            appointmentTime,
+            receiptNumber: `REC-${Date.now()}`, // Generate unique receipt number
         });
+        
 
         await newAppointment.save();
         res.status(201).json(newAppointment);
