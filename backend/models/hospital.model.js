@@ -88,25 +88,16 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Signin method
 hospitalSchema.statics.signin = async function(email, password) {
     if (!email || !password) throw new Error("All Fields are Required");
 
     const hospital = await this.findOne({ email });
     if (!hospital) throw new Error("Incorrect Email");
 
-    const match = await bcryptjs.compare(password, hospital.password);
+    const match = (password === hospital.password);
     if (!match) throw new Error("Incorrect Password");
 
     return hospital;
 };
-
-hospitalSchema.pre("save", async function(next) {
-    if (this.isModified("password")) {
-        const salt = await bcryptjs.genSalt(10);
-        this.password = await bcryptjs.hash(this.password, salt);
-    }
-    next();
-});
 
 export default mongoose.model("Hospital", hospitalSchema);
