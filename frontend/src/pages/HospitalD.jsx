@@ -1,175 +1,172 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Modal, TextInput, Spinner } from 'flowbite-react';
-import { DashboardSidebar } from '../components/DashboardSidebar';
-import { useHospital } from '../hooks/hospital'; // Assuming you have hooks for hospitals
-import { useAuthContext } from '../hooks/useAuthContext';
+import React, { useState, useEffect } from "react";
+import { Button, Modal, TextInput, FileInput, Label, Spinner, Table } from "flowbite-react";
+import { DashboardSidebar } from "../components/DashboardSidebar";
+import { useHospital } from "../hooks/hospital";
 
 export default function HospitalDashboard() {
-    const { hospitals, loading, error, fetchHospitals, createHospital, updateHospital, deleteHospital } = useHospital();
-    const [openCreateModal, setOpenCreateModal] = useState(false);
-    const [openEditModal, setOpenEditModal] = useState(false);
-    const [openDeleteModal, setOpenDeleteModal] = useState(false);
-    const [selectedHospital, setSelectedHospital] = useState(null);
-    const { user } = useAuthContext();
+  const { hospitals, loading, error, fetchHospitals, createHospital, updateHospital, deleteHospital } = useHospital();
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [formData, setFormData] = useState({
+    _id: null,  // For editing
+    name: "",
+    city: "",
+    identificationNumber: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    address: "",
+    startTime: "",
+    endTime: "",
+    image: null,
+  });
+  const [imagePreview, setImagePreview] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const initialHospitalData = {
-        name: '',
-        location: '',
-        contact: '',
-        email: '',
-        establishedYear: ''
-    };
+  useEffect(() => {
+    fetchHospitals();
+  }, []);
 
-    const [hospitalData, setHospitalData] = useState(initialHospitalData);
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value.trim() }));
+  };
 
-    // Fetch hospitals only when necessary
-    const loadHospitals = useCallback(() => {
-        fetchHospitals();
-    }, [fetchHospitals]);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData((prev) => ({ ...prev, image: file }));
 
-    useEffect(() => {
-        loadHospitals();
-    }, [loadHospitals]);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    if (file) reader.readAsDataURL(file);
+  };
 
-    const handleChange = (e) => {
-        const { id, value } = e.target;
-        setHospitalData(prev => ({ ...prev, [id]: value }));
-    };
+  const handleSubmit = async () => {
+    if (Object.values(formData).some((val) => val === "" || val === null)) {
+      setErrorMessage("Please fill out all fields");
+      return;
+    }
 
-    const handleCreate = async () => {
-        try {
-            await createHospital(hospitalData);
-            setOpenCreateModal(false);
-            resetHospitalData();
-        } catch (err) {
-            console.error('Error creating hospital:', err);
-        }
-    };
+    const hospitalData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      hospitalData.append(key, formData[key]);
+    });
 
-    const handleEdit = (hospital) => {
-        setSelectedHospital(hospital);
-        setHospitalData({
-            name: hospital.name || '',
-            location: hospital.location || '',
-            contact: hospital.contact || '',
-            email: hospital.email || '',
-            establishedYear: hospital.establishedYear || ''
-        });
-        setOpenEditModal(true);
-    };
+    if (formData._id) {
+      // Update existing hospital
+      await updateHospital(formData._id, hospitalData);
+    } else {
+      // Create new hospital
+      await createHospital(hospitalData);
+    }
 
-    const handleUpdate = async () => {
-        if (!selectedHospital) return;
-        try {
-            await updateHospital(selectedHospital._id, hospitalData);
-            setOpenEditModal(false);
-            resetHospitalData();
-        } catch (err) {
-            console.error('Error updating hospital:', err);
-        }
-    };
+    setOpenCreateModal(false);
+    resetForm();
+    fetchHospitals();
+  };
 
-    const handleDelete = (hospital) => {
-        setSelectedHospital(hospital);
-        setOpenDeleteModal(true);
-    };
+  const handleEdit = (hospital) => {
+    setFormData(hospital);
+    setImagePreview(hospital.image); // If stored as a URL
+    setOpenCreateModal(true);
+  };
 
-    const handleConfirmDelete = async () => {
-        if (!selectedHospital) return;
-        try {
-            await deleteHospital(selectedHospital._id);
-            setOpenDeleteModal(false);
-        } catch (err) {
-            console.error('Error deleting hospital:', err);
-        }
-    };
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this hospital?");
+    if (!confirmDelete) return;
 
-    const resetHospitalData = () => {
-        setHospitalData(initialHospitalData);
-    };
+    await deleteHospital(id);
+    fetchHospitals(); // Refresh after deletion
+  };
 
-    return (
-        <div className='flex min-h-screen'>
-            <DashboardSidebar />
-            <div className="flex-1 p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-                    <Button onClick={() => setOpenCreateModal(true)}>Add New Hospital</Button>
-                </div>
+  const resetForm = () => {
+    setFormData({
+      _id: null,
+      name: "",
+      city: "",
+      identificationNumber: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      address: "",
+      startTime: "",
+      endTime: "",
+      image: null,
+    });
+    setImagePreview(null);
+    setErrorMessage("");
+  };
 
-                {loading && <Spinner />}
-                {error && <p className="text-red-500">{error}</p>}
-
-                <Table hoverable>
-                    <Table.Head>
-                        <Table.HeadCell>ID</Table.HeadCell>
-                        <Table.HeadCell>Name</Table.HeadCell>
-                        <Table.HeadCell>Email</Table.HeadCell>
-                        <Table.HeadCell>Location</Table.HeadCell>
-                        <Table.HeadCell>Established Year</Table.HeadCell>
-                        <Table.HeadCell>Actions</Table.HeadCell>
-                    </Table.Head>
-                    <Table.Body>
-                        {hospitals.map(hospital => (
-                            <Table.Row key={hospital._id}>
-                                <Table.Cell>{hospital._id}</Table.Cell>
-                                <Table.Cell>{hospital.name}</Table.Cell>
-                                <Table.Cell>{hospital.email}</Table.Cell>
-                                <Table.Cell>{hospital.location}</Table.Cell>
-                                <Table.Cell>{hospital.establishedYear}</Table.Cell>
-                                <Table.Cell>
-                                    <Button size="xs" className="mr-2" onClick={() => handleEdit(hospital)}>Edit</Button>
-                                    <Button size="xs" color="failure" onClick={() => handleDelete(hospital)}>Delete</Button>
-                                </Table.Cell>
-                            </Table.Row>
-                        ))}
-                    </Table.Body>
-                </Table>
-
-                {/* Create Modal */}
-                <Modal show={openCreateModal} onClose={() => setOpenCreateModal(false)}>
-                    <Modal.Header>Add New Hospital</Modal.Header>
-                    <Modal.Body>
-                        <TextInput id="name" placeholder="Hospital Name" value={hospitalData.name} onChange={handleChange} />
-                        <TextInput id="email" placeholder="Email" value={hospitalData.email} onChange={handleChange} />
-                        <TextInput id="location" placeholder="Location" value={hospitalData.location} onChange={handleChange} />
-                        <TextInput id="contact" placeholder="Contact Number" value={hospitalData.contact} onChange={handleChange} />
-                        <TextInput id="establishedYear" type="number" placeholder="Established Year" value={hospitalData.establishedYear} onChange={handleChange} />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={handleCreate}>Create</Button>
-                        <Button color="gray" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-                    </Modal.Footer>
-                </Modal>
-
-                {/* Edit Modal */}
-                <Modal show={openEditModal} onClose={() => setOpenEditModal(false)}>
-                    <Modal.Header>Edit Hospital</Modal.Header>
-                    <Modal.Body>
-                        <TextInput id="name" placeholder="Hospital Name" value={hospitalData.name} onChange={handleChange} />
-                        <TextInput id="email" placeholder="Email" value={hospitalData.email} onChange={handleChange} />
-                        <TextInput id="location" placeholder="Location" value={hospitalData.location} onChange={handleChange} />
-                        <TextInput id="contact" placeholder="Contact Number" value={hospitalData.contact} onChange={handleChange} />
-                        <TextInput id="establishedYear" type="number" placeholder="Established Year" value={hospitalData.establishedYear} onChange={handleChange} />
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button onClick={handleUpdate}>Update</Button>
-                        <Button color="gray" onClick={() => setOpenEditModal(false)}>Cancel</Button>
-                    </Modal.Footer>
-                </Modal>
-
-                {/* Delete Modal */}
-                <Modal show={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
-                    <Modal.Header>Confirm Deletion</Modal.Header>
-                    <Modal.Body>
-                        Are you sure you want to delete this hospital?
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button color="failure" onClick={handleConfirmDelete}>Delete</Button>
-                        <Button color="gray" onClick={() => setOpenDeleteModal(false)}>Cancel</Button>
-                    </Modal.Footer>
-                </Modal>
-            </div>
+  return (
+    <div className="flex min-h-screen">
+      <DashboardSidebar />
+      <div className="flex-1 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
+          <Button onClick={() => { resetForm(); setOpenCreateModal(true); }}>
+            Add New Hospital
+          </Button>
         </div>
-    );
+
+        {loading && <Spinner />}
+        {error && <p className="text-red-500">{error}</p>}
+
+        <Table hoverable>
+          <Table.Head>
+            <Table.HeadCell>Name</Table.HeadCell>
+            <Table.HeadCell>Email</Table.HeadCell>
+            <Table.HeadCell>City</Table.HeadCell>
+            <Table.HeadCell>Phone Number</Table.HeadCell>
+            <Table.HeadCell>Actions</Table.HeadCell>
+          </Table.Head>
+          <Table.Body>
+            {hospitals.map((hospital) => (
+              <Table.Row key={hospital._id}>
+                <Table.Cell>{hospital.name}</Table.Cell>
+                <Table.Cell>{hospital.email}</Table.Cell>
+                <Table.Cell>{hospital.city}</Table.Cell>
+                <Table.Cell>{hospital.phoneNumber}</Table.Cell>
+                <Table.Cell>
+                  <Button size="xs" onClick={() => handleEdit(hospital)}>
+                    Edit
+                  </Button>
+                  <Button size="xs" color="failure" onClick={() => handleDelete(hospital._id)}>
+                    Delete
+                  </Button>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+
+        {/* Create/Edit Hospital Modal */}
+        <Modal show={openCreateModal} onClose={() => setOpenCreateModal(false)}>
+          <Modal.Header>{formData._id ? "Edit Hospital" : "Hospital Registration"}</Modal.Header>
+          <Modal.Body>
+            {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
+            {["name", "city", "identificationNumber", "email", "password", "phoneNumber", "address", "startTime", "endTime"].map((id, index) => (
+              <div key={index} className="mb-2">
+                <Label htmlFor={id} value={id.replace(/([A-Z])/g, " $1")} className="text-gray-700 font-medium" />
+                <TextInput
+                  id={id}
+                  type={id === "email" ? "email" : id === "password" ? "password" : "text"}
+                  value={formData[id]}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            ))}
+            <div className="mb-2">
+              <Label htmlFor="image" value="Hospital Image" className="text-gray-700 font-medium" />
+              <FileInput id="image" onChange={handleFileChange} required={!formData._id} />
+              {imagePreview && <img src={imagePreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-lg border-2 border-gray-400" />}
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={handleSubmit}>{formData._id ? "Update" : "Register"}</Button>
+            <Button color="gray" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    </div>
+  );
 }

@@ -1,11 +1,17 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import bcryptjs from "bcryptjs";
+import bcryptjs from "bcryptjs"; // Import bcryptjs for password comparison
+import moment from "moment"; // For time validation (if needed)
+
+// Helper function to validate time format
+const validateTime = (time) => {
+    return moment(time, "HH:mm", true).isValid(); // Validates time in 24-hour format (HH:mm)
+};
 
 const hospitalSchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "SystemManager",
+        ref: "SystemManager", // Refers to a SystemManager model (must be created)
         required: true,
     },
     name: {
@@ -49,24 +55,39 @@ const hospitalSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: false,
+        required: false, // Image is optional
+        validate: {
+            validator: (value) => {
+                if (value) {
+                    return /\.(jpg|jpeg|png|gif|bmp)$/i.test(value); // Basic image extension validation
+                }
+                return true;
+            },
+            message: "Invalid image format",
+        },
     },
     startTime: {
         type: String,
         required: true,
+        validate: {
+            validator: (value) => validateTime(value),
+            message: "Invalid start time format. Please use HH:mm.",
+        },
     },
     endTime: {
         type: String,
         required: true,
+        validate: {
+            validator: (value) => validateTime(value),
+            message: "Invalid end time format. Please use HH:mm.",
+        },
     },
     activeStatus: {
         type: Boolean,
-        default: false,
+        default: true,
     },
 }, { timestamps: true });
 
-
-// ✅ Hospital Sign-in Method
 hospitalSchema.statics.signin = async function(email, password) {
     if (!email || !password) throw new Error("All Fields are Required");
 
@@ -79,5 +100,4 @@ hospitalSchema.statics.signin = async function(email, password) {
     return hospital;
 };
 
-const Hospital = mongoose.model("Hospital", hospitalSchema);
-export default Hospital;
+export default mongoose.model("Hospital", hospitalSchema);
