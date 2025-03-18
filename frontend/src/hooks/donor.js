@@ -51,18 +51,14 @@ export const useDonor = () => {
         }
     };
 
-    // Update donor details
+    //update
     const updateDonor = async(id, donorData) => {
         setLoading(true);
         try {
-            const formData = new FormData();
-            for (const key in donorData) {
-                formData.append(key, donorData[key]);
-            }
-
             const response = await fetch(`/api/donor/${id}`, {
                 method: "PUT",
-                body: formData,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(donorData),
             });
 
             if (!response.ok) {
@@ -70,8 +66,11 @@ export const useDonor = () => {
             }
 
             const updatedDonor = await response.json();
+
             setDonors((prev) =>
-                prev.map((donor) => (donor._id === id ? updatedDonor : donor))
+                prev.map((donor) =>
+                    donor._id === id ? {...donor, ...updatedDonor } : donor
+                )
             );
         } catch (err) {
             setError(err.message);
@@ -79,6 +78,7 @@ export const useDonor = () => {
             setLoading(false);
         }
     };
+
 
     // Delete a donor
     const deleteDonor = async(id) => {

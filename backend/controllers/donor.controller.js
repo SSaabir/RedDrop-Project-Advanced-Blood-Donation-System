@@ -1,5 +1,5 @@
 import Donor from "../models/donor.model.js";
-import bcrypt from "bcryptjs";
+
 
 // ✅ Get all donors
 export const getDonors = async(req, res) => {
@@ -70,9 +70,17 @@ export const createDonor = async(req, res) => {
 // ✅ Update donor details
 export const updateDonor = async(req, res) => {
     try {
+        let { password, ...otherUpdates } = req.body;
+
+        // ✅ If password is provided, hash it before updating
+        if (password) {
+            password = await bcrypt.hash(password, 10);
+            otherUpdates.password = password;
+        }
+
         const updatedDonor = await Donor.findByIdAndUpdate(
             req.params.id,
-            req.body, { new: true, runValidators: true } // ✅ Ensure validation on update
+            otherUpdates, { new: true, runValidators: true }
         );
 
         if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
@@ -82,6 +90,7 @@ export const updateDonor = async(req, res) => {
         res.status(500).json({ message: "Error updating donor", error: error.message });
     }
 };
+
 
 // ✅ Delete a donor
 export const deleteDonor = async(req, res) => {
