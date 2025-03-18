@@ -11,7 +11,8 @@ export default function AppointmentDashboard() {
     appointments,
     fetchAppointments,
     deleteAppointment,
-    updateAppointment,
+    updateAppointmentDateTime,
+    arrivedForAppointment,
     acceptAppointment,
     cancelAppointment,
   } = useBloodDonationAppointment();
@@ -21,16 +22,27 @@ export default function AppointmentDashboard() {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
-  const { user } = useAuthContext();
-  const { secondUser } = useSecondAuth();
-  const hospitalAdminId = secondUser?.userObj?._id;
+  const [openArrivedModal, setOpenArrivedModal] = useState(false);
+  const [receiptNumber, setReceiptNumber] = useState("");
+  
 
-  const isHospitalAdmin = secondUser?.role === "HospitalAdmin";
+  const { user } = useAuthContext();
+
+  const { secondUser } = useSecondAuth();
+  const userId = secondUser?.userObj?._id;
+  const [hospitalAdminId, sethospitalAdminId] = useState(userId);
+
+  const Donor = user?.role === 'Donor';
+  const Hospital = user?.role === 'Hospital';
+  const Manager = user?.role === 'Manager';
+  const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
 
   useEffect(() => {
     fetchAppointments();
   }, []);
 
+
+  // Handle Reschedule Click
   const handleRescheduleClick = (appointment) => {
     setSelectedAppointment(appointment);
     setNewDate(appointment.appointmentDate || "");
@@ -38,10 +50,26 @@ export default function AppointmentDashboard() {
     setRescheduleModal(true);
   };
 
+  // Handle Reschedule Submit
   const handleRescheduleSubmit = async () => {
     if (selectedAppointment) {
-      await updateAppointment(selectedAppointment._id, newDate, newTime);
+      await updateAppointmentDateTime(selectedAppointment._id, newDate, newTime,hospitalAdminId);
       setRescheduleModal(false);
+    }
+  };
+
+  // Handle Arrived Button Click
+  const handleArrivedClick = (appointment) => {
+    setSelectedEvaluation(appointment);
+    setReceiptNumber(appointment.receiptNumber || "");
+    setOpenArrivedModal(true);
+  };
+
+  // Submit Arrived Status
+  const handleArrivedSubmit = async () => {
+    if (selectedAppointment) {
+      await arrivedForAppointment(selectedAppointment._id, receiptNumber);
+      setOpenArrivedModal(false);
     }
   };
 
@@ -74,28 +102,77 @@ export default function AppointmentDashboard() {
                   <Table.Cell>{appointment.receiptNumber}</Table.Cell>
                   <Table.Cell>{new Date(appointment.appointmentDate).toLocaleDateString()}</Table.Cell>
                   <Table.Cell>{appointment.appointmentTime}</Table.Cell>
-                  <Table.Cell>{appointment.passStatus}</Table.Cell>
-                  <Table.Cell>{appointment.acceptStatus}</Table.Cell>
+
+
+                  <Table.Cell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        appointment.progressStatus === "Completed" ? "bg-green-100 text-green-700" :
+                        appointment.progressStatus === "In Progress" ? "bg-blue-100 text-blue-700" :
+                              "bg-gray-100 text-gray-700"
+                        }`}>
+                       {appointment.progressStatus}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              appointment.acceptStatus === "Accept" ? "bg-green-100 text-green-700" :
+                              appointment.acceptStatus === "denied" ? "bg-red-100 text-red-700" :
+                              "bg-yellow-100 text-yellow-700"
+                            }`}>
+                              {appointment.passStatus}
+                            </span>
+                          </Table.Cell>
                   <Table.Cell>{appointment.hospitalId?.hospitalName || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment.donorId?.name || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment.hospitalAdminId?.name || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment.donorId?.fullname || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment.hospitalAdminId?.fullname || "N/A"}</Table.Cell>
                   <Table.Cell className="space-x-2">
-                    {isHospitalAdmin && (
-                      <>
-                        <Button size="xs" color="warning" onClick={() => handleRescheduleClick(appointment)}>
-                          Reschedule
-                        </Button>
-                        <Button size="xs" color="gray" onClick={() => cancelAppointment(appointment._id)}>
-                          Cancel
-                        </Button>
-                        <Button size="xs" color="success" onClick={() => acceptAppointment(appointment._id)}>
-                          Accept
-                        </Button>
-                        <Button size="xs" color="failure" onClick={() => deleteAppointment(appointment._id)}>
-                          Delete
-                        </Button>
-                      </>
-                    )}
+                    {Hospital && HospitalAdmin && (
+                        <>
+                                {(appointment.activeStatus !== "Cancelled" && appointment.activeStatus !== "Re-Scheduled" && appointment.activeStatus !== "Accepted") && (
+                                  <Button size="xs" color="warning" onClick={() => handleRescheduleClick(appointment)}>
+                                    Reschedule
+                                  </Button>
+                                )}
+                                {(appointment.activeStatus !== "Cancelled" && appointment.activeStatus !== "Accepted") && (
+                                  <Button size="xs" color="gray" onClick={() => cancelAppointment(appointment._id, hospitalAdminId)}>
+                                    Cancel
+                                  </Button>
+                                )}
+                                {(appointment.activeStatus !== "Cancelled" && appointment.activeStatus !== "Accepted" && appointment.activeStatus !== "Re-Scheduled") && (
+                                  <Button size="xs" color="gray" onClick={() => acceptAppointment(appointment._id, hospitalAdminId)}>
+                                    Accept
+                                  </Button>
+                                )}
+                                {(appointment.activeStatus === "Accepted" && appointment.progressStatus === "Completed") || (appointment.progressStatus === "Cancelled" && appointment.activeStatus === "Cancelled") && (
+                                  <Button size="xs" color="failure" onClick={() => deleteAppointment(appointment._id)}>
+                                    Delete
+                                  </Button>
+                                )}
+
+                                {(appointment.progressStatus === "Not Started" && appointment.activeStatus === "Accepted") && (
+                                  <Button size="xs" color="success" onClick={() => handleArrivedClick(appointment)}>
+                                    Arrived
+                                  </Button>
+                                )}
+                                
+                                
+                    </>
+                      )}
+
+                      {Donor && (
+                                    <>
+                                               {(appointment.activeStatus === "Re-Sheduled" && appointment.activeStatus != "Cancelled") && (
+                                                <Button size="xs" color="gray" onClick={() => cancelAppointment(appointment._id, hospitalAdminId)}>
+                                                  Cancel
+                                                </Button>
+                                              )}
+                                              {(appointment.activeStatus !== "Cancelled" && appointment.activeStatus !== "Accepted" && appointment.activeStatus !== "Re-Scheduled") && (
+                                                <Button size="xs" color="gray" onClick={() => acceptAppointment(appointment._id, hospitalAdminId)}>
+                                                  Accept
+                                                </Button>
+                                                )}
+                                  </>
+                                  )}
                   </Table.Cell>
                 </Table.Row>
               ))
@@ -123,6 +200,18 @@ export default function AppointmentDashboard() {
           <Button onClick={handleRescheduleSubmit}>Save</Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Arrived Modal */}
+            <Modal show={openArrivedModal} onClose={() => setOpenArrivedModal(false)}>
+              <Modal.Header>Confirm Arrival</Modal.Header>
+              <Modal.Body>
+                <Label value="Receipt Number" />
+                <TextInput value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} required />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleArrivedSubmit}>Confirm</Button>
+              </Modal.Footer>
+            </Modal>
     </div>
   );
 }
