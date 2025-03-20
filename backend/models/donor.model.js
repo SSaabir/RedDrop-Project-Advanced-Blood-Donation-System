@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import bcryptjs from "bcryptjs"; // Password hashing
 import validator from "validator";
 import moment from "moment"; // For DOB validation
 
@@ -91,7 +90,7 @@ const donorSchema = new mongoose.Schema({
 
 // ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
-    
+
     if (!email || !password) {
         throw new Error("All Fields are Required");
     }
@@ -110,27 +109,7 @@ donorSchema.statics.signin = async function(email, password) {
     return donor;
 };
 
-// ✅ Update method (for profile and status update)
-donorSchema.statics.updateProfile = async function(id, updateData) {
-    const updatedDonor = await this.findByIdAndUpdate(id, updateData, { new: true });
-    if (!updatedDonor) {
-        throw new Error("Donor not found");
-    }
-    return updatedDonor;
-};
 
-// ✅ Deactivate method (for active status toggle)
-donorSchema.statics.toggleActiveStatus = async function(id) {
-    const donor = await this.findById(id);
-    if (!donor) {
-        throw new Error("Donor not found");
-    }
-
-    donor.activeStatus = !donor.activeStatus;
-    await donor.save();
-
-    return donor;
-};
 
 const Donor = mongoose.model("Donor", donorSchema);
 

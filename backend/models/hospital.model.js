@@ -1,17 +1,11 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import bcryptjs from "bcryptjs"; // Import bcryptjs for password comparison
-import moment from "moment"; // For time validation (if needed)
-
-// Helper function to validate time format
-const validateTime = (time) => {
-    return moment(time, "HH:mm", true).isValid(); // Validates time in 24-hour format (HH:mm)
-};
+import moment from "moment";
 
 const hospitalSchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "SystemManager", // Refers to a SystemManager model (must be created)
+        ref: "SystemManager",
         required: true,
     },
     name: {
@@ -55,22 +49,13 @@ const hospitalSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: false, // Image is optional
-        validate: {
-            validator: (value) => {
-                if (value) {
-                    return /\.(jpg|jpeg|png|gif|bmp)$/i.test(value); // Basic image extension validation
-                }
-                return true;
-            },
-            message: "Invalid image format",
-        },
+        required: false,
     },
     startTime: {
         type: String,
         required: true,
         validate: {
-            validator: (value) => validateTime(value),
+            validator: (value) => moment(value, "HH:mm", true).isValid(),
             message: "Invalid start time format. Please use HH:mm.",
         },
     },
@@ -78,7 +63,7 @@ const hospitalSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: {
-            validator: (value) => validateTime(value),
+            validator: (value) => moment(value, "HH:mm", true).isValid(),
             message: "Invalid end time format. Please use HH:mm.",
         },
     },
@@ -88,14 +73,14 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+// Sign-in method (plain text password comparison)
 hospitalSchema.statics.signin = async function(email, password) {
-    if (!email || !password) throw new Error("All Fields are Required");
+    if (!email || !password) throw new Error("All fields are required");
 
     const hospital = await this.findOne({ email });
-    if (!hospital) throw new Error("Incorrect Email");
+    if (!hospital) throw new Error("Incorrect email");
 
-    const match = (password === hospital.password);
-    if (!match) throw new Error("Incorrect Password");
+    if (password !== hospital.password) throw new Error("Incorrect password");
 
     return hospital;
 };
