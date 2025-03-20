@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Button, Modal, TextInput, FileInput, Label, Spinner, Table } from "flowbite-react";
+import React, { useEffect, useState } from "react";
+import { Button, Spinner, Table, Modal, TextInput, Label, FileInput } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
 
 export default function HospitalDashboard() {
-  const { hospitals, loading, error, fetchHospitals, createHospital, updateHospital, deleteHospital } = useHospital();
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [formData, setFormData] = useState({
-    _id: null,  // For editing
+  const { hospitals, loading, error, fetchHospitals, deleteHospital, updateHospital, createHospital } = useHospital();
+  const [editHospital, setEditHospital] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const [newHospital, setNewHospital] = useState({
     name: "",
     city: "",
     identificationNumber: "",
@@ -15,10 +17,12 @@ export default function HospitalDashboard() {
     password: "",
     phoneNumber: "",
     address: "",
+    image: null,
     startTime: "",
     endTime: "",
-    image: null,
+    activeStatus: true,
   });
+
   const [imagePreview, setImagePreview] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -26,74 +30,99 @@ export default function HospitalDashboard() {
     fetchHospitals();
   }, []);
 
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value.trim() }));
+  const handleDelete = async (id) => {
+    if (!id) {
+      console.error("No ID provided for deletion.");
+      return;
+    }
+    
+    const confirmDelete = window.confirm("Are you sure you want to delete this hospital?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteHospital(id);
+      fetchHospitals(); // Refresh the list after deletion
+    } catch (error) {
+      console.error("Error deleting hospital:", error.response?.data?.message || error.message);
+    }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setFormData((prev) => ({ ...prev, image: file }));
-
-    const reader = new FileReader();
-    reader.onloadend = () => setImagePreview(reader.result);
-    if (file) reader.readAsDataURL(file);
+  const handleEdit = (hospital) => {
+    setEditHospital(hospital);
+    setIsEditing(true);
   };
 
-  const handleSubmit = async () => {
-    if (Object.values(formData).some((val) => val === "" || val === null)) {
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!editHospital?._id) {
+      console.error("Hospital ID not found for update.");
+      return;
+    }
+
+    try {
+      await updateHospital(editHospital._id, editHospital);
+      setIsEditing(false);
+      fetchHospitals(); // Refresh the list after update
+    } catch (error) {
+      console.error("Error updating hospital:", error.response?.data?.message || error.message);
+    }
+  };
+
+  const handleAddHospital = async (e) => {
+    e.preventDefault();
+
+    if (Object.values(newHospital).some((val) => val === "" || val === null)) {
       setErrorMessage("Please fill out all fields");
       return;
     }
 
     const hospitalData = new FormData();
-    Object.keys(formData).forEach((key) => {
-      hospitalData.append(key, formData[key]);
+    Object.keys(newHospital).forEach((key) => {
+      hospitalData.append(key, newHospital[key]);
     });
 
-    if (formData._id) {
-      // Update existing hospital
-      await updateHospital(formData._id, hospitalData);
-    } else {
-      // Create new hospital
+    try {
       await createHospital(hospitalData);
+      setIsAdding(false);
+      setNewHospital({
+        name: "",
+        city: "",
+        identificationNumber: "",
+        email: "",
+        password: "",
+        phoneNumber: "",
+        address: "",
+        image: null,
+        startTime: "",
+        endTime: "",
+        activeStatus: true,
+      });
+      setImagePreview(null);
+      fetchHospitals(); // Refresh the list after adding
+    } catch (error) {
+      console.error("Error adding hospital:", error.response?.data?.message || error.message);
     }
-
-    setOpenCreateModal(false);
-    resetForm();
-    fetchHospitals();
   };
 
-  const handleEdit = (hospital) => {
-    setFormData(hospital);
-    setImagePreview(hospital.image); // If stored as a URL
-    setOpenCreateModal(true);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setNewHospital((prev) => ({ ...prev, image: file }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this hospital?");
-    if (!confirmDelete) return;
-
-    await deleteHospital(id);
-    fetchHospitals(); // Refresh after deletion
-  };
-
-  const resetForm = () => {
-    setFormData({
-      _id: null,
-      name: "",
-      city: "",
-      identificationNumber: "",
-      email: "",
-      password: "",
-      phoneNumber: "",
-      address: "",
-      startTime: "",
-      endTime: "",
-      image: null,
-    });
-    setImagePreview(null);
-    setErrorMessage("");
+  const handleEditFieldChange = (e) => {
+    const { name, value } = e.target;
+    setEditHospital((prevHospital) => ({
+      ...prevHospital,
+      [name]: value,
+    }));
   };
 
   return (
@@ -102,9 +131,7 @@ export default function HospitalDashboard() {
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Hospital Dashboard</h1>
-          <Button onClick={() => { resetForm(); setOpenCreateModal(true); }}>
-            Add New Hospital
-          </Button>
+          <Button onClick={() => setIsAdding(true)}>Add Hospital</Button>
         </div>
 
         {loading && <Spinner />}
@@ -113,58 +140,131 @@ export default function HospitalDashboard() {
         <Table hoverable>
           <Table.Head>
             <Table.HeadCell>Name</Table.HeadCell>
-            <Table.HeadCell>Email</Table.HeadCell>
             <Table.HeadCell>City</Table.HeadCell>
+            <Table.HeadCell>Identification Number</Table.HeadCell>
+            <Table.HeadCell>Address</Table.HeadCell>
             <Table.HeadCell>Phone Number</Table.HeadCell>
+            <Table.HeadCell>Email</Table.HeadCell>
+            <Table.HeadCell>Start Time</Table.HeadCell>
+            <Table.HeadCell>End Time</Table.HeadCell>
+            <Table.HeadCell>Active Status</Table.HeadCell>
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
             {hospitals.map((hospital) => (
               <Table.Row key={hospital._id}>
                 <Table.Cell>{hospital.name}</Table.Cell>
-                <Table.Cell>{hospital.email}</Table.Cell>
                 <Table.Cell>{hospital.city}</Table.Cell>
+                <Table.Cell>{hospital.identificationNumber}</Table.Cell>
+                <Table.Cell>{hospital.address}</Table.Cell>
                 <Table.Cell>{hospital.phoneNumber}</Table.Cell>
+                <Table.Cell>{hospital.email}</Table.Cell>
+                <Table.Cell>{hospital.startTime}</Table.Cell>
+                <Table.Cell>{hospital.endTime}</Table.Cell>
+                <Table.Cell>{hospital.activeStatus ? "Active" : "Inactive"}</Table.Cell>
                 <Table.Cell>
-                  <Button size="xs" onClick={() => handleEdit(hospital)}>
-                    Edit
-                  </Button>
-                  <Button size="xs" color="failure" onClick={() => handleDelete(hospital._id)}>
-                    Delete
-                  </Button>
+                  <Button size="xs" onClick={() => handleEdit(hospital)}>Edit</Button>
+                  <Button size="xs" color="failure" onClick={() => handleDelete(hospital._id)}>Delete</Button>
                 </Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>
         </Table>
 
-        {/* Create/Edit Hospital Modal */}
-        <Modal show={openCreateModal} onClose={() => setOpenCreateModal(false)}>
-          <Modal.Header>{formData._id ? "Edit Hospital" : "Hospital Registration"}</Modal.Header>
+        {/* Add Hospital Modal */}
+        <Modal show={isAdding} onClose={() => setIsAdding(false)}>
+          <Modal.Header>Add Hospital</Modal.Header>
           <Modal.Body>
-            {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
-            {["name", "city", "identificationNumber", "email", "password", "phoneNumber", "address", "startTime", "endTime"].map((id, index) => (
-              <div key={index} className="mb-2">
-                <Label htmlFor={id} value={id.replace(/([A-Z])/g, " $1")} className="text-gray-700 font-medium" />
-                <TextInput
-                  id={id}
-                  type={id === "email" ? "email" : id === "password" ? "password" : "text"}
-                  value={formData[id]}
-                  onChange={handleChange}
-                  required
-                />
+            <form onSubmit={handleAddHospital} className="space-y-4">
+              {errorMessage && <p className="text-red-600 text-center">{errorMessage}</p>}
+              <div>
+                <Label htmlFor="name" value="Name" />
+                <TextInput id="name" value={newHospital.name} onChange={(e) => setNewHospital({ ...newHospital, name: e.target.value })} required />
               </div>
-            ))}
-            <div className="mb-2">
-              <Label htmlFor="image" value="Hospital Image" className="text-gray-700 font-medium" />
-              <FileInput id="image" onChange={handleFileChange} required={!formData._id} />
-              {imagePreview && <img src={imagePreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-lg border-2 border-gray-400" />}
-            </div>
+              <div>
+                <Label htmlFor="city" value="City" />
+                <TextInput id="city" value={newHospital.city} onChange={(e) => setNewHospital({ ...newHospital, city: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="identificationNumber" value="Identification Number" />
+                <TextInput id="identificationNumber" value={newHospital.identificationNumber} onChange={(e) => setNewHospital({ ...newHospital, identificationNumber: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="email" value="Email" />
+                <TextInput id="email" type="email" value={newHospital.email} onChange={(e) => setNewHospital({ ...newHospital, email: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="password" value="Password" />
+                <TextInput id="password" type="password" value={newHospital.password} onChange={(e) => setNewHospital({ ...newHospital, password: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="phoneNumber" value="Phone Number" />
+                <TextInput id="phoneNumber" value={newHospital.phoneNumber} onChange={(e) => setNewHospital({ ...newHospital, phoneNumber: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="address" value="Address" />
+                <TextInput id="address" value={newHospital.address} onChange={(e) => setNewHospital({ ...newHospital, address: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="image" value="Upload Image" />
+                <FileInput id="image" onChange={handleFileChange} required />
+                {imagePreview && <img src={imagePreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-full" />}
+              </div>
+              <div>
+                <Label htmlFor="startTime" value="Start Time" />
+                <TextInput id="startTime" type="time" value={newHospital.startTime} onChange={(e) => setNewHospital({ ...newHospital, startTime: e.target.value })} required />
+              </div>
+              <div>
+                <Label htmlFor="endTime" value="End Time" />
+                <TextInput id="endTime" type="time" value={newHospital.endTime} onChange={(e) => setNewHospital({ ...newHospital, endTime: e.target.value })} required />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button color="gray" onClick={() => setIsAdding(false)}>Cancel</Button>
+                <Button type="submit">Add Hospital</Button>
+              </div>
+            </form>
           </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={handleSubmit}>{formData._id ? "Update" : "Register"}</Button>
-            <Button color="gray" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-          </Modal.Footer>
+        </Modal>
+
+        {/* Edit Hospital Modal */}
+        <Modal show={isEditing} onClose={() => setIsEditing(false)}>
+          <Modal.Header>Edit Hospital</Modal.Header>
+          <Modal.Body>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <Label htmlFor="name" value="Name" />
+                <TextInput id="name" name="name" value={editHospital?.name} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="city" value="City" />
+                <TextInput id="city" name="city" value={editHospital?.city} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="identificationNumber" value="Identification Number" />
+                <TextInput id="identificationNumber" name="identificationNumber" value={editHospital?.identificationNumber} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="email" value="Email" />
+                <TextInput id="email" name="email" type="email" value={editHospital?.email} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="password" value="Password" />
+                <TextInput id="password" name="password" type="password" value={editHospital?.password} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="phoneNumber" value="Phone Number" />
+                <TextInput id="phoneNumber" name="phoneNumber" value={editHospital?.phoneNumber} onChange={handleEditFieldChange} required />
+              </div>
+              <div>
+                <Label htmlFor="address" value="Address" />
+                <TextInput id="address" name="address" value={editHospital?.address} onChange={handleEditFieldChange} required />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button color="gray" onClick={() => setIsEditing(false)}>Cancel</Button>
+                <Button type="submit">Update Hospital</Button>
+              </div>
+            </form>
+          </Modal.Body>
         </Modal>
       </div>
     </div>
