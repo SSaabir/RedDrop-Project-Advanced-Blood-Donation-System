@@ -4,39 +4,54 @@ import EmergencyBR from '../models/EmergencyBR.model.js';
 export const getEmergencyRequests = async (req, res) => {
     try {
         const requests = await EmergencyBR.find();
-        res.json(requests);
+        res.status(200).json(requests);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching emergency requests", error });
+        res.status(500).json({ message: "Error retrieving emergency requests", error });
     }
 };
 
-// ✅ Get a single emergency request by ID
+// ✅ Get a single emergency request by emergencyBRId
 export const getEmergencyRequestById = async (req, res) => {
     try {
-        const request = await EmergencyBR.findById(req.params.id);
+        const request = await EmergencyBR.findOne({ emergencyBRId: req.params.emergencyBRId });
         if (!request) return res.status(404).json({ message: "Emergency request not found" });
-        res.json(request);
+
+        res.status(200).json(request);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching emergency request", error });
+        res.status(500).json({ message: "Error retrieving emergency request", error });
     }
 };
 
 // ✅ Create a new emergency request
 export const createEmergencyRequest = async (req, res) => {
     try {
-        const { name, phoneNumber, ID, email, proofDocument, neededBlood, criticalLevel, expiry, responsibleId, responsibleModel } = req.body;
-
-        const newRequest = new EmergencyBR({
-            name,
-            phoneNumber,
-            ID,
-            email,
-            proofDocument,
-            neededBlood,
-            criticalLevel,
-            expiry,
+        const {
+            emergencyBRId,
             responsibleId,
             responsibleModel,
+            name,
+            phoneNumber,
+            proofOfIdentificationNumber,
+            patientBlood,
+            criticalLevel,
+            withinDate,
+            activeStatus,
+        } = req.body;
+
+        const proofDocument = req.file ? req.file.path : null; // Get the file path
+
+        const newRequest = new EmergencyBR({
+            emergencyBRId,
+            responsibleId,
+            responsibleModel,
+            name,
+            phoneNumber,
+            proofOfIdentificationNumber,
+            proofDocument,
+            patientBlood,
+            criticalLevel,
+            withinDate,
+            activeStatus,
         });
 
         await newRequest.save();
@@ -49,9 +64,37 @@ export const createEmergencyRequest = async (req, res) => {
 // ✅ Update an emergency request
 export const updateEmergencyRequest = async (req, res) => {
     try {
-        const updatedRequest = await EmergencyBR.findByIdAndUpdate(
-            req.params.id,
-            req.body, { new: true }
+        const {
+            emergencyBRId,
+            responsibleId,
+            responsibleModel,
+            name,
+            phoneNumber,
+            proofOfIdentificationNumber,
+            patientBlood,
+            criticalLevel,
+            withinDate,
+            activeStatus,
+        } = req.body;
+
+        const proofDocument = req.file ? req.file.path : null; // Get the file path
+
+        const updatedRequest = await EmergencyBR.findOneAndUpdate(
+            { emergencyBRId: req.params.emergencyBRId }, // Match by emergencyBRId
+            {
+                emergencyBRId,
+                responsibleId,
+                responsibleModel,
+                name,
+                phoneNumber,
+                proofOfIdentificationNumber,
+                proofDocument,
+                patientBlood,
+                criticalLevel,
+                withinDate,
+                activeStatus,
+            },
+            { new: true } // Return the updated document
         );
 
         if (!updatedRequest) return res.status(404).json({ message: "Emergency request not found" });
@@ -65,7 +108,7 @@ export const updateEmergencyRequest = async (req, res) => {
 // ✅ Delete an emergency request
 export const deleteEmergencyRequest = async (req, res) => {
     try {
-        const deletedRequest = await EmergencyBR.findByIdAndDelete(req.params.id);
+        const deletedRequest = await EmergencyBR.findOneAndDelete({ emergencyBRId: req.params.emergencyBRId });
         if (!deletedRequest) return res.status(404).json({ message: "Emergency request not found" });
 
         res.json({ message: "Emergency request deleted successfully" });

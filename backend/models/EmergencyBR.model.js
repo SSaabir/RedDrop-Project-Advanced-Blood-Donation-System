@@ -1,6 +1,22 @@
 import mongoose from 'mongoose';
 
 const emergencyBRSchema = new mongoose.Schema({
+    
+    emergencyBRId: { // Primary Key (P)
+        type: String,
+        required: true,
+        unique: true,
+    },
+    responsibleId: { // Foreign Key (F)
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: 'responsibleModel', // Can be either a hospitalId or donorId
+    },
+    responsibleModel: {
+        type: String,
+        required: true,
+        enum: ['Hospital', 'Donor'], // To specify whether responsibleId is hospital or donor
+    },
     name: {
         type: String,
         required: true,
@@ -13,32 +29,26 @@ const emergencyBRSchema = new mongoose.Schema({
             message: (props) => `${props.value} is not a valid phone number!`,
         },
     },
-    ID: {
+    proofOfIdentificationNumber: { 
         type: String,
         required: true,
         unique: true,
-    },
-    email: {
-        type: String,
-        required: true,
-        validate: {
-            validator: (value) => /\S+@\S+\.\S+/.test(value), // Basic email validation
-            message: (props) => `${props.value} is not a valid email!`,
-        },
     },
     proofDocument: {
         type: String, // Store the file path or URL of the document
         required: true,
     },
-    neededBlood: {
+    patientBlood: {
         type: String,
-        required: true, // e.g., A+, O-
+        required: true,
+        enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'], // Ensures only valid blood types
     },
     criticalLevel: {
-        type: String, // e.g., "Low", "Medium", "High"
+        type: String,
+        enum: ['Low', 'Medium', 'High'], // Restrict to valid values
         required: true,
-    },
-    expiry: {
+    },    
+    withinDate: { 
         type: Date,
         required: true,
     },
@@ -46,17 +56,7 @@ const emergencyBRSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
-    responsibleId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: 'responsibleModel', // Can be either a hospitalId or donorId
-    },
-    responsibleModel: {
-        type: String,
-        required: true,
-        enum: ['Hospital', 'Donor'], // To specify whether responsibleId is hospital or donor
-    }
-}, {timestamps: true});
+}, { timestamps: true });
 
 const EmergencyBR = mongoose.model('EmergencyBR', emergencyBRSchema);
 

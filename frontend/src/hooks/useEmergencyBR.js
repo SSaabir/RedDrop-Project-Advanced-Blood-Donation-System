@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export const useEmergencyBR = () => {
     const [emergencyRequests, setEmergencyRequests] = useState([]);
@@ -6,8 +6,9 @@ export const useEmergencyBR = () => {
     const [error, setError] = useState(null);
 
     // ✅ Fetch all emergency requests
-    const fetchEmergencyRequests = async () => {
+    const fetchEmergencyRequests = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await fetch("/api/emergencyBR");
             if (!response.ok) throw new Error("Failed to fetch emergency requests");
@@ -18,7 +19,7 @@ export const useEmergencyBR = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // ✅ Fetch a single emergency request by ID
     const fetchEmergencyRequestById = async (id) => {
@@ -32,20 +33,12 @@ export const useEmergencyBR = () => {
         }
     };
 
-    // ✅ Create a new emergency request
-    const createEmergencyRequest = async (requestData) => {
+    // ✅ Create a new emergency request with file upload
+    const createEmergencyRequest = async (requestData, file) => {
         try {
             const formData = new FormData();
-            formData.append("name", requestData.name);
-            formData.append("phoneNumber", requestData.phoneNumber);
-            formData.append("ID", requestData.ID);
-            formData.append("email", requestData.email);
-            formData.append("neededBlood", requestData.neededBlood);
-            formData.append("criticalLevel", requestData.criticalLevel);
-            formData.append("expiry", requestData.expiry);
-            formData.append("responsibleId", requestData.responsibleId);
-            formData.append("responsibleModel", requestData.responsibleModel);
-            formData.append("proofDocument", requestData.proofDocument); // File input
+            Object.keys(requestData).forEach((key) => formData.append(key, requestData[key]));
+            if (file) formData.append("proofDocument", file);
 
             const response = await fetch("/api/emergencyBR", {
                 method: "POST",
@@ -60,20 +53,12 @@ export const useEmergencyBR = () => {
         }
     };
 
-    // ✅ Update an emergency request
-    const updateEmergencyRequest = async (id, requestData) => {
+    // ✅ Update an emergency request with file upload
+    const updateEmergencyRequest = async (id, requestData, file) => {
         try {
             const formData = new FormData();
-            formData.append("name", requestData.name);
-            formData.append("phoneNumber", requestData.phoneNumber);
-            formData.append("ID", requestData.ID);
-            formData.append("email", requestData.email);
-            formData.append("neededBlood", requestData.neededBlood);
-            formData.append("criticalLevel", requestData.criticalLevel);
-            formData.append("expiry", requestData.expiry);
-            formData.append("responsibleId", requestData.responsibleId);
-            formData.append("responsibleModel", requestData.responsibleModel);
-            formData.append("proofDocument", requestData.proofDocument); // File input
+            Object.keys(requestData).forEach((key) => formData.append(key, requestData[key]));
+            if (file) formData.append("proofDocument", file);
 
             const response = await fetch(`/api/emergencyBR/${id}`, {
                 method: "PUT",
@@ -93,9 +78,7 @@ export const useEmergencyBR = () => {
     // ✅ Delete an emergency request
     const deleteEmergencyRequest = async (id) => {
         try {
-            const response = await fetch(`/api/emergencyBR/${id}`, {
-                method: "DELETE",
-            });
+            const response = await fetch(`/api/emergencyBR/${id}`, { method: "DELETE" });
             if (!response.ok) throw new Error("Failed to delete emergency request");
             setEmergencyRequests((prev) => prev.filter((request) => request._id !== id));
         } catch (err) {
@@ -103,10 +86,10 @@ export const useEmergencyBR = () => {
         }
     };
 
-    // Fetch emergency requests when the hook is used
+    // ✅ Fetch emergency requests when the hook is used
     useEffect(() => {
         fetchEmergencyRequests();
-    }, []);
+    }, [fetchEmergencyRequests]);
 
     return {
         emergencyRequests,
