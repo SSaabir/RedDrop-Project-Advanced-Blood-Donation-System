@@ -6,6 +6,7 @@ import { useLogout } from '../hooks/useLogout';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { useHospital } from '../hooks/hospital';
 import {useHealthEvaluation} from '../hooks/useHealthEvaluation';
+import{useBloodDonationAppointment} from '../hooks/useBloodDonationAppointment';
 
 export default function Header() {
   const path = useLocation().pathname;
@@ -13,6 +14,11 @@ export default function Header() {
   const { user } = useAuthContext();
   const { hospitals, loading, error } = useHospital();
   const {createEvaluation} = useHealthEvaluation();
+  const {createAppointment} = useBloodDonationAppointment();
+
+  
+
+
 
   // State for modals and form data
   const [openEvalModal, setOpenEvalModal] = useState(false);
@@ -31,12 +37,11 @@ export default function Header() {
   });
 
   const [appointmentFormData, setAppointmentFormData] = useState({
-    donorName: "",
-    address: "",
-    phoneNumber: "",
-    nicNumber: "",
-    email: "",
-    file: null
+    hospitalId: "",
+    appointmentDate: "",
+    appointmentTime: "",
+    donorId: userId || "",
+   
   });
 
   
@@ -55,10 +60,11 @@ export default function Header() {
 
   // Handle form field change for appointment
   const handleAppointmentChange = (e) => {
-    const { id, value, type, files } = e.target;
+    const { id, value} = e.target;
+
     setAppointmentFormData(prev => ({
       ...prev,
-      [id]: type === 'file' ? files[0] : value
+      [id]: value
     }));
   };
 
@@ -85,8 +91,15 @@ export default function Header() {
   // Handle form submission for appointment
   const handleAppointmentSubmit = (e) => {
     e.preventDefault();
+
+    const appointmentData = { 
+      ...appointmentFormData, 
+      donorId: userId || "" // Ensure donorId is included before submitting
+    };
     // Handle the appointment scheduling logic here
     console.log("Scheduling appointment", appointmentFormData);
+    createAppointment(appointmentData);
+
     // Close modal after submission
     setOpenAppointmentModal(false);
   };
@@ -191,30 +204,24 @@ export default function Header() {
         <Modal.Header>Schedule an Appointment</Modal.Header>
         <Modal.Body>
           <form onSubmit={handleAppointmentSubmit}>
-            <div>
-              <Label htmlFor="donorName" value="Donor Name" className="text-gray-700 font-medium" />
-              <TextInput id="donorName" type="text" placeholder="Enter donor name" required value={appointmentFormData.donorName} onChange={handleAppointmentChange} />
+          <div>
+              <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-medium" />
+              <Select id="hospitalId" required value={evalFormData.hospitalId} onChange={handleAppointmentChange}>
+                <option value="" disabled>Select a hospital</option>
+                {hospitals.map(hospital => (
+                  <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
+                ))}
+              </Select>
             </div>
             <div>
-              <Label htmlFor="address" value="Address" className="text-gray-700 font-medium" />
-              <TextInput id="address" placeholder="Enter address" required value={appointmentFormData.address} onChange={handleAppointmentChange} />
+              <Label htmlFor="appointmentDate" value="AppointmentDate" className="text-gray-700 font-medium" />
+              <TextInput id="appointmentDate" type="date" required value={appointmentFormData.appointmentDate} onChange={handleAppointmentChange} />
             </div>
             <div>
-              <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700 font-medium" />
-              <TextInput id="phoneNumber" type="tel" placeholder="Enter phone number" required value={appointmentFormData.phoneNumber} onChange={handleAppointmentChange} />
+              <Label htmlFor="appointmentTime" value="AppointmentTime " className="text-gray-700 font-medium" />
+              <TextInput id="appointmentTime" type="time" required value={appointmentFormData.appointmentTime} onChange={handleAppointmentChange} />
             </div>
-            <div>
-              <Label htmlFor="nicNumber" value="NIC Number" className="text-gray-700 font-medium" />
-              <TextInput id="nicNumber" type="text" placeholder="Enter NIC number" required value={appointmentFormData.nicNumber} onChange={handleAppointmentChange} />
-            </div>
-            <div>
-              <Label htmlFor="email" value="Email" className="text-gray-700 font-medium" />
-              <TextInput id="email" type="email" placeholder="Enter email address" required value={appointmentFormData.email} onChange={handleAppointmentChange} />
-            </div>
-            <div>
-              <Label htmlFor="file" value="Upload Document" className="text-gray-700 font-medium" />
-              <input id="file" type="file" required onChange={handleAppointmentChange} className="mt-2 w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-red-500 transition-all" />
-            </div>
+           
             <Modal.Footer>
               <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center">
                 {loading ? <Spinner color="white" size="sm" /> : "Schedule Appointment"}

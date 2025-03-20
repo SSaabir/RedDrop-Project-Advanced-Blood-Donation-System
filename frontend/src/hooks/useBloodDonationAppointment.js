@@ -49,7 +49,7 @@ export const useBloodDonationAppointment = () => {
     };
 
     // ✅ Update blood donation appointment details
-    const updateAppointment = async (id, appointmentDate, appointmentTime) => {
+    const updateAppointmentDateTime = async (id, appointmentDate, appointmentTime) => {
         try {
             const response = await fetch(`/api/BloodDonationAppointment/${id}`,{
                 method: "PATCH",
@@ -68,6 +68,68 @@ export const useBloodDonationAppointment = () => {
             setError(err.message);
         }
     };
+
+    // ✅ Cancel cancelAppointment
+  const cancelAppointment = async (id, hospitalAdminId) => {
+    try {
+      const response = await fetch(`/api/BloodDonationAppointment/${id}/cancel`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+      });
+  
+      if (!response.ok) throw new Error("Failed to cancel appointment");
+      const canceledAppointment = await response.json();
+      setAppointments((prev) =>
+        prev.map((appointment) => (appointment._id === id ? canceledAppointment : evaluation))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+  
+
+  // ✅ Accept acceptAppointment
+  const acceptAppointment = async (id, hospitalAdminId) => {
+    try {
+      const response = await fetch(`/api/BloodDonationAppointment/${id}/accept`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+      });
+  
+      if (!response.ok) throw new Error("Failed to accept Appointments");
+      const acceptedAppointment = await response.json();
+      setAppointments((prev) =>
+        prev.map((appointment) => (appointment._id === id ? acceptedAppointment : appointment))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+  
+  // ✅ Mark as arrivedForAppointment
+  const arrivedForAppointment = async (id, receiptNumber) => {
+    try {
+      const response = await fetch(`/api/BloodDonationAppointment/${id}/arrived`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ receiptNumber }),
+      });
+      if (!response.ok) throw new Error("Failed to mark as arrived");
+      const updatedappointment = await response.json();
+      setAppointments((prev) =>
+        prev.map((appointment) => (appointment._id === id ? updatedappointment : appointment))
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
 
     // ✅ Delete a blood donation appointment
     const deleteAppointment = async (id) => {
@@ -94,7 +156,10 @@ export const useBloodDonationAppointment = () => {
         fetchAppointments,
         fetchAppointmentById,
         createAppointment,
-        updateAppointment,
+        updateAppointmentDateTime,
         deleteAppointment,
+        arrivedForAppointment,
+        acceptAppointment,
+        cancelAppointment,
     };
 };

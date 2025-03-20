@@ -50,17 +50,7 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// Method for appointment status update (example implementation)
-bloodDonationAppointmentSchema.methods.updateStatus = async function (newStatus) {
-    const validStatuses = ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'];
 
-    if (!validStatuses.includes(newStatus)) {
-        throw new Error('Invalid Status');
-    }
-
-    this.acceptStatus = newStatus;
-    await this.save();
-};
 
 
 const BloodDonationAppointment = mongoose.model('BloodDonationAppointment', bloodDonationAppointmentSchema);
