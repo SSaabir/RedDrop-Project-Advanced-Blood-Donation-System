@@ -12,10 +12,10 @@ import {
 const router = express.Router();
 
 router.get("/", getSystemManagers);          // Get all system managers
-router.get("/:systemManagerId", getSystemManagerById);    // Get a single system manager by ID
+router.get("/:id", getSystemManagerById);    // Get a single system manager by ID
 router.post("/", upload.single('image'), createSystemManager);       // Create a new system manager
-router.put("/:systemManagerId", upload.single('image'), updateSystemManager);     // Update an existing system manager
-router.delete("/:systemManagerId", deleteSystemManager);  // Delete a system manager
-router.patch("/:systemManagerId/toggle-status", activateDeactivateSystemManager); // Activate/Deactivate system manager
+router.put("/:id", upload.single('image'), updateSystemManager);     // Update an existing system manager
+router.delete("/:id", deleteSystemManager);  // Delete a system manager
+router.patch('/:id/toggle-status', activateDeactivateSystemManager); // New route
 
 export default router;
