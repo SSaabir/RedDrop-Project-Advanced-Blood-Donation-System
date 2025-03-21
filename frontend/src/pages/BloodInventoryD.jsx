@@ -1,34 +1,34 @@
-import React, { useState } from 'react';
-import { Button, Table, Modal, TextInput, Label } from 'flowbite-react';
-import { DashboardSidebar } from '../components/DashboardSidebar';
-import { useBloodInventory } from '../hooks/BloodInventory';
+import React, { useState } from "react";
+import { Button, Table, Modal, TextInput, Label, Select } from "flowbite-react";
+import { DashboardSidebar } from "../components/DashboardSidebar";
+import { useBloodInventory } from "../hooks/BloodInventory";
 
 export default function BloodInventoryD() {
     const { bloodInventory, createBloodInventory, updateBloodInventory, deleteBloodInventory } = useBloodInventory();
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
-    const [formData, setFormData] = useState({ hospitalId: '', bloodType: '', availableStocks: '', expirationDate: '' });
-    
+    const [formData, setFormData] = useState({ hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
+
+    // Blood Type Options
+    const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+
+    // Open Modal for Add/Edit
     const openModal = (inventory = null) => {
-        if (inventory) {
-            setIsEdit(true);
-            setFormData(inventory);
-        } else {
-            setIsEdit(false);
-            setFormData({ hospitalId: '', bloodType: '', availableStocks: '', expirationDate: '' });
-        }
+        setIsEdit(!!inventory);
+        setFormData(inventory || { hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
         setIsModalOpen(true);
     };
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-    };
+    // Close Modal
+    const closeModal = () => setIsModalOpen(false);
 
+    // Handle Input Change
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // Handle Submit (Add or Update)
     const handleSubmit = async () => {
         if (isEdit) {
             await updateBloodInventory(formData._id, formData);
@@ -39,13 +39,14 @@ export default function BloodInventoryD() {
     };
 
     return (
-        <div className='flex min-h-screen'>
+        <div className="flex min-h-screen">
             <DashboardSidebar />
-            <div className='flex-1 p-6'>
-                <div className='flex justify-between items-center mb-4'>
-                    <h1 className='text-2xl font-bold'>Blood Inventory</h1>
+            <div className="flex-1 p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold">Blood Inventory</h1>
                     <Button onClick={() => openModal()}>Add New Inventory</Button>
                 </div>
+
                 <Table hoverable>
                     <Table.Head>
                         <Table.HeadCell>Hospital ID</Table.HeadCell>
@@ -63,37 +64,46 @@ export default function BloodInventoryD() {
                                     <Table.Cell>{inventory.availableStocks}</Table.Cell>
                                     <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString()}</Table.Cell>
                                     <Table.Cell>
-                                        <Button size='xs' className='bg-blue-500 text-white px-2 py-1 rounded'
+                                        <Button size="xs" className="bg-blue-500 text-white px-2 py-1 rounded"
                                             onClick={() => openModal(inventory)}>Edit</Button> 
-                                        <Button size='xs' color='failure' className='ml-2'
+                                        <Button size="xs" color="failure" className="ml-2"
                                             onClick={() => deleteBloodInventory(inventory._id)}>Delete</Button> 
                                     </Table.Cell>
                                 </Table.Row>
                             ))
                         ) : (
                             <Table.Row>
-                                <Table.Cell colSpan={5} className='text-center'>No blood inventory records found.</Table.Cell>
+                                <Table.Cell colSpan={5} className="text-center">No blood inventory records found.</Table.Cell>
                             </Table.Row>
                         )}
                     </Table.Body>
                 </Table>
+
+                {/* Modal for Add/Edit */}
                 <Modal show={isModalOpen} onClose={closeModal}>
-                    <Modal.Header>{isEdit ? 'Edit Inventory' : 'Add New Inventory'}</Modal.Header>
+                    <Modal.Header>{isEdit ? "Edit Inventory" : "Add New Inventory"}</Modal.Header>
                     <Modal.Body>
-                        <div className='space-y-4'>
+                        <div className="space-y-4">
                             <Label>Hospital ID</Label>
-                            <TextInput name='hospitalId' value={formData.hospitalId} onChange={handleChange} required />
+                            <TextInput name="hospitalId" value={formData.hospitalId} onChange={handleChange} required />
+
                             <Label>Blood Type</Label>
-                            <TextInput name='bloodType' value={formData.bloodType} onChange={handleChange} required />
+                            <Select name="bloodType" value={formData.bloodType} onChange={handleChange} required>
+                                {bloodTypes.map((type) => (
+                                    <option key={type} value={type}>{type}</option>
+                                ))}
+                            </Select>
+
                             <Label>Stock</Label>
-                            <TextInput type='number' name='availableStocks' value={formData.availableStocks} onChange={handleChange} required />
+                            <TextInput type="number" name="availableStocks" value={formData.availableStocks} onChange={handleChange} required />
+
                             <Label>Expiration Date</Label>
-                            <TextInput type='date' name='expirationDate' value={formData.expirationDate} onChange={handleChange} required />
+                            <TextInput type="date" name="expirationDate" value={formData.expirationDate} onChange={handleChange} required />
                         </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={handleSubmit}>{isEdit ? 'Update' : 'Add'}</Button>
-                        <Button color='gray' onClick={closeModal}>Cancel</Button>
+                        <Button onClick={handleSubmit}>{isEdit ? "Update" : "Add"}</Button>
+                        <Button color="gray" onClick={closeModal}>Cancel</Button>
                     </Modal.Footer>
                 </Modal>
             </div>

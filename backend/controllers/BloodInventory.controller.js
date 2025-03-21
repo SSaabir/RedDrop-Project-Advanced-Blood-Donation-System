@@ -26,6 +26,10 @@ export const createBloodInventory = async (req, res) => {
     try {
         const { hospitalId, bloodType,availableStocks, expirationDate } = req.body;
 
+        if (!hospitalId || !bloodType || !availableStocks || !expirationDate) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         const newInventory = new BloodInventory({
             hospitalId,
             bloodType,
