@@ -9,7 +9,7 @@ export const useBloodDonationAppointment = () => {
     const fetchAppointments = async () => {
         setLoading(true);
         try {
-            const response = await fetch("/api/BloodDonationAppointment");
+            const response = await fetch("/api/Blood-donation-appointment");
             if (!response.ok) throw new Error("Failed to fetch appointments");
             const data = await response.json();
             setAppointments(data);
@@ -23,7 +23,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Fetch a single blood donation appointment by ID
     const fetchAppointmentById = async (id) => {
         try {
-            const response = await fetch(`/api/BloodDonationAppointment/${id}`);
+            const response = await fetch(`/api/Blood-donation-appointment/${id}`);
             if (!response.ok) throw new Error("Failed to fetch appointment");
             return await response.json();
         } catch (err) {
@@ -35,7 +35,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Create a new blood donation appointment
     const createAppointment = async (appointmentData) => {
         try {
-            const response = await fetch("/api/BloodDonationAppointment", {
+            const response = await fetch("/api/Blood-donation-appointment", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(appointmentData),
@@ -51,7 +51,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Update blood donation appointment details
     const updateAppointmentDateTime = async (id, appointmentDate, appointmentTime) => {
         try {
-            const response = await fetch(`/api/BloodDonationAppointment/${id}`,{
+            const response = await fetch(`/api/Blood-donation-appointment/${id}`,{
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ appointmentDate, appointmentTime }),
@@ -72,7 +72,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Cancel cancelAppointment
   const cancelAppointment = async (id, hospitalAdminId) => {
     try {
-      const response = await fetch(`/api/BloodDonationAppointment/${id}/cancel`, {
+      const response = await fetch(`/api/Blood-donation-appointment/${id}/cancel`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json"
@@ -94,7 +94,7 @@ export const useBloodDonationAppointment = () => {
   // ✅ Accept acceptAppointment
   const acceptAppointment = async (id, hospitalAdminId) => {
     try {
-      const response = await fetch(`/api/BloodDonationAppointment/${id}/accept`, {
+      const response = await fetch(`/api/Blood-donation-appointment/${id}/accept`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json"
@@ -115,7 +115,7 @@ export const useBloodDonationAppointment = () => {
   // ✅ Mark as arrivedForAppointment
   const arrivedForAppointment = async (id, receiptNumber) => {
     try {
-      const response = await fetch(`/api/BloodDonationAppointment/${id}/arrived`, {
+      const response = await fetch(`/api/Blood-donation-appointment/${id}/arrived`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ receiptNumber }),
@@ -134,7 +134,7 @@ export const useBloodDonationAppointment = () => {
     // ✅ Delete a blood donation appointment
     const deleteAppointment = async (id) => {
         try {
-            const response = await fetch(`/api/BloodDonationAppointment/${id}`, {
+            const response = await fetch(`/api/Blood-donation-appointment/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete appointment");
