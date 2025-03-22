@@ -20,11 +20,6 @@ const feedbackSchema = new mongoose.Schema({
         refPath: 'sessionModel', // Dynamic reference
         required: true,
     },
-    sessionModel: {
-        type: String,
-        enum: ['Evaluation', 'Appointment'], // Determines the model being referenced
-        required: true,
-    },
     subject: {
         type: String,
         required: true,
@@ -35,7 +30,7 @@ const feedbackSchema = new mongoose.Schema({
     },
     feedbackType: {
         type: String,
-        enum: ['Positive', 'Negative', 'Neutral'], // Define feedback types
+        enum: ['General Feedback', 'Technical Feedback', 'Complaint Feedback'], // Define feedback types
         required: true,
     },
     starRating: {

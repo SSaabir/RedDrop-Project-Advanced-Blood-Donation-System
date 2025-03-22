@@ -1,150 +1,135 @@
-import React, { useState } from 'react';
-import { Button, Table, Modal, TextInput, Label, Spinner } from 'flowbite-react';
-import { DashboardSidebar } from '../components/DashboardSidebar';
+import React, { useState, useEffect } from "react";
+import { Table, TextInput, Select, Spinner } from "flowbite-react";
+import { DashboardSidebar } from "../components/DashboardSidebar";
+import { useInquiry } from "../hooks/useInquiry"; // Assuming you have a hook for handling the API calls
 
-export default function InquiryD() {
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Editor' },
-    { id: 3, name: 'Alice Johnson', email: 'alice@example.com', role: 'Viewer' },
-  ]);
+export default function InquiryDashboard() {
+    const {
+        inquiries,
+        loading,
+        error,
+        fetchInquiries,
+        updateInquiryStatus,
+        deleteInquiry
+    } = useInquiry();
 
-  const [loading, setLoading] = useState(false);
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userData, setUserData] = useState({ name: '', email: '', role: 'Viewer' });
+    const [filteredInquiries, setFilteredInquiries] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterCategory, setFilterCategory] = useState('');
 
-  // Open Create Modal
-  const handleCreateUser = () => {
-    setUsers([...users, { id: users.length + 1, ...userData }]);
-    setOpenCreateModal(false);
-    setUserData({ name: '', email: '', role: 'Viewer' });
-  };
+    // Fetch inquiries on component mount
+    useEffect(() => {
+        fetchInquiries();
+    }, []); // Empty dependency array to fetch only once
 
-  // Open Edit Modal
-  const handleEdit = (user) => {
-    setSelectedUser(user);
-    setUserData({ name: user.name, email: user.email, role: user.role });
-    setOpenEditModal(true);
-  };
+    // Update filtered inquiries when data, search term or filter category changes
+    useEffect(() => {
+        const filtered = inquiries.filter((inquiry) => {
+            const matchesSearchTerm =
+                inquiry.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                inquiry.message.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesCategory =
+                !filterCategory || inquiry.category === filterCategory;
 
-  // Update User
-  const handleUpdateUser = () => {
-    setUsers(users.map(user => (user.id === selectedUser.id ? { ...user, ...userData } : user)));
-    setOpenEditModal(false);
-    setUserData({ name: '', email: '', role: 'Viewer' });
-  };
+            return matchesSearchTerm && matchesCategory;
+        });
+        setFilteredInquiries(filtered);
+    }, [inquiries, searchTerm, filterCategory]); // Runs when inquiries, search term, or filter category changes
 
-  // Open Delete Modal
-  const handleDelete = (user) => {
-    setSelectedUser(user);
-    setOpenDeleteModal(true);
-  };
+    // Handle search input
+    const handleSearch = (value) => {
+        setSearchTerm(value); // The filtering happens in useEffect
+    };
 
-  // Confirm Delete User
-  const handleConfirmDelete = () => {
-    setUsers(users.filter(user => user.id !== selectedUser.id));
-    setOpenDeleteModal(false);
-  };
+    // Handle category filter
+    const handleCategoryFilter = (value) => {
+        setFilterCategory(value); // The filtering happens in useEffect
+    };
 
-  return (
-    <div className='flex min-h-screen'>
-      <DashboardSidebar />
+    // Handle status update
+    const handleUpdateStatus = (id, status) => {
+        updateInquiryStatus(id, status);
+    };
 
-      <div className="flex-1 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Inquiries</h1>
-          <Button onClick={() => setOpenCreateModal(true)}>Add New User</Button>
+    // Handle inquiry deletion
+    const handleDeleteInquiry = (id) => {
+        deleteInquiry(id);
+    };
+
+    return (
+        <div className="flex min-h-screen">
+            <DashboardSidebar />
+            <div className="flex-1 p-6">
+                <h2 className="text-2xl font-bold mb-4">Inquiry Dashboard</h2>
+
+                {/* Search & Filter Controls */}
+                <div className="flex gap-4 mb-4">
+                    <TextInput
+                        placeholder="Search inquiries..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                    <Select
+                        value={filterCategory}
+                        onChange={(e) => handleCategoryFilter(e.target.value)}
+                    >
+                        <option value="">All Categories</option>
+                        <option value="General">General</option>
+                        <option value="Technical">Technical</option>
+                        <option value="Complaint">Complaint</option>
+                        <option value="Other">Other</option>
+                    </Select>
+                </div>
+
+                {/* Display loading, error, or inquiry table */}
+                {loading ? (
+                    <Spinner size="lg" />
+                ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                ) : (
+                    <Table hoverable>
+                        <Table.Head>
+                            <Table.HeadCell>Subject</Table.HeadCell>
+                            <Table.HeadCell>Email</Table.HeadCell>
+                            <Table.HeadCell>Category</Table.HeadCell>
+                            <Table.HeadCell>Status</Table.HeadCell>
+                            <Table.HeadCell>Actions</Table.HeadCell>
+                        </Table.Head>
+                        <Table.Body>
+                            {filteredInquiries.length > 0 ? (
+                                filteredInquiries.map((inquiry) => (
+                                    <Table.Row key={inquiry._id}>
+                                        <Table.Cell>{inquiry.subject}</Table.Cell>
+                                        <Table.Cell>{inquiry.email}</Table.Cell>
+                                        <Table.Cell>{inquiry.category}</Table.Cell>
+                                        <Table.Cell>{inquiry.attentiveStatus}</Table.Cell>
+                                        <Table.Cell>
+                                            <button
+                                                onClick={() => handleUpdateStatus(inquiry._id, "In Progress")}
+                                                className="text-blue-500 hover:text-blue-700"
+                                            >
+                                                Update Status
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteInquiry(inquiry._id)}
+                                                className="text-red-500 hover:text-red-700 ml-2"
+                                            >
+                                                Delete
+                                            </button>
+                                        </Table.Cell>
+                                    </Table.Row>
+                                ))
+                            ) : (
+                                <Table.Row>
+                                    <Table.Cell colSpan="5" className="text-center">
+                                        No inquiries found.
+                                    </Table.Cell>
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table>
+                )}
+            </div>
         </div>
-
-        {loading ? (
-          <Spinner />
-        ) : (
-          <Table hoverable>
-            <Table.Head>
-              <Table.HeadCell>ID</Table.HeadCell>
-              <Table.HeadCell>Name</Table.HeadCell>
-              <Table.HeadCell>Email</Table.HeadCell>
-              <Table.HeadCell>Role</Table.HeadCell>
-              <Table.HeadCell>Actions</Table.HeadCell>
-            </Table.Head>
-            <Table.Body>
-              {users.map((user) => (
-                <Table.Row key={user.id}>
-                  <Table.Cell>{user.id}</Table.Cell>
-                  <Table.Cell>{user.name}</Table.Cell>
-                  <Table.Cell>{user.email}</Table.Cell>
-                  <Table.Cell>{user.role}</Table.Cell>
-                  <Table.Cell>
-                    <Button size="xs" className="mr-2" onClick={() => handleEdit(user)}>Edit</Button>
-                    <Button size="xs" color="failure" onClick={() => handleDelete(user)}>Delete</Button>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-        )}
-      </div>
-
-      {/* Create User Modal */}
-      <Modal show={openCreateModal} onClose={() => setOpenCreateModal(false)}>
-        <Modal.Header>Add New User</Modal.Header>
-        <Modal.Body>
-          <div className="flex flex-col gap-3">
-            <Label htmlFor="name">Name</Label>
-            <TextInput id="name" value={userData.name} onChange={(e) => setUserData({ ...userData, name: e.target.value })} />
-            <Label htmlFor="email">Email</Label>
-            <TextInput id="email" value={userData.email} onChange={(e) => setUserData({ ...userData, email: e.target.value })} />
-            <Label htmlFor="role">Role</Label>
-            <select id="role" className="p-2 border rounded" value={userData.role} onChange={(e) => setUserData({ ...userData, role: e.target.value })}>
-              <option value="Admin">Admin</option>
-              <option value="Editor">Editor</option>
-              <option value="Viewer">Viewer</option>
-            </select>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleCreateUser}>Create</Button>
-          <Button color="gray" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Edit User Modal */}
-      <Modal show={openEditModal} onClose={() => setOpenEditModal(false)}>
-        <Modal.Header>Edit User</Modal.Header>
-        <Modal.Body>
-          <div className="flex flex-col gap-3">
-            <Label htmlFor="name">Name</Label>
-            <TextInput id="name" value={userData.name} onChange={(e) => setUserData({ ...userData, name: e.target.value })} />
-            <Label htmlFor="email">Email</Label>
-            <TextInput id="email" value={userData.email} onChange={(e) => setUserData({ ...userData, email: e.target.value })} />
-            <Label htmlFor="role">Role</Label>
-            <select id="role" className="p-2 border rounded" value={userData.role} onChange={(e) => setUserData({ ...userData, role: e.target.value })}>
-              <option value="Admin">Admin</option>
-              <option value="Editor">Editor</option>
-              <option value="Viewer">Viewer</option>
-            </select>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleUpdateUser}>Update</Button>
-          <Button color="gray" onClick={() => setOpenEditModal(false)}>Cancel</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Delete User Modal */}
-      <Modal show={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
-        <Modal.Header>Confirm Delete</Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete {selectedUser?.name}?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleConfirmDelete}>Delete</Button>
-          <Button color="gray" onClick={() => setOpenDeleteModal(false)}>Cancel</Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
-  );
+    );
 }

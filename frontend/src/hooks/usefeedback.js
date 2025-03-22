@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export const useFeedback = () => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // ✅ Fetch all feedback
-    const fetchFeedbacks = async () => {
+    // Fetch all feedback
+    const fetchFeedbacks = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
-            const response = await fetch("/api/feedback");
+            const response = await fetch("http://localhost:3000/api/feedback");
             if (!response.ok) throw new Error("Failed to fetch feedback");
             const data = await response.json();
             setFeedbacks(data);
@@ -18,24 +19,25 @@ export const useFeedback = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    // ✅ Fetch a single feedback by ID
-    const fetchFeedbackById = async (id) => {
+    // Fetch a single feedback by ID
+    const fetchFeedbackById = useCallback(async (id) => {
         try {
-            const response = await fetch(`/api/feedback/${id}`);
+            const response = await fetch(`http://localhost:5000/api/feedback/${id}`);
             if (!response.ok) throw new Error("Failed to fetch feedback");
             return await response.json();
         } catch (err) {
             setError(err.message);
             return null;
         }
-    };
+    }, []);
 
-    // ✅ Create new feedback
-    const createFeedback = async (feedbackData) => {
+    // Create new feedback
+    const createFeedback = useCallback(async (feedbackData) => {
+        setLoading(true);
         try {
-            const response = await fetch("/api/feedback", {
+            const response = await fetch("http://localhost:5000/api/feedback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedbackData),
@@ -45,13 +47,16 @@ export const useFeedback = () => {
             setFeedbacks((prev) => [...prev, newFeedback]);
         } catch (err) {
             setError(err.message);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, []);
 
-    // ✅ Update feedback details
-    const updateFeedback = async (id, feedbackData) => {
+    // Update feedback details
+    const updateFeedback = useCallback(async (id, feedbackData) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/feedback/${id}`, {
+            const response = await fetch(`http://localhost:5000/api/feedback/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedbackData),
@@ -62,27 +67,32 @@ export const useFeedback = () => {
                 prev.map((feedback) => (feedback._id === id ? updatedFeedback : feedback))
             );
         } catch (err) {
-            console.error(err.message);
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, []);
 
-    // ✅ Delete a feedback
-    const deleteFeedback = async (id) => {
+    // Delete a feedback
+    const deleteFeedback = useCallback(async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/feedback/${id}`, {
+            const response = await fetch(`http://localhost:5000/api/feedback/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete feedback");
             setFeedbacks((prev) => prev.filter((feedback) => feedback._id !== id));
         } catch (err) {
             setError(err.message);
+        } finally {
+            setLoading(false);
         }
-    };
+    }, []);
 
     // Fetch feedbacks when the hook is used
     useEffect(() => {
         fetchFeedbacks();
-    }, []);
+    }, [fetchFeedbacks]);
 
     return {
         feedbacks,
