@@ -7,7 +7,7 @@ import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
 import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.route.js";
 import SystemManagerRoutes from './routes/SystemManager.route.js';
-
+import cors from 'cors'
 import hospitalRoutes from "./routes/hospital.route.js";
 import donorRoutes from "./routes/donor.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
@@ -23,7 +23,7 @@ const app = express();
 
 // ✅ Middleware (before routes)
 app.use(express.json());
-
+app.use(cors())
 // ✅ Multer Configuration for File Uploads
 const storage = multer.diskStorage({
     destination: './uploads/', // Directory where files will be stored

@@ -9,10 +9,19 @@ import {
 
 const router = express.Router();
 
-router.get("/", getFeedbacks); // Get all feedback
-router.get("/:id", getFeedbackById); // Get a single feedback by ID
-router.post("/", createFeedback); // Create new feedback
-router.patch("/:id", updateFeedback); // Update feedback details
-router.delete("/:id", deleteFeedback); // Delete feedback
+// ✅ Get all feedbacks
+router.get("/", getFeedbacks);
 
-export default router;
+// ✅ Get a single feedback by ID
+router.get("/:id", getFeedbackById);
+
+// ✅ Create new feedback
+router.post("/", createFeedback);
+
+// ✅ Update feedback (Partial Update)
+router.patch("/:id", updateFeedback);
+
+// ✅ Delete feedback
+router.delete("/:id", deleteFeedback);
+
+export default router;

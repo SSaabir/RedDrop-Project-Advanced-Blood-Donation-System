@@ -1,72 +1,94 @@
-import Inquiry from "../models/inquiry.model.js";
+// controllers/inquiryController.js
+import Inquiry from '../models/inquiry.model.js';
+import SystemManager from '../models/SystemManager.model.js';
 
-// ✅ Get all inquiries
-export const getInquiries = async (req, res) => {
+// Controller to fetch all inquiries with system manager details populated
+export const getAllInquiries = async (req, res) => {
     try {
-        const inquiries = await Inquiry.find().populate('systemAdminId donorId');
+        const inquiries = await Inquiry.find()
+            .populate('systemManagerId', 'name email');  // Populate system manager's name and email
         res.json(inquiries);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching inquiries", error });
+        res.status(500).json({ message: 'Error fetching inquiries', error });
     }
 };
 
-// ✅ Get a single inquiry by ID
+// Controller to fetch a specific inquiry by ID
 export const getInquiryById = async (req, res) => {
     try {
-        const inquiry = await Inquiry.findById(req.params.id).populate('systemAdminId donorId');
-        if (!inquiry) return res.status(404).json({ message: "Inquiry not found" });
+        const inquiry = await Inquiry.findById(req.params.id)
+            .populate('systemManagerId', 'name email');
+        if (!inquiry) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
         res.json(inquiry);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching inquiry", error });
+        res.status(500).json({ message: 'Error fetching inquiry', error });
     }
 };
 
-// ✅ Create a new inquiry
+// Controller to create a new inquiry
 export const createInquiry = async (req, res) => {
+    const { systemManagerId, email, subject, message, category, attentiveStatus } = req.body;
+    
     try {
-        const { systemAdminId, donorId, enroll, subject, description, category } = req.body;
+        // Validate if the systemManagerId exists in the SystemManager collection
+        const systemManager = await SystemManager.findById(systemManagerId);
+        if (!systemManager) {
+            return res.status(400).json({ message: 'System Manager not found' });
+        }
 
         const newInquiry = new Inquiry({
-            systemAdminId,
-            donorId,
-            enroll,
+            systemManagerId,
+            email,
             subject,
-            description,
+            message,
             category,
+            attentiveStatus,
         });
 
         await newInquiry.save();
-        res.status(201).json(newInquiry);
+        res.status(201).json({ message: 'Inquiry created successfully', inquiry: newInquiry });
     } catch (error) {
-        res.status(400).json({ message: "Error creating inquiry", error });
+        res.status(500).json({ message: 'Error creating inquiry', error });
     }
 };
 
-// ✅ Update inquiry details
-export const updateInquiry = async (req, res) => {
+// Controller to update an inquiry's status
+export const updateInquiryStatus = async (req, res) => {
+    const { status } = req.body;
+    const validStatuses = ['Pending', 'In Progress', 'Resolved'];
+
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+    }
+
     try {
-        const updatedInquiry = await Inquiry.findByIdAndUpdate(
+        const inquiry = await Inquiry.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            { attentiveStatus: status },
             { new: true }
         );
+        
+        if (!inquiry) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
 
-        if (!updatedInquiry) return res.status(404).json({ message: "Inquiry not found" });
-
-        res.status(200).json(updatedInquiry);
+        res.json({ message: 'Inquiry updated successfully', inquiry });
     } catch (error) {
-        res.status(500).json({ message: "Error updating inquiry", error });
+        res.status(500).json({ message: 'Error updating inquiry', error });
     }
 };
 
-// ✅ Delete an inquiry
+// Controller to delete an inquiry by ID
 export const deleteInquiry = async (req, res) => {
     try {
-        const deletedInquiry = await Inquiry.findByIdAndDelete(req.params.id);
-        if (!deletedInquiry) return res.status(404).json({ message: "Inquiry not found" });
-
-        res.json({ message: "Inquiry deleted successfully" });
+        const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+        if (!inquiry) {
+            return res.status(404).json({ message: 'Inquiry not found' });
+        }
+        res.json({ message: 'Inquiry deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting inquiry", error });
-    }
+        res.status(500).json({ message: 'Error deleting inquiry', error });
+    }
 };
