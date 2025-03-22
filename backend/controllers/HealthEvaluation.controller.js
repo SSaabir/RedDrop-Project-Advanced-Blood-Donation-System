@@ -173,3 +173,25 @@ export const deleteHealthEvaluation = async (req, res) => {
         res.status(500).json({ message: "Error deleting health evaluation", error });
     }
 };
+
+export const getHealthEvaluationByDonorId = async (req, res) => {
+    try {
+        const {id} = req.params;
+        const evaluation = await HealthEvaluation.find({donorId: id}).populate("hospitalId donorId hospitalAdminId");
+        if (!evaluation) return res.status(404).json({ message: "Health evaluation not found" });
+        res.json(evaluation);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching health evaluation", error });
+    }
+};
+
+export const getHealthEvaluationByHospitalId = async (req, res) => {
+    try {
+        const {id} = req.params;
+        const evaluation = await HealthEvaluation.find({hospitalId: id}).populate("hospitalId donorId hospitalAdminId");
+        if (!evaluation) return res.status(404).json({ message: "Health evaluation not found" });
+        res.json(evaluation);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching health evaluation", error });
+    }
+};

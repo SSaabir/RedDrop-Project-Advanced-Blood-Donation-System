@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const useHospital = () => {
     const [hospitals, setHospitals] = useState([]);
@@ -7,16 +7,13 @@ export const useHospital = () => {
 
     // Fetch all hospitals
     const fetchHospitals = async() => {
-        setLoading(false);
         try {
             const response = await fetch("/api/hospital");
-            if (!response.ok) throw new Error("Failed to fetch hospitals");
             const data = await response.json();
+            if (!response.ok) throw new Error("Failed to fetch hospitals");
             setHospitals(data);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -25,9 +22,9 @@ export const useHospital = () => {
         setLoading(true);
         try {
             const response = await fetch(`/api/hospital/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch hospital");
             const data = await response.json();
-            setHospitals([data]); // Store the hospital in an array for consistency
+            if (!response.ok) throw new Error("Failed to fetch hospital");
+            setHospitals(data); // Store the hospital in an array for consistency
         } catch (err) {
             setError(err.message);
         } finally {
@@ -117,6 +114,10 @@ export const useHospital = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchHospitals();
+    }, []);
 
     return {
         hospitals,

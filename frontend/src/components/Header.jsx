@@ -176,7 +176,7 @@ export default function Header() {
               <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-medium" />
               <Select id="hospitalId" required value={evalFormData.hospitalId} onChange={handleEvalChange}>
                 <option value="" disabled>Select a hospital</option>
-                {hospitals.map(hospital => (
+                {hospitals && hospitals.map(hospital => (
                   <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
                 ))}
               </Select>
@@ -206,9 +206,9 @@ export default function Header() {
           <form onSubmit={handleAppointmentSubmit}>
           <div>
               <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-medium" />
-              <Select id="hospitalId" required value={evalFormData.hospitalId} onChange={handleAppointmentChange}>
+              <Select id="hospitalId" required value={appointmentFormData.hospitalId} onChange={handleAppointmentChange}>
                 <option value="" disabled>Select a hospital</option>
-                {hospitals.map(hospital => (
+                {hospitals && hospitals.map(hospital => (
                   <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
                 ))}
               </Select>
