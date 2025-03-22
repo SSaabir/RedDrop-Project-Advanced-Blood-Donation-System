@@ -182,11 +182,35 @@ export const useHealthEvaluation = () => {
     }
   };
 
-  // Fetch evaluations when the hook is used
-  useEffect(() => {
-    fetchEvaluations();
-  }, []);
+  const fetchEvaluationByDonorId = async (id) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/healthEvaluation/donor/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch evaluations");
+      const data = await response.json();
+      setEvaluations(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const fetchEvaluationByHospitalId = async (id) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/healthEvaluation/hospital/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch evaluations");
+      const data = await response.json();
+      setEvaluations(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
   return {
     evaluations,
     loading,
@@ -194,6 +218,8 @@ export const useHealthEvaluation = () => {
     uploadEvaluationFile,
     fetchEvaluations,
     fetchEvaluationById,
+    fetchEvaluationByDonorId,
+    fetchEvaluationByHospitalId,
     createEvaluation,
     updateEvaluationDateTime,
     cancelEvaluation,

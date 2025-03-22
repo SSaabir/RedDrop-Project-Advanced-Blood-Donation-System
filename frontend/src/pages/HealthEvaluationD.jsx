@@ -6,7 +6,7 @@ import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function AppointmentD() {
-  const { evaluations, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, uploadEvaluationFile } = useHealthEvaluation();
+  const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, uploadEvaluationFile } = useHealthEvaluation();
 
   const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
@@ -21,10 +21,11 @@ export default function AppointmentD() {
   const [evaluationResult, setEvaluationResult] = useState("");
 
   const { user } = useAuthContext();
-
+  const userId = user?.userObj?._id;
+  
   const { secondUser } = useSecondAuth();
-  const userId = secondUser?.userObj?._id;
-  const [hospitalAdminId, sethospitalAdminId] = useState(userId);
+  const SecondUserId = secondUser?.userObj?._id;
+  const [hospitalAdminId, sethospitalAdminId] = useState(SecondUserId);
 
   const Donor = user?.role === 'Donor';
   const Hospital = user?.role === 'Hospital';
@@ -32,8 +33,18 @@ export default function AppointmentD() {
   const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
 
   useEffect(() => {
+    if (!userId) {
+      return;
+  }
+  if (Donor) {
+    fetchEvaluationByDonorId(userId);
+  }
+  else if (Hospital) {
+    fetchEvaluationByHospitalId(userId);
+  } else {
     fetchEvaluations();
-  }, []);
+  }
+  }, [userId, Donor, Hospital]);
 
   // Handle Reschedule Click
   const handleRescheduleClick = (evaluation) => {
