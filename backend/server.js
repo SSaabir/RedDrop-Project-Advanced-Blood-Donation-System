@@ -24,6 +24,7 @@ const app = express();
 // ✅ Middleware (before routes)
 app.use(express.json());
 app.use(cors())
+
 // ✅ Multer Configuration for File Uploads
 const storage = multer.diskStorage({
     destination: './uploads/', // Directory where files will be stored
