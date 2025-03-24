@@ -67,9 +67,9 @@ app.use('/api/manager', SystemManagerRoutes);
 app.use('/api/emergencyBR', EmergencyBRRoutes);
 app.use('/api/healthAd', HospitalAdminRoutes);
 // ✅ Error handling middleware (should be last)
-app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || 'Internal Server Error';
+app.use((error, req, res, next) => {
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
     res.status(statusCode).json({
         success: false,
         statusCode,

@@ -123,7 +123,7 @@ export const useSignin = () => {
     }
   };
 
-  const signinHD = async (formData) => {
+  const signinHD = async (formData, userId) => {
     setLoading(true);
     setError(null);
 
@@ -131,7 +131,7 @@ export const useSignin = () => {
         const res = await fetch('/api/auth/signinhd', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
+            body: JSON.stringify({...formData, userId}),
         });
 
         const text = await res.text();

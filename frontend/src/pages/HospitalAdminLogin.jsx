@@ -3,9 +3,13 @@ import { Button, Card, Label, TextInput } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignin } from "../hooks/useSignin";
 import background from '../assets/hospital.jpg'; // Ensure this path is correct
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function HospitalAdminLogin() {
-  const navigate = useNavigate(); 
+    const {user} = useAuthContext();
+
+    const userId = user?.userObj?._id;
+    const navigate = useNavigate(); 
     const [formData, setFormData] = useState({});
     const {signinHD, loading, error} = useSignin();
   
@@ -18,7 +22,7 @@ export default function HospitalAdminLogin() {
       if (!formData.email || !formData.password) {
         return setErrorMessage('Please fill out all fields');
       }
-     await signinHD(formData);
+     await signinHD(formData, userId);
   }
 
   return (

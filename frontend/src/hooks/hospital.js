@@ -115,10 +115,7 @@ export const useHospital = () => {
         }
     };
 
-    useEffect(() => {
-        fetchHospitals();
-    }, []);
-
+    
     return {
         hospitals,
         loading,

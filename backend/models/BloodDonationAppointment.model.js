@@ -16,6 +16,11 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
         ref: 'HospitalAdmin',
         required: false,
      },
+     feedbackStatus: {
+        type: Boolean, // URL or file path for the image
+        required: false,
+        default: false
+    },
     appointmentDate: {
         type: Date, // Assuming you want to store the exact date and time
         required: true,
@@ -36,12 +41,12 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
     receiptNumber: {
         type: String, // Unique receipt number for the appointment
         required: true,
-        unique: true,
+        unique: false,
     },
-    passStatus: {
+    progressStatus: {
         type: String,
-        enum: ['Pending', 'Passed', 'Failed', 'Cancelled'],
-        default: 'Pending',
+        enum: ['Not Started', 'In Progress', 'Completed', 'Cancelled'],
+        default: 'Not Started',
     },
     acceptStatus: {
         type: String,
