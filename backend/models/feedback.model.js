@@ -1,19 +1,32 @@
 import mongoose from 'mongoose';
 
 const feedbackSchema = new mongoose.Schema({
+    feedbackId: {
+        type: mongoose.Schema.Types.ObjectId,
+        auto: true, // Automatically generated unique ID
+    },
     donorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Donor', // Reference to Donor model
         required: true,
     },
-    hospitalId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Hospital', // Reference to Hospital model
-        required: true,
-    },
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SystemManager', // Reference to System Manager model
+        required: true,
+    },
+    sessionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        refPath: 'sessionModel', // Dynamic reference
+        required: true,
+    },
+    sessionModel: {
+        type: String,
+        enum: ['BloodDonationAppointment', 'HealthEvaluation'], // Define session models
+        required: true,
+    },
+    subject: {
+        type: String,
         required: true,
     },
     comments: {
@@ -22,8 +35,14 @@ const feedbackSchema = new mongoose.Schema({
     },
     feedbackType: {
         type: String,
-        enum: ['Positive', 'Negative', 'Neutral'], // Define feedback types
+        enum: ['General Feedback', 'Technical Feedback', 'Complaint Feedback'], // Define feedback types
         required: true,
+    },
+    starRating: {
+        type: Number,
+        min: 1,
+        max: 5,
+        required: false, // Optional field
     },
 }, { timestamps: true });
 

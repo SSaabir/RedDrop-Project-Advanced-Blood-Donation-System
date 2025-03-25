@@ -1,18 +1,28 @@
-import express from "express";
+// routes/inquiryRoutes.js
+import express from 'express';
 import {
-    getInquiries,
+    getAllInquiries,
     getInquiryById,
     createInquiry,
-    updateInquiry,
+    updateInquiryStatus,
     deleteInquiry
-} from "../controllers/inquiry.controller.js";
+} from '../controllers/inquiry.controller.js';
 
 const router = express.Router();
 
-router.get("/", getInquiries); // Get all inquiries
-router.get("/:id", getInquiryById); // Get a single inquiry by ID
-router.post("/", createInquiry); // Create a new inquiry
-router.patch("/:id", updateInquiry); // Update inquiry details
-router.delete("/:id", deleteInquiry); // Delete inquiry
+// Get all inquiries
+router.get('/inquiries', getAllInquiries);
 
-export default router;
+// Get a specific inquiry by ID
+router.get('/inquiries/:id', getInquiryById);
+
+// Create a new inquiry
+router.post('/inquiries', createInquiry);
+
+// Update inquiry status
+router.put('/inquiries/:id/status', updateInquiryStatus);
+
+// Delete an inquiry by ID
+router.delete('/inquiries/:id', deleteInquiry);
+
+export default router;

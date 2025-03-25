@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Modal, TextInput, Label, Spinner, FileInput } from 'flowbite-react';
 import { DashboardSidebar } from '../components/DashboardSidebar';
-import useHospitalAdmin from '../hooks/useHospitalAdmin';
+import { useHospitalAdmin } from '../hooks/useHospitalAdmin';
 import { useAuthContext } from '../hooks/useAuthContext';
 
 export default function HospitalAdminsD() {
     
 
-    const { hospitalAdmins, loading, error, fetchHospitalAdmins, createHospitalAdmin, updateHospitalAdmin, deleteHospitalAdmin } = useHospitalAdmin();
+    const { hospitalAdmins, loading, error, fetchHospitalAdmins, createHospitalAdmin, updateHospitalAdmin, deleteHospitalAdmin, activateDeactivateHospitalAdmin } = useHospitalAdmin();
     const [openCreateModal, setOpenCreateModal] = useState(false);
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -30,6 +30,10 @@ export default function HospitalAdminsD() {
     useEffect(() => {
         fetchHospitalAdmins();
     }, [fetchHospitalAdmins]);
+
+    const handleToggleStatus = async (id, currentStatus) => {
+        await activateDeactivateHospitalAdmin(id);
+      };
 
     // Handle text input changes
     const handleChange = (e) => {
@@ -167,6 +171,14 @@ export default function HospitalAdminsD() {
                                 <Table.Cell>{admin.email}</Table.Cell>
                                 <Table.Cell>{admin.phoneNumber}</Table.Cell>
                                 <Table.Cell>
+                                <Button
+                      size="xs"
+                      className="mr-2"
+                      color={admin.activeStatus ? 'failure' : 'success'}
+                      onClick={() => handleToggleStatus(admin._id, admin.activeStatus)}
+                    >
+                      {admin.activeStatus ? 'Deactivate' : 'Activate'}
+                    </Button>
                                     <Button size="xs" className="mr-2" onClick={() => handleEdit(admin)}>Edit</Button>
                                     <Button size="xs" color="failure" onClick={() => handleDelete(admin)}>Delete</Button>
                                 </Table.Cell>

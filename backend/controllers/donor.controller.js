@@ -1,24 +1,24 @@
 import Donor from "../models/donor.model.js";
-import bcrypt from "bcryptjs";
+
 
 // ✅ Get all donors
 export const getDonors = async(req, res) => {
     try {
-        const donors = await Donor.find().lean(); // ✅ Use lean() for faster query response
+        const donors = await Donor.find();
         res.json(donors);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching donors", error: error.message });
+        res.status(500).json({ message: "Error fetching donors", error });
     }
 };
 
 // ✅ Get a single donor by ID
 export const getDonorById = async(req, res) => {
     try {
-        const donor = await Donor.findById(req.params.id).lean();
+        const donor = await Donor.findById(req.params.id);
         if (!donor) return res.status(404).json({ message: "Donor not found" });
         res.json(donor);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching donor", error: error.message });
+        res.status(500).json({ message: "Error fetching donor", error });
     }
 };
 
@@ -35,19 +35,13 @@ export const createDonor = async(req, res) => {
             dob,
             bloodType,
             city, // ✅ Changed location to city
-            nic, // ✅ Added NIC
-            healthStatus = true,
-            appointmentStatus = false
+            nic
         } = req.body;
 
         // ✅ Ensure all required fields are provided
         if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
             return res.status(400).json({ message: "All fields are required" });
         }
-
-        // ✅ Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
 
         const image = req.file ? req.file.path : null;
 
@@ -57,14 +51,13 @@ export const createDonor = async(req, res) => {
             gender,
             phoneNumber,
             email,
-            password: hashedPassword, // ✅ Store hashed password
+            password, // ✅ Store hashed password
             dob,
             bloodType,
             city, // ✅ Changed location to city
             nic, // ✅ Added NIC
             image,
-            healthStatus,
-            appointmentStatus
+
         });
 
         await newDonor.save();
@@ -77,9 +70,17 @@ export const createDonor = async(req, res) => {
 // ✅ Update donor details
 export const updateDonor = async(req, res) => {
     try {
+        let { password, ...otherUpdates } = req.body;
+
+        // ✅ If password is provided, hash it before updating
+        if (password) {
+            password = await bcrypt.hash(password, 10);
+            otherUpdates.password = password;
+        }
+
         const updatedDonor = await Donor.findByIdAndUpdate(
             req.params.id,
-            req.body, { new: true, runValidators: true } // ✅ Ensure validation on update
+            otherUpdates, { new: true, runValidators: true }
         );
 
         if (!updatedDonor) return res.status(404).json({ message: "Donor not found" });
@@ -89,6 +90,7 @@ export const updateDonor = async(req, res) => {
         res.status(500).json({ message: "Error updating donor", error: error.message });
     }
 };
+
 
 // ✅ Delete a donor
 export const deleteDonor = async(req, res) => {
@@ -135,5 +137,33 @@ export const updateAppointmentStatus = async(req, res) => {
         res.status(200).json(updatedDonor);
     } catch (error) {
         res.status(500).json({ message: "Error updating appointment status", error: error.message });
+    }
+};
+
+// ✅ Activate/Deactivate donor status
+export const activateDeactivateDonor = async(req, res) => {
+    try {
+        const { id } = req.params;
+
+        const donor = await Donor.findById(id);
+        if (!donor) {
+            return res.status(404).json({ message: "Donor not found" });
+        }
+
+        const newStatus = !donor.activeStatus;
+        const updatedDonor = await Donor.findByIdAndUpdate(
+            id, { $set: { activeStatus: newStatus } }, { new: true }
+        );
+
+        res.status(200).json({
+            message: `Donor ${newStatus ? 'activated' : 'deactivated'} successfully`,
+            donor: updatedDonor,
+        });
+    } catch (error) {
+        console.error('Activate/Deactivate error:', error);
+        res.status(500).json({
+            message: "Error toggling donor status",
+            error: error.message,
+        });
     }
 };
