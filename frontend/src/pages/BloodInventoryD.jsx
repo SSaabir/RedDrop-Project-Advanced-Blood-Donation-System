@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Table, Modal, TextInput, Label, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
-import { useBloodInventory } from "../hooks/BloodInventory";
+import { useBloodInventory } from "../hooks/useBloodInventory";
 import { useHospital } from "../hooks/hospital";
 
 export default function BloodInventoryD() {
