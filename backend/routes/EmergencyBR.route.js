@@ -5,7 +5,6 @@ import {
     getEmergencyRequests,
     getEmergencyRequestById,
     createEmergencyRequest,
-    updateEmergencyRequest,
     deleteEmergencyRequest,
     acceptEmergencyRequest,
     declineEmergencyRequest
@@ -35,13 +34,11 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter, limits: { fileSize: 100 * 1024 * 1024 } });
 
 // ✅ Routes for Emergency Blood Requests
-router.get("/", getEmergencyRequests);  // ✅ Get all requests (with search & filter support)
-router.get("/:emergencyBRId", getEmergencyRequestById); // ✅ Get a single request by ID
-router.post("/", upload.single('proofDocument'), createEmergencyRequest); // ✅ Create request with file upload
-router.put("/:emergencyBRId", upload.single('proofDocument'), updateEmergencyRequest); // ✅ Update request with file upload
-router.delete("/:emergencyBRId", deleteEmergencyRequest); // ✅ Delete request
-
-// ✅ Accept & Decline Emergency Requests
+// Routes using the imported multer configuration
+router.get("/", getEmergencyRequests);
+router.get("/:emergencyBRId", getEmergencyRequestById);
+router.post("/", upload.single('proofDocument'), createEmergencyRequest); // Use single file upload
+router.delete("/:emergencyBRId", deleteEmergencyRequest);
 router.put("/:emergencyBRId/accept", acceptEmergencyRequest);
 router.put("/:emergencyBRId/decline", declineEmergencyRequest);
 

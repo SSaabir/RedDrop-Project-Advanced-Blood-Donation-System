@@ -43,46 +43,33 @@ export const useEmergencyBR = () => {
     // ✅ Create a new emergency request with file upload
     const createEmergencyRequest = async (requestData, file) => {
         try {
-            const formData = new FormData();
-            Object.entries(requestData).forEach(([key, value]) => formData.append(key, value));
-            if (file) formData.append("proofDocument", file);
-
-            const response = await fetch("/api/emergencyBR", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Failed to create emergency request");
-
-            const newRequest = await response.json();
-            setEmergencyRequests((prev) => [...prev, newRequest]);
+          const formData = new FormData();
+          Object.entries(requestData).forEach(([key, value]) => {
+            // Prevent "null" string by converting null/undefined to empty string
+            formData.append(key, value === null || value === undefined ? "" : value);
+          });
+          if (file) {
+            formData.append("proofDocument", file); // File should be a File object, not a data URL
+          }
+      
+          const response = await fetch("http://localhost:3000/api/emergencyBR", { // Use full URL
+            method: "POST",
+            body: formData,
+          });
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to create emergency request: ${errorText}`);
+          }
+      
+          const newRequest = await response.json();
+          setEmergencyRequests((prev) => [...prev, newRequest]);
+          setError(null); // Clear any previous errors
         } catch (err) {
-            setError(err.message);
+          setError(err.message);
+          console.error("Error in createEmergencyRequest:", err);
         }
-    };
-
-    // ✅ Update an emergency request with file upload
-    const updateEmergencyRequest = async (id, requestData, file) => {
-        try {
-            const formData = new FormData();
-            Object.entries(requestData).forEach(([key, value]) => formData.append(key, value));
-            if (file) formData.append("proofDocument", file);
-
-            const response = await fetch(`/api/emergencyBR/${id}`, {
-                method: "PUT",
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Failed to update emergency request");
-
-            const updatedRequest = await response.json();
-            setEmergencyRequests((prev) =>
-                prev.map((request) => (request._id === updatedRequest._id ? updatedRequest : request))
-            );
-        } catch (err) {
-            setError(err.message);
-        }
-    };
+      };
 
     // ✅ Delete an emergency request
     const deleteEmergencyRequest = async (id) => {
@@ -149,7 +136,6 @@ export const useEmergencyBR = () => {
         fetchEmergencyRequests,
         fetchEmergencyRequestById,
         createEmergencyRequest,
-        updateEmergencyRequest,
         deleteEmergencyRequest,
         acceptEmergencyRequest,
         declineEmergencyRequest,

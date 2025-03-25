@@ -1,6 +1,8 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import fs from 'fs';
 import authRoutes from './routes/auth.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
@@ -12,8 +14,6 @@ import feedbackRoutes from "./routes/feedback.route.js";
 import inquiryRoutes from "./routes/inquiry.route.js";
 import EmergencyBRRoutes from './routes/EmergencyBR.route.js';
 import HospitalAdminRoutes from './routes/HospitalAdmin.route.js';
-import multer from 'multer';
-import fs from 'fs';
 
 dotenv.config();
 
@@ -77,6 +77,7 @@ app.use((err, req, res, next) => {
 });
 
 // ✅ Database Connection & Server Start
+console.log('Mongo URI:', process.env.MONGO);
 mongoose.connect(process.env.MONGO)
     .then(() => {
         console.log('Connected to MongoDB');
@@ -86,4 +87,5 @@ mongoose.connect(process.env.MONGO)
     })
     .catch((err) => {
         console.error('MongoDB Connection Error:', err);
+        process.exit(1);
     });
