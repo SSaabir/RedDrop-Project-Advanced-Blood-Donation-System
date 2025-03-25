@@ -22,14 +22,22 @@ export const getBloodInventoryById = async (req, res) => {
 };
 
 //  Create a new blood inventory record
+
+
 export const createBloodInventory = async (req, res) => {
     try {
-        const { hospitalId, bloodType, rhFactor, availableStocks, expirationDate } = req.body;
+        console.log("Received Data:", req.body); // Debugging
+
+        const { hospitalId, bloodType, availableStocks, expirationDate } = req.body;
+
+        if (!hospitalId || !bloodType || !availableStocks || !expirationDate) {
+            console.error("Validation failed: Missing required fields", req.body);
+            return res.status(400).json({ message: "All fields are required!" });
+        }
 
         const newInventory = new BloodInventory({
             hospitalId,
             bloodType,
-            rhFactor,
             availableStocks,
             expirationDate,
         });
@@ -37,9 +45,12 @@ export const createBloodInventory = async (req, res) => {
         await newInventory.save();
         res.status(201).json(newInventory);
     } catch (error) {
+        console.error("Error in createBloodInventory:", error);
         res.status(400).json({ message: "Error creating blood inventory record", error });
     }
 };
+
+
 
 //  Update blood inventory details
 export const updateBloodInventory = async (req, res) => {

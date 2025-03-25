@@ -20,6 +20,7 @@ export default function DonorSign() {
     image: null,
   });
   const [errorMessage, setErrorMessage] = useState("");
+  const [imagePreview, setImagePreview] = useState(null); // Add state for image preview
 
   // Handle Input Change
   const handleChange = (e) => {
@@ -27,9 +28,19 @@ export default function DonorSign() {
     setFormData((prev) => ({ ...prev, [id]: value.trim() }));
   };
 
-  // Handle File Upload
+  // Handle File Upload (Image)
   const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, image: e.target.files[0] }));
+    const file = e.target.files[0];
+    setFormData((prev) => ({ ...prev, image: file }));
+    
+    // Create an image preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
   // Handle Form Submit
@@ -80,10 +91,7 @@ export default function DonorSign() {
                 <TextInput id={id} type={id === "dob" ? "date" : "text"} onChange={handleChange} required />
               </div>
             ))}
-            {[
-              { id: "bloodType", options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] },
-              { id: "gender", options: ["Male", "Female", "Other"] },
-            ].map((field, index) => (
+            {[{ id: "bloodType", options: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"] }, { id: "gender", options: ["Male", "Female", "Other"] }].map((field, index) => (
               <div key={index}>
                 <Label htmlFor={field.id} value={field.id.replace(/([A-Z])/g, ' $1').trim()} className="text-gray-700 font-medium" />
                 <Select id={field.id} onChange={handleChange} required>
@@ -97,6 +105,12 @@ export default function DonorSign() {
             <div>
               <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
               <FileInput id="image" onChange={handleFileChange} required />
+              {/* Display the image preview */}
+              {imagePreview && (
+                <div className="mt-4">
+                  <img src={imagePreview} alt="Profile Preview" className="w-32 h-32 object-cover rounded-full border-2 border-gray-400" />
+                </div>
+              )}
             </div>
           </div>
 

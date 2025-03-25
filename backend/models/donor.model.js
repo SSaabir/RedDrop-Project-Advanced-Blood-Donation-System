@@ -79,7 +79,7 @@ const donorSchema = new mongoose.Schema({
     },
     healthStatus: {
         type: Boolean,
-        default: true, // true = Healthy, false = Unfit/Pending Checkup
+        default: false, // true = Healthy, false = Unfit/Pending Checkup
     },
     appointmentStatus: {
         type: Boolean,
@@ -87,78 +87,29 @@ const donorSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Signup method
-donorSchema.statics.signup = async function(
-    firstName,
-    lastName,
-    gender,
-    phoneNumber,
-    email,
-    password,
-    dob,
-    bloodType,
-    city,
-    nic,
-    image,
-    healthStatus = true,
-    appointmentStatus = false
-) {
-    // Validation
-    if (!firstName || !lastName || !gender || !phoneNumber || !email || !password || !dob || !bloodType || !city || !nic) {
-        throw new Error("All Fields are Required");
-    }
-
-    if (!validator.isEmail(email)) {
-        throw new Error("Email is Not Valid");
-    }
-
-    if (!validator.isStrongPassword(password)) {
-        throw new Error("Password is Not Strong Enough");
-    }
-
-    const exists = await this.findOne({ email });
-    if (exists) {
-        throw new Error("Email Already Exists");
-    }
-
-    const donor = await this.create({
-        firstName,
-        lastName,
-        gender,
-        phoneNumber,
-        email,
-        password,
-        dob,
-        bloodType,
-        city,
-        nic,
-        image,
-        healthStatus,
-        appointmentStatus,
-        activeStatus: true, // Default to active
-    });
-
-    return donor;
-};
 
 // ✅ Signin method
 donorSchema.statics.signin = async function(email, password) {
+
     if (!email || !password) {
         throw new Error("All Fields are Required");
     }
 
     const donor = await this.findOne({ email });
+    console.log(donor);
     if (!donor) {
         throw new Error("Incorrect Email");
     }
 
-    const match = password === donor.password;
+    const match = (password === donor.password);
     if (!match) {
         throw new Error("Incorrect Password");
     }
 
     return donor;
 };
+
+
 
 const Donor = mongoose.model("Donor", donorSchema);
 

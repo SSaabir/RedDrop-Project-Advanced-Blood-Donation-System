@@ -1,5 +1,9 @@
 import React from 'react'
 import { BrowserRouter, Router, Route, Routes } from 'react-router-dom'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import the default styles
+
+
 import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import Footer from './components/Footer'
@@ -21,12 +25,13 @@ import ContactUs from './pages/ContactUs'
 import Terms from './pages/Terms'
 import Home from './pages/Home'
 import FAQ from './pages/FAQ'
+import Feedback from './pages/Feedback'
 
 import HospitalAdminSignup from'./pages/HospitalAdminSignup'
 import HospitalAdminLogin from'./pages/HospitalAdminLogin'
 import HealthEvaluation from './pages/healthEvaluation'
 import HealthEvaluationD from './pages/HealthEvaluationD'
-import DonorProfile from './pages/DonorProfile'
+import Profile from './pages/Profile'
 import About from './pages/About'
 
 import InquiryD from './pages/InquiryD'
@@ -63,6 +68,7 @@ export default function App() {
     <Route path="/Terms" element={<Terms />} />
     <Route path="/" element={<Home />} />
     <Route path="/FAQ" element={<FAQ />} />
+    <Route path='/Feedback' element={<Feedback />} />
 
     <Route path="/feedd" element={<FeedbackD/>}/>
     <Route path="/inqd" element={<InquiryD/>}/>
@@ -73,13 +79,14 @@ export default function App() {
     <Route path="/healthEF" element={<HealthEvaluation />} />
     <Route path="/HospitalAdminSignup" element={<HospitalAdminSignup />} />
     <Route path="/HospitalAdminLogin" element={<HospitalAdminLogin />} />
-    <Route path="/Profile" element={<DonorProfile/>}/>
+    <Route path="/Profile" element={<Profile/>}/>
     <Route path="/About" element={<About/>}/>
 
     <Route path="/hosadd" element={<HospitalAdminsD/>}/>
     <Route path="/sysmand" element={<SystemManagerD/>}/>
     </Routes>
     <Footer/>
+    <ToastContainer />
     </BrowserRouter>
   )
 }

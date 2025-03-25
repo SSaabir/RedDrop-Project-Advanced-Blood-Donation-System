@@ -4,6 +4,8 @@ import upload from "../utils/Multer.js";
 import {
   getHealthEvaluations,
   getHealthEvaluationById,
+  getHealthEvaluationByDonorId,
+  getHealthEvaluationByHospitalId,
   createEvaluation,
   updateEvaluationDateTime,
   cancelEvaluation,
@@ -15,6 +17,8 @@ import {
 
 const router = express.Router();
 
+router.get("/hospital/:id", getHealthEvaluationByHospitalId);
+router.get("/donor/:id", getHealthEvaluationByDonorId);
 router.get("/", getHealthEvaluations);
 router.get("/:id", getHealthEvaluationById);
 router.post("/", createEvaluation);

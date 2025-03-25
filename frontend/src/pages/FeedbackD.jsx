@@ -1,52 +1,99 @@
-import React from 'react';
-import { Button, Table } from 'flowbite-react';
-import { DashboardSidebar } from '../components/DashboardSidebar'; 
+import React, { useState, useEffect } from "react";
+import { Table, TextInput, Select, Spinner } from "flowbite-react";
+import { DashboardSidebar } from "../components/DashboardSidebar";
+import { useFeedback } from "../hooks/usefeedback.js";
 
-const users = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Editor' },
-  { id: 3, name: 'Alice Johnson', email: 'alice@example.com', role: 'Viewer' },
-];
+export default function FeedbackDashboard() {
+    const { feedbacks, loading, error, fetchFeedbacks } = useFeedback();
+    const [filteredFeedbacks, setFilteredFeedbacks] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState('');
 
-export default function FeedbackD() {
-  return (
-    <div className='flex min-h-screen'>
-      {/* Sidebar */}
-      <DashboardSidebar />
+    // Fetch feedbacks on component mount
+    useEffect(() => {
+        fetchFeedbacks();
+    }, [fetchFeedbacks]);
 
-      
-      <div className="flex-1 p-6">
-   
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Feedback</h1>
-          <Button>Add New User</Button>
+    // Update filtered feedbacks when data changes
+    useEffect(() => {
+        setFilteredFeedbacks(feedbacks);
+    }, [feedbacks]);
+
+    // Handle search input
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        const filtered = feedbacks.filter(feedback =>
+            feedback.subject.toLowerCase().includes(value.toLowerCase()) ||
+            feedback.comments.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredFeedbacks(filtered);
+    };
+
+    // Handle feedback type filter
+    const handleFilterChange = (value) => {
+        setFilterType(value);
+        if (value) {
+            setFilteredFeedbacks(feedbacks.filter(feedback => feedback.feedbackType === value));
+        } else {
+            setFilteredFeedbacks(feedbacks);
+        }
+    };
+
+    return (
+        <div className="flex min-h-screen">
+            <DashboardSidebar />
+            <div className="flex-1 p-6">
+                <h2 className="text-2xl font-bold mb-4">Feedback Dashboard</h2>
+
+                {/* Search & Filter Controls */}
+                <div className="flex gap-4 mb-4">
+                    <TextInput
+                        placeholder="Search feedback..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
+                    <Select value={filterType} onChange={(e) => handleFilterChange(e.target.value)}>
+                        <option value="">All Types</option>
+                        <option value="General Feedback">General Feedback</option>
+                        <option value="Technical Feedback">Technical Feedback</option>
+                        <option value="Complaint Feedback">Complaint Feedback</option>
+                    </Select>
+                </div>
+
+                {/* Display loading, error, or feedback table */}
+                {loading ? (
+                    <Spinner size="lg" />
+                ) : error ? (
+                    <p className="text-red-500">{error}</p>
+                ) : (
+                    <Table hoverable>
+                        <Table.Head>
+                            <Table.HeadCell>Subject</Table.HeadCell>
+                            <Table.HeadCell>Comments</Table.HeadCell>
+                            <Table.HeadCell>Type</Table.HeadCell>
+                            <Table.HeadCell>Rating</Table.HeadCell>
+                        </Table.Head>
+                        <Table.Body>
+                            {filteredFeedbacks.length > 0 ? (
+                                filteredFeedbacks.map((feedback) => (
+                                    <Table.Row key={feedback._id}>
+                                        <Table.Cell>{feedback.subject}</Table.Cell>
+                                        <Table.Cell>{feedback.comments}</Table.Cell>
+                                        <Table.Cell>{feedback.feedbackType}</Table.Cell>
+                                        <Table.Cell>{feedback.starRating ? `${feedback.starRating} ⭐` : 'N/A'}</Table.Cell>
+                                    </Table.Row>
+                                ))
+                            ) : (
+                                <Table.Row>
+                                    <Table.Cell colSpan="4" className="text-center">
+                                        No feedback found.
+                                    </Table.Cell>
+                                </Table.Row>
+                            )}
+                        </Table.Body>
+                    </Table>
+                )}
+            </div>
         </div>
-
-     
-        <Table hoverable>
-          <Table.Head>
-            <Table.HeadCell>ID</Table.HeadCell>
-            <Table.HeadCell>Name</Table.HeadCell>
-            <Table.HeadCell>Email</Table.HeadCell>
-            <Table.HeadCell>Role</Table.HeadCell>
-            <Table.HeadCell>Actions</Table.HeadCell>
-          </Table.Head>
-          <Table.Body>
-            {users.map((user) => (
-              <Table.Row key={user.id}>
-                <Table.Cell>{user.id}</Table.Cell>
-                <Table.Cell>{user.name}</Table.Cell>
-                <Table.Cell>{user.email}</Table.Cell>
-                <Table.Cell>{user.role}</Table.Cell>
-                <Table.Cell>
-                  <Button size="xs" className="mr-2">Edit</Button>
-                  <Button size="xs" color="failure">Delete</Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      </div>
-    </div>
-  );
+    );
 }

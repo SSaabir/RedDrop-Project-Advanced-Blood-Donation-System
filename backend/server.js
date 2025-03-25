@@ -8,7 +8,7 @@ import authRoutes from "./routes/auth.route.js";
 import healthEvaluationRoutes from "./routes/HealthEvaluation.route.js";
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
 import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.route.js";
-import SystemManagerRoutes from "./routes/SystemManager.route.js";
+import SystemManagerRoutes from './routes/SystemManager.route.js';
 import hospitalRoutes from "./routes/hospital.route.js";
 import donorRoutes from "./routes/donor.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
@@ -17,7 +17,7 @@ import EmergencyBRRoutes from "./routes/EmergencyBR.route.js";
 import HospitalAdminRoutes from "./routes/HospitalAdmin.route.js";
 
 dotenv.config();
-
+//
 // ✅ Initialize Express
 const app = express();
 
@@ -29,6 +29,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type"], // ✅ Allowed headers
 }));
 app.use(express.json());
+app.use(cors())
 
 // ✅ Ensure 'uploads/' folder exists
 const uploadDir = "./uploads/";
@@ -60,27 +61,27 @@ app.get("/", (req, res) => {
 });
 
 // ✅ API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/healthEvaluation", healthEvaluationRoutes);
-app.use("/api/hospital", hospitalRoutes);
-app.use("/api/donor", donorRoutes);
-app.use("/api/Blood-inventory", BloodInventoryRoutes);
-app.use("/api/Blood-donation-appointment", BloodDonationAppointmentRoutes);
-app.use("/api/inquiry", inquiryRoutes);
-app.use("/api/feedback", feedbackRoutes);
-app.use("/api/manager", SystemManagerRoutes);
-app.use("/api/emergencyBR", EmergencyBRRoutes);
-app.use("/api/healthAd", HospitalAdminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/healthEvaluation', healthEvaluationRoutes);
+app.use('/api/hospital', hospitalRoutes);
+app.use('/api/donor', donorRoutes);
+app.use('/api/Blood-inventory', BloodInventoryRoutes);
+app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
+app.use('/api/inquiry', inquiryRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/manager', SystemManagerRoutes);
+app.use('/api/emergencyBR', EmergencyBRRoutes);
+app.use('/api/healthAd', HospitalAdminRoutes);
 
 // ✅ Global Error Handling Middleware
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(statusCode).json({
-    success: false,
-    statusCode,
-    message,
-  });
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message
+    });
 });
 
 // ✅ Database Connection & Server Start
