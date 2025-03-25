@@ -7,7 +7,7 @@ import { useAuthContext } from '../hooks/useAuthContext';
 export default function HospitalAdminsD() {
     
 
-    const { hospitalAdmins, loading, error, fetchHospitalAdmins, createHospitalAdmin, updateHospitalAdmin, deleteHospitalAdmin, activateDeactivateHospitalAdmin } = useHospitalAdmin();
+    const { hospitalAdmins, loading, fetchHospitalAdmins, createHospitalAdmin, updateHospitalAdmin, deleteHospitalAdmin, activateDeactivateHospitalAdmin, fetchHospitalAdminsByHospitalId } = useHospitalAdmin();
     const [openCreateModal, setOpenCreateModal] = useState(false);
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
@@ -26,10 +26,16 @@ export default function HospitalAdminsD() {
     });
 
     const hospitalId = user?.userObj._id || '';
-
+    const Hospital = user?.role === 'Hospital';
+    const Manager = user?.role === 'Manager';
+    
     useEffect(() => {
-        fetchHospitalAdmins();
-    }, [fetchHospitalAdmins]);
+        if (Hospital) {
+            fetchHospitalAdminsByHospitalId(hospitalId);
+        }else if (Manager) {
+           fetchHospitalAdmins();
+        }
+    }, [fetchHospitalAdmins, fetchHospitalAdminsByHospitalId, hospitalId, Hospital, Manager]);
 
     const handleToggleStatus = async (id, currentStatus) => {
         await activateDeactivateHospitalAdmin(id);
@@ -153,7 +159,6 @@ export default function HospitalAdminsD() {
                 </div>
 
                 {loading && <Spinner />}
-                {error && <p className="text-red-500">{error}</p>}
 
                 <Table hoverable>
                     <Table.Head>
