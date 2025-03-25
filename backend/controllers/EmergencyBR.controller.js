@@ -157,4 +157,3 @@ export const declineEmergencyRequest = async (req, res) => {
       res.status(500).json({ message: "Error declining emergency request", error });
     }
   };
-
