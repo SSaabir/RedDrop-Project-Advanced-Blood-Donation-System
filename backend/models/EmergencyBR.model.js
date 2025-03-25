@@ -58,7 +58,7 @@ const emergencyBRSchema = new mongoose.Schema({
   withinDate: {
     type: Date,
     required: true,
-    default: null
+    default: Date.now, // Default to current date if not provided
   },
   activeStatus: {
     type: String,
