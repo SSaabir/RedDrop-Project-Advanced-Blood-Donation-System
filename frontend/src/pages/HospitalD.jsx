@@ -125,6 +125,16 @@ export default function HospitalDashboard() {
     }));
   };
 
+  const handleActivateDeactivate = async (id, currentStatus) => {
+    try {
+      const updatedStatus = !currentStatus; // Toggle active status
+      await updateHospital(id, { activeStatus: updatedStatus });
+      fetchHospitals(); // Refresh the list after status update
+    } catch (error) {
+      console.error("Error updating hospital status:", error.response?.data?.message || error.message);
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       <DashboardSidebar />
@@ -165,6 +175,13 @@ export default function HospitalDashboard() {
                 <Table.Cell>
                   <Button size="xs" onClick={() => handleEdit(hospital)}>Edit</Button>
                   <Button size="xs" color="failure" onClick={() => handleDelete(hospital._id)}>Delete</Button>
+                  <Button
+                    size="xs"
+                    color={hospital.activeStatus ? "success" : "warning"}
+                    onClick={() => handleActivateDeactivate(hospital._id, hospital.activeStatus)}
+                  >
+                    {hospital.activeStatus ? "Deactivate" : "Activate"}
+                  </Button>
                 </Table.Cell>
               </Table.Row>
             ))}
