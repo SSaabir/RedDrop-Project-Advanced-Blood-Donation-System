@@ -1,12 +1,12 @@
 import HealthEvaluation from "../models/HealthEvaluation.model.js";
-
+import { errorHandler } from "../utils/error.js";
 // Get all health evaluations
 export const getHealthEvaluations = async (req, res) => {
     try {
         const evaluations = await HealthEvaluation.find().populate("hospitalId donorId hospitalAdminId");
         res.json(evaluations);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching health evaluations", error });
+        next(errorHandler(500, "Error fetching health evaluations"));
     }
 };
 
@@ -14,10 +14,10 @@ export const getHealthEvaluations = async (req, res) => {
 export const getHealthEvaluationById = async (req, res) => {
     try {
         const evaluation = await HealthEvaluation.findById(req.params.id).populate("hospitalId donorId hospitalAdminId");
-        if (!evaluation) return res.status(404).json({ message: "Health evaluation not found" });
+        if (!evaluation) return next(errorHandler(404, "Health evaluation not found"));
         res.json(evaluation);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching health evaluation", error });
+        next(errorHandler(500, "Error fetching health evaluation"));
     }
 };
 
@@ -27,7 +27,7 @@ export const createEvaluation = async (req, res) => {
         const { hospitalId, donorId, evaluationDate, evaluationTime } = req.body;
 
         if (!hospitalId || !donorId || !evaluationDate || !evaluationTime) {
-            return res.status(400).json({ error: "All fields are required." });
+            next(errorHandler(400, "All fields are required"));
         }
 
         const newEvaluation = new HealthEvaluation({
@@ -41,10 +41,9 @@ export const createEvaluation = async (req, res) => {
         await newEvaluation.save();
 
         res.status(201).json({ success: true, data: newEvaluation });
-    } catch (err) {
-        console.error("Error creating evaluation:", err);
-        res.status(500).json({ success: false, error: err.message });
-    }
+    } catch (error) {
+       next(errorHandler(400, "Error creating health evaluation"));
+}
 };
 
 // Update Date and Time of Evaluation
@@ -62,11 +61,10 @@ export const updateEvaluationDateTime = async (req, res) => {
             { new: true }
         );
 
-        if (!updatedEvaluation) return res.status(404).json({ error: "Evaluation not found" });
-
+        if (!updatedEvaluation) return next(errorHandler(404, "Evaluation not found"));
         res.status(200).json(updatedEvaluation);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        next(errorHandler(500, "Error updating evaluation date and time"));
     }
 };
 
@@ -85,11 +83,10 @@ export const cancelEvaluation = async (req, res) => {
             { new: true }
         );
 
-        if (!canceledEvaluation) return res.status(404).json({ error: "Evaluation not found" });
-
+        if (!canceledEvaluation) return next(errorHandler(404, "Evaluation not found"));
         res.status(200).json(canceledEvaluation);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        next(errorHandler(500, "Error cancelling evaluation"));
     }
 };
 
@@ -104,11 +101,11 @@ export const acceptEvaluation = async (req, res) => {
             { new: true }
         );
 
-        if (!acceptEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+        if (!acceptEvaluation) return next(errorHandler(404, "Evaluation not found"));
 
         res.status(200).json(acceptEvaluation);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        next(errorHandler(500, "Error accepting evaluation"));
     }
 };
 
@@ -123,11 +120,11 @@ export const arrivedForEvaluation = async (req, res) => {
             { new: true }
         );
 
-        if (!arrivedForEvaluation) return res.status(404).json({ error: "Evaluation not found" });
+        if (!arrivedForEvaluation) return next(errorHandler(404, "Evaluation not found"));
 
         res.status(200).json(arrivedForEvaluation);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        next(errorHandler(500, "Error marking evaluation as arrived"));
     }
 };
 
@@ -138,7 +135,7 @@ export const completeEvaluation = async (req, res) => {
         const file = req.file ? req.file.path : null ; // Get uploaded file
 
         if (!result) {
-            return res.status(400).json({ error: "Result is required" });
+            return next(errorHandler(400, "Result is required"));
         }
 
         // Find evaluation and update status
@@ -153,12 +150,12 @@ export const completeEvaluation = async (req, res) => {
         );
 
         if (!completedEvaluation) {
-            return res.status(404).json({ error: "Evaluation not found" });
+            return next(errorHandler(404, "Evaluation not found"));
         }
 
         res.status(200).json(completedEvaluation);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        next(errorHandler(500, "Error completing evaluation"));
     }
 };
 
@@ -167,31 +164,30 @@ export const completeEvaluation = async (req, res) => {
 export const deleteHealthEvaluation = async (req, res) => {
     try {
         const deletedEvaluation = await HealthEvaluation.findByIdAndDelete(req.params.id);
-        if (!deletedEvaluation) return res.status(404).json({ message: "Health evaluation not found" });
-        res.json({ message: "Health evaluation deleted successfully" });
+        if (!deletedEvaluation) return next(errorHandler(404, "Health evaluation not found"));
     } catch (error) {
-        res.status(500).json({ message: "Error deleting health evaluation", error });
-    }
+    
+        next(errorHandler(500, "Error deleting health evaluation"));}
 };
 
 export const getHealthEvaluationByDonorId = async (req, res) => {
     try {
         const {id} = req.params;
         const evaluation = await HealthEvaluation.find({donorId: id}).populate("hospitalId donorId hospitalAdminId");
-        if (!evaluation) return res.status(404).json({ message: "Health evaluation not found" });
+        if (!evaluation) return next(errorHandler(404, "Health evaluation not found"));
         res.json(evaluation);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching health evaluation", error });
-    }
+        next(errorHandler(500, "Error fetching health evaluation"));
+    }   
 };
 
 export const getHealthEvaluationByHospitalId = async (req, res) => {
     try {
         const {id} = req.params;
         const evaluation = await HealthEvaluation.find({hospitalId: id}).populate("hospitalId donorId hospitalAdminId");
-        if (!evaluation) return res.status(404).json({ message: "Health evaluation not found" });
-        res.json(evaluation);
+        if (!evaluation) return next(errorHandler(404, "Health evaluation not found"));
+                res.json(evaluation);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching health evaluation", error });
+        next(errorHandler(500, "Error fetching health evaluation"));
     }
 };

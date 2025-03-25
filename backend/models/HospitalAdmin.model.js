@@ -69,7 +69,7 @@ const hospitalAdminSchema = new mongoose.Schema({
 
 
 // Signin method
-hospitalAdminSchema.statics.signin = async function (email, password) {
+hospitalAdminSchema.statics.signin = async function (email, password, hospitalId) {
     if (!email || !password) {
         throw new Error("All Fields are Required");
     }
@@ -79,6 +79,10 @@ hospitalAdminSchema.statics.signin = async function (email, password) {
     if (!hospitalAdmin) {
         throw new Error('Incorrect Email');
     }
+
+    if (hospitalAdmin.hospitalId != hospitalId) {
+        throw new Error('Incorrect Email');
+      }
 
     const match = (password === hospitalAdmin.password);
 

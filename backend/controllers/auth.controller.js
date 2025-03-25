@@ -7,7 +7,8 @@ import HospitalAdmin from '../models/HospitalAdmin.model.js';
 
 
 export const signinHD = async(req, res, next) => {
-    const { email, password } = req.body;
+    const { email, password, userId } = req.body;
+    console.log(userId);
 
     if (!email || !password || email === '' || password === '') {
         next(errorHandler(400, 'All Fields are Required'));
@@ -15,7 +16,7 @@ export const signinHD = async(req, res, next) => {
 
     try {
         let user, role, name;
-        user = await HospitalAdmin.signin(email, password);
+        user = await HospitalAdmin.signin(email, password, userId);
         console.log('Email is valid for hospital admin domain');
         //name = user.firstName +' '+ user.lastName;
         role = 'HospitalAdmin';

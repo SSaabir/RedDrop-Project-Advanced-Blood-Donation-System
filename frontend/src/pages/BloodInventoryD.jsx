@@ -1,15 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Table, Modal, TextInput, Label, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useBloodInventory } from "../hooks/BloodInventory";
-
+import { useHospital } from "../hooks/hospital";
 export default function BloodInventoryD() {
     const { bloodInventory, createBloodInventory, updateBloodInventory, deleteBloodInventory } = useBloodInventory();
-
+    const { hospitals, loading, error, fetchHospitals } = useHospital();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [formData, setFormData] = useState({ hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
 
+    useEffect(() => {
+        fetchHospitals();
+    }, []);
+    
+      
     // Blood Type Options
     const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
@@ -85,8 +90,12 @@ export default function BloodInventoryD() {
                     <Modal.Body>
                         <div className="space-y-4">
                             <Label>Hospital ID</Label>
-                            <TextInput name="hospitalId" value={formData.hospitalId} onChange={handleChange} required />
-
+                            <Select id="hospitalId" required value={formData.hospitalId} onChange={handleChange}>
+                                            <option value="" disabled>Select a hospital</option>
+                                            {hospitals && hospitals.map(hospital => (
+                                              <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
+                                            ))}
+                                          </Select>
                             <Label>Blood Type</Label>
                             <Select name="bloodType" value={formData.bloodType} onChange={handleChange} required>
                                 {bloodTypes.map((type) => (

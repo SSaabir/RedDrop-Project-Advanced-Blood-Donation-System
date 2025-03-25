@@ -1,5 +1,9 @@
 import React from 'react'
 import { BrowserRouter, Router, Route, Routes } from 'react-router-dom'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Import the default styles
+
+
 import Header from './components/Header'
 import Dashboard from './pages/Dashboard'
 import Footer from './components/Footer'
@@ -82,6 +86,7 @@ export default function App() {
     <Route path="/sysmand" element={<SystemManagerD/>}/>
     </Routes>
     <Footer/>
+    <ToastContainer />
     </BrowserRouter>
   )
 }

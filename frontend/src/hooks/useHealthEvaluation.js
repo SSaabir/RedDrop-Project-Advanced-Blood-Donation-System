@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { handleError } from "../services/handleError.js"; // Import the handleError function
+import { toast } from "react-toastify";
 
 export const useHealthEvaluation = () => {
   const [evaluations, setEvaluations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   // ✅ Fetch all evaluations
   const fetchEvaluations = async () => {
@@ -13,8 +14,41 @@ export const useHealthEvaluation = () => {
       if (!response.ok) throw new Error("Failed to fetch evaluations");
       const data = await response.json();
       setEvaluations(data);
+      toast.success("Evaluations fetched successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Fetch evaluations by donor ID
+  const fetchEvaluationByDonorId = async (id) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/healthEvaluation/donor/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch evaluations by donor");
+      const data = await response.json();
+      setEvaluations(data);
+      toast.success("Evaluations by donor fetched successfully!"); // Success toast
+    } catch (err) {
+      handleError(err); // Show error using handleError (toast)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Fetch evaluations by hospital ID
+  const fetchEvaluationByHospitalId = async (id) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/healthEvaluation/hospital/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch evaluations by hospital");
+      const data = await response.json();
+      setEvaluations(data);
+      toast.success("Evaluations by hospital fetched successfully!"); // Success toast
+    } catch (err) {
+      handleError(err); // Show error using handleError (toast)
     } finally {
       setLoading(false);
     }
@@ -25,9 +59,12 @@ export const useHealthEvaluation = () => {
     try {
       const response = await fetch(`/api/healthEvaluation/${id}`);
       if (!response.ok) throw new Error("Failed to fetch evaluation");
-      return await response.json();
+      const data = await response.json();
+      toast.success("Evaluation fetched successfully!"); // Success toast
+      return data;
     } catch (err) {
-      return null; // Avoid setting global error
+      handleError(err); // Show error using handleError (toast)
+      return null;
     }
   };
 
@@ -42,8 +79,9 @@ export const useHealthEvaluation = () => {
       if (!response.ok) throw new Error("Failed to create evaluation");
       const newEvaluation = await response.json();
       setEvaluations((prev) => [...prev, newEvaluation.data]);
+      toast.success("Evaluation created successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
 
@@ -60,8 +98,9 @@ export const useHealthEvaluation = () => {
       setEvaluations((prev) =>
         prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
       );
+      toast.success("Date and time updated successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
 
@@ -71,21 +110,21 @@ export const useHealthEvaluation = () => {
       const response = await fetch(`/api/healthEvaluation/${id}/cancel`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+        body: JSON.stringify({ hospitalAdminId }),
       });
-  
+
       if (!response.ok) throw new Error("Failed to cancel evaluation");
       const canceledEvaluation = await response.json();
       setEvaluations((prev) =>
         prev.map((evaluation) => (evaluation._id === id ? canceledEvaluation : evaluation))
       );
+      toast.success("Evaluation canceled successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
-  
 
   // ✅ Accept evaluation
   const acceptEvaluation = async (id, hospitalAdminId) => {
@@ -93,21 +132,22 @@ export const useHealthEvaluation = () => {
       const response = await fetch(`/api/healthEvaluation/${id}/accept`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
+        body: JSON.stringify({ hospitalAdminId }),
       });
-  
+
       if (!response.ok) throw new Error("Failed to accept evaluation");
       const acceptedEvaluation = await response.json();
       setEvaluations((prev) =>
         prev.map((evaluation) => (evaluation._id === id ? acceptedEvaluation : evaluation))
       );
+      toast.success("Evaluation accepted successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
-  
+
   // ✅ Mark as arrived
   const arrivedForEvaluation = async (id, receiptNumber) => {
     try {
@@ -121,8 +161,9 @@ export const useHealthEvaluation = () => {
       setEvaluations((prev) =>
         prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
       );
+      toast.success("Marked as arrived successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
 
@@ -139,35 +180,9 @@ export const useHealthEvaluation = () => {
       setEvaluations((prev) =>
         prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
       );
+      toast.success("Evaluation completed successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
-    }
-  };
-//upload Evaluation File
-  const uploadEvaluationFile = async (id, file, result) => {
-    try {
-      const formData = new FormData();
-      formData.append("evaluationFile", file);
-      formData.append("result", result); // Pass/Fail result
-  
-      const response = await fetch(`/api/healthEvaluation/${id}/complete`, {
-        method: "PATCH",
-        body: formData,
-      });
-  
-      if (!response.ok) throw new Error("Failed to upload evaluation file");
-  
-      const updatedEvaluation = await response.json();
-  
-      // Update the evaluation list
-      setEvaluations((prev) =>
-        prev.map((evaluation) => (evaluation._id === id ? updatedEvaluation : evaluation))
-      );
-  
-      return updatedEvaluation;
-    } catch (err) {
-      setError(err.message);
-      return null;
+      handleError(err); // Show error using handleError (toast)
     }
   };
 
@@ -177,49 +192,19 @@ export const useHealthEvaluation = () => {
       const response = await fetch(`/api/healthEvaluation/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Failed to delete evaluation");
       setEvaluations((prev) => prev.filter((evaluation) => evaluation._id !== id));
+      toast.success("Evaluation deleted successfully!"); // Success toast
     } catch (err) {
-      setError(err.message);
+      handleError(err); // Show error using handleError (toast)
     }
   };
 
-  const fetchEvaluationByDonorId = async (id) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/healthEvaluation/donor/${id}`);
-      if (!response.ok) throw new Error("Failed to fetch evaluations");
-      const data = await response.json();
-      setEvaluations(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchEvaluationByHospitalId = async (id) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/healthEvaluation/hospital/${id}`);
-      if (!response.ok) throw new Error("Failed to fetch evaluations");
-      const data = await response.json();
-      setEvaluations(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  
   return {
     evaluations,
     loading,
-    error,
-    uploadEvaluationFile,
     fetchEvaluations,
     fetchEvaluationById,
-    fetchEvaluationByDonorId,
-    fetchEvaluationByHospitalId,
+    fetchEvaluationByDonorId,  // Corrected
+    fetchEvaluationByHospitalId,  // Corrected
     createEvaluation,
     updateEvaluationDateTime,
     cancelEvaluation,
