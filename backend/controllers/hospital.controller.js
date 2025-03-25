@@ -37,7 +37,7 @@ export const createHospital = async(req, res) => {
             city,
             identificationNumber,
             email,
-            password, // No password hashing
+            password,
             phoneNumber,
             address,
             image,
@@ -59,7 +59,7 @@ export const updateHospital = async(req, res) => {
         const updatedData = req.body;
 
         if (req.file) {
-            updatedData.image = req.file.path; // Update image path if a new file is uploaded
+            updatedData.image = req.file.path;
         }
 
         const updatedHospital = await Hospital.findByIdAndUpdate(id, updatedData, {
@@ -86,51 +86,5 @@ export const deleteHospital = async(req, res) => {
         res.status(200).json({ message: "Hospital deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting hospital", error: error.message });
-    }
-};
-
-// ✅ Activate/Deactivate hospital status
-export const activateDeactivateHospital = async(req, res) => {
-    try {
-        const { id } = req.params;
-
-        const hospital = await Hospital.findById(id);
-        if (!hospital) {
-            return res.status(404).json({ message: "Hospital not found" });
-        }
-
-        const newStatus = !hospital.activeStatus;
-        const updatedHospital = await Hospital.findByIdAndUpdate(
-            id, { $set: { activeStatus: newStatus } }, { new: true }
-        );
-
-        res.status(200).json({
-            message: `Hospital ${newStatus ? 'activated' : 'deactivated'} successfully`,
-            hospital: updatedHospital,
-        });
-    } catch (error) {
-        console.error('Activate/Deactivate error:', error);
-        res.status(500).json({
-            message: "Error toggling hospital status",
-            error: error.message,
-        });
-    }
-};
-
-// ✅ Update hospital health status (if applicable)
-export const updateHealthStatus = async(req, res) => {
-    try {
-        let { healthStatus } = req.body;
-        healthStatus = healthStatus === "true" || healthStatus === true; // Ensure Boolean value
-
-        const updatedHospital = await Hospital.findByIdAndUpdate(
-            req.params.id, { healthStatus }, { new: true }
-        );
-
-        if (!updatedHospital) return res.status(404).json({ message: "Hospital not found" });
-
-        res.status(200).json(updatedHospital);
-    } catch (error) {
-        res.status(500).json({ message: "Error updating health status", error: error.message });
     }
 };
