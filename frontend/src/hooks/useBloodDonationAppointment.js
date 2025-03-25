@@ -179,7 +179,7 @@ export const useBloodDonationAppointment = () => {
     const fetchBloodDonationAppointmentByHospitalId = async (id) => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/blooddonationappointmentt/hospital/${id}`);
+        const response = await fetch(`/api/blooddonationappointment/hospital/${id}`);
         if (!response.ok) throw new Error("Failed to fetch Appointment");
         const data = await response.json();
         setAppointments(data);

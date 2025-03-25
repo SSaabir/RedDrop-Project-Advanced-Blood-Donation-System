@@ -6,7 +6,8 @@ import {
     createHospitalAdmin,
     updateHospitalAdmin,
     deleteHospitalAdmin,
-    activateDeactivateHospitalAdmin
+    activateDeactivateHospitalAdmin,
+    getHospitalAdminsByHospitalId,
 } from '../controllers/HospitalAdmin.controller.js';
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
 // Hospital Admin CRUD Routes
 router.get('/', getHospitalAdmins);               // Get all hospital admins
 router.get('/:id', getHospitalAdminById);         // Get a single hospital admin by ID
+router.get('/hospital/:id', getHospitalAdminsByHospitalId);   // Get all hospital admins by hospital ID
 router.post('/', upload.single('image'), createHospitalAdmin); // Create a new hospital admin with optional image upload
 router.put('/:id', upload.single('image'), updateHospitalAdmin); // Update hospital admin details with optional image upload
 router.patch('/:id/toggle-status', activateDeactivateHospitalAdmin);

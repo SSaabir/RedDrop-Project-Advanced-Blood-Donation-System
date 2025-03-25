@@ -21,6 +21,22 @@ export const useBloodInventory = () => {
         }
     };
 
+    //  Fetch all blood inventory by HospitalId
+    const fetchBloodInventoryByHospital = async (id) => {
+        setLoading(true);
+        
+        try {
+            const response = await fetch(`/api/blood-inventory/hospital/${id}`);
+            if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
+            const data = await response.json();
+            setBloodInventory(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     //  Fetch a single blood inventory record by ID
     const fetchBloodInventoryById = async (id) => {
         setError(null);
@@ -93,17 +109,14 @@ export const useBloodInventory = () => {
         }
     };
 
-    // Fetch blood inventory records when the hook is used
-    useEffect(() => {
-        fetchBloodInventory();
-    }, []);
-
+    
     return {
         bloodInventory,
         loading,
         error,
         fetchBloodInventory,
         fetchBloodInventoryById,
+        fetchBloodInventoryByHospital,
         createBloodInventory,
         updateBloodInventory,
         deleteBloodInventory,

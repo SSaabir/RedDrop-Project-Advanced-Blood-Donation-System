@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { Button, Table, Modal, TextInput, Label, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
-import { useBloodInventory } from "../hooks/BloodInventory";
+import { useBloodInventory } from "../hooks/useBloodInventory";
 import { useHospital } from "../hooks/hospital";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function BloodInventoryD() {
-    const { bloodInventory, createBloodInventory, updateBloodInventory, deleteBloodInventory } = useBloodInventory();
+    const { bloodInventory, createBloodInventory, updateBloodInventory, deleteBloodInventory, fetchBloodInventoryByHospital, fetchBloodInventory } = useBloodInventory();
     const { hospitals, loading, error, fetchHospitals } = useHospital();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [formData, setFormData] = useState({ hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
-
+    const { user } = useAuthContext();
+    const userId = user?.userObj?._id;
+    const Hospital = user?.role === 'Hospital';
+    const Manager = user?.role === 'Manager';
     useEffect(() => {
         fetchHospitals();
-    }, []);
+        if (Hospital) {
+            fetchBloodInventoryByHospital(userId);
+        } 
+    }, [userId, Hospital]);
     
       
     // Blood Type Options
@@ -90,6 +97,8 @@ export default function BloodInventoryD() {
                     </Table.Body>
                 </Table>
 
+            </div>
+            
                 {/* Modal for Add/Edit */}
                 <Modal show={isModalOpen} onClose={closeModal}>
                     <Modal.Header>{isEdit ? "Edit Inventory" : "Add New Inventory"}</Modal.Header>
@@ -97,7 +106,7 @@ export default function BloodInventoryD() {
                         <div className="space-y-4">
 
                             <Label>Hospital ID</Label>
-                            <Select id="hospitalId" required value={formData.hospitalId} onChange={handleChange}>
+                            <Select name="hospitalId" id="hospitalId" required value={formData.hospitalId} onChange={handleChange}>
                                             <option value="" disabled>Select a hospital</option>
                                             {hospitals && hospitals.map(hospital => (
                                               <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
@@ -123,7 +132,6 @@ export default function BloodInventoryD() {
                         <Button color="gray" onClick={closeModal}>Cancel</Button>
                     </Modal.Footer>
                 </Modal>
-            </div>
         </div>
     );
 }
