@@ -73,6 +73,16 @@ const emergencyBRSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  activeStatus: {
+    type: String,
+    enum: ["Pending", "Accepted", "Declined"],
+    default: "Pending",
+  },
+  declineReason: {
+    type: String,
+    required: false,
+    default: null,
+  },
 }, { timestamps: true });
 
 // Only keep the index for patientBlood (not covered by unique: true)
