@@ -31,17 +31,14 @@ const hospitalSchema = new mongoose.Schema({
         unique: true,
         validate: {
             validator: (value) => /^\d{10}$/.test(value),
-            message: (props) => `${props.value} is not a valid phone number!`,
+            message: "Invalid phone number",
         },
     },
     email: {
         type: String,
         required: true,
         unique: true,
-        validate: {
-            validator: validator.isEmail,
-            message: "Invalid email format",
-        },
+        validate: [validator.isEmail, "Invalid email format"],
     },
     password: {
         type: String,
@@ -49,14 +46,13 @@ const hospitalSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: false,
     },
     startTime: {
         type: String,
         required: true,
         validate: {
             validator: (value) => moment(value, "HH:mm", true).isValid(),
-            message: "Invalid start time format. Please use HH:mm.",
+            message: "Invalid start time format (HH:mm required)",
         },
     },
     endTime: {
@@ -64,7 +60,7 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: (value) => moment(value, "HH:mm", true).isValid(),
-            message: "Invalid end time format. Please use HH:mm.",
+            message: "Invalid end time format (HH:mm required)",
         },
     },
     activeStatus: {
@@ -72,6 +68,7 @@ const hospitalSchema = new mongoose.Schema({
         default: true,
     },
 }, { timestamps: true });
+
 
 // Sign-in method (plain text password comparison)
 hospitalSchema.statics.signin = async function(email, password) {
@@ -84,5 +81,6 @@ hospitalSchema.statics.signin = async function(email, password) {
 
     return hospital;
 };
+
 
 export default mongoose.model("Hospital", hospitalSchema);
