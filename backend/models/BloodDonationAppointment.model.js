@@ -50,7 +50,7 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
     },
     acceptStatus: {
         type: String,
-        enum: ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'], // Only these values are allowed
+        enum: ['Pending', 'Re-Scheduled', 'Accepted', 'Cancelled'], // Only these values are allowed
         default: 'Pending', // Default to Pending if no status is provided
     },
 }, { timestamps: true });

@@ -58,8 +58,9 @@ app.use('/api/healthEvaluation', healthEvaluationRoutes);
 app.use('/api/hospital', hospitalRoutes);
 app.use('/api/donor', donorRoutes);
 
-app.use('/api/Blood-inventory', BloodInventoryRoutes);
-app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
+app.use('/api/blood-inventory', BloodInventoryRoutes);
+
+app.use('/api/blooddonationappointment', BloodDonationAppointmentRoutes);
 
 app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
