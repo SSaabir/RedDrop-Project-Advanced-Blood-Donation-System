@@ -11,6 +11,16 @@ export const getHospitalAdmins = async (req, res, next) => {
     }
 };
 
+// ✅ Get all hospital admins by hospital ID
+export const getHospitalAdminsByHospitalId = async (req, res, next) => {
+    try {
+        const admins = await HospitalAdmin.find({ hospitalId: req.params.id });
+        res.json(admins);
+    } catch (error) {
+        next(errorHandler(500, 'Error fetching hospital admins')); // Pass the error to the next middleware
+    }
+};
+
 // ✅ Get a single hospital admin by ID
 export const getHospitalAdminById = async (req, res, next) => {
     try {

@@ -8,19 +8,28 @@ export const useHospitalAdmin = () => {
 
     // Fetch all hospital admins
     const fetchHospitalAdmins = async () => {
-        setLoading(true);
         try {
             const response = await fetch('/api/healthAd');
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Something went wrong');
             setHospitalAdmins(data);
-            toast.success('Hospital Admins fetched successfully!');
         } catch (err) {
             handleError(err);
-        } finally {
-            setLoading(false);
         }
     };
+
+    // Fetch all hospital admins by hospital ID
+    const fetchHospitalAdminsByHospitalId = async (id) => {
+        try {
+            const response = await fetch(`/api/healthAd/hospital/${id}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch hospital admins');
+            setHospitalAdmins(data);
+        } catch (err) {
+            handleError(err);
+        }
+    }
+
 
     // Fetch a single hospital admin by ID
     const fetchHospitalAdminById = async (id) => {
@@ -106,9 +115,9 @@ export const useHospitalAdmin = () => {
     return {
         hospitalAdmins,
         loading,
-        error,
         fetchHospitalAdmins,
         fetchHospitalAdminById,
+        fetchHospitalAdminsByHospitalId,
         createHospitalAdmin,
         updateHospitalAdmin,
         deleteHospitalAdmin,

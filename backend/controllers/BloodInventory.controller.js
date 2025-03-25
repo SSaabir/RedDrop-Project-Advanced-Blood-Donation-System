@@ -3,8 +3,9 @@ import BloodInventory from "../models/BloodInventory.model.js";
 // Get all blood inventory records
 export const getBloodInventory = async (req, res) => {
     try {
-        const inventory = await BloodInventory.find().populate('hospitalId');
+        const inventory = await BloodInventory.find();
         res.json(inventory);
+        console.log("Blood Inventory:", inventory);
     } catch (error) {
         res.status(500).json({ message: "Error fetching blood inventory", error });
     }
@@ -78,5 +79,15 @@ export const deleteBloodInventory = async (req, res) => {
         res.json({ message: "Blood inventory record deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting blood inventory record", error });
+    }
+};
+
+//  Get all blood inventory records by Hospital ID
+export const getBloodInventoryByHospital = async (req, res) => {
+    try {
+        const inventory = await BloodInventory.find({ hospitalId: req.params.id });
+        res.json(inventory);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching blood inventory", error });
     }
 };
