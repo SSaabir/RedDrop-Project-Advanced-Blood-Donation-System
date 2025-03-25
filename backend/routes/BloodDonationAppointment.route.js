@@ -7,11 +7,16 @@ import {
     cancelAppointment,
     acceptAppointment,
     arrivedForAppointment,
-    deleteAppointment
+    completeAppointment,
+    deleteAppointment,
+    getBloodDonationAppointmentByDonorId,
+    getBloodDonationAppointmentByHospitalId
 } from "../controllers/BloodDonationAppointment.controller.js";
 
 const router = express.Router();
 
+router.get("/hospital/:id", getBloodDonationAppointmentByHospitalId);
+router.get("/donor/:id", getBloodDonationAppointmentByDonorId);
 router.get("/", getAppointments); // Get all blood donation appointments
 router.get("/:id", getAppointmentById); // Get a single blood donation appointment by ID
 router.post("/", createAppointment); // Create a new blood donation appointment
@@ -19,6 +24,7 @@ router.patch("/:id/date-time", updateAppointmentDateTime); // Update blood donat
 router.patch("/:id/cancel", cancelAppointment); 
 router.patch("/:id/accept", acceptAppointment);
 router.patch("/:id/arrived", arrivedForAppointment);
+router.patch("/:id/complete", completeAppointment);
 router.delete("/:id", deleteAppointment); // Delete a blood donation appointment
 
 export default router;

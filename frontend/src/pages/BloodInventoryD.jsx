@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Table, Modal, TextInput, Label, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
-import { useBloodInventory } from "../hooks/BloodInventory";
+import { useBloodInventory } from "../hooks/useBloodInventory";
 
 export default function BloodInventoryD() {
     const { bloodInventory, createBloodInventory, updateBloodInventory, deleteBloodInventory } = useBloodInventory();
@@ -16,12 +16,15 @@ export default function BloodInventoryD() {
     // Open Modal for Add/Edit
     const openModal = (inventory = null) => {
         setIsEdit(!!inventory);
-        setFormData(inventory || { hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
+        setFormData(inventory ? { ...inventory } : { hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
         setIsModalOpen(true);
     };
 
     // Close Modal
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setFormData({ hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
+    };
 
     // Handle Input Change
     const handleChange = (e) => {
@@ -30,6 +33,7 @@ export default function BloodInventoryD() {
 
     // Handle Submit (Add or Update)
     const handleSubmit = async () => {
+        console.log("Submitting Form Data:", formData); // Debugging
         if (isEdit) {
             await updateBloodInventory(formData._id, formData);
         } else {
@@ -37,6 +41,7 @@ export default function BloodInventoryD() {
         }
         closeModal();
     };
+    
 
     return (
         <div className="flex min-h-screen">
@@ -84,9 +89,6 @@ export default function BloodInventoryD() {
                     <Modal.Header>{isEdit ? "Edit Inventory" : "Add New Inventory"}</Modal.Header>
                     <Modal.Body>
                         <div className="space-y-4">
-                            <Label>Hospital ID</Label>
-                            <TextInput name="hospitalId" value={formData.hospitalId} onChange={handleChange} required />
-
                             <Label>Blood Type</Label>
                             <Select name="bloodType" value={formData.bloodType} onChange={handleChange} required>
                                 {bloodTypes.map((type) => (

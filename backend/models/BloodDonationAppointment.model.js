@@ -38,14 +38,14 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    passStatus: {
+    progressStatus: {
         type: String,
-        enum: ['Pending', 'Passed', 'Failed', 'Cancelled'],
-        default: 'Pending',
+        enum: ['Not Started', 'In Progress', 'Completed'],
+        default: 'Not Started',
     },
     acceptStatus: {
         type: String,
-        enum: ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'], // Only these values are allowed
+        enum: ['Pending', 'Re-Scheduled', 'Accepted', 'Cancelled'], // Only these values are allowed
         default: 'Pending', // Default to Pending if no status is provided
     },
 }, { timestamps: true });
