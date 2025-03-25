@@ -31,21 +31,25 @@ const hospitalSchema = new mongoose.Schema({
         unique: true,
         validate: {
             validator: (value) => /^\d{10}$/.test(value),
-            message: "Invalid phone number",
+            message: (props) => `${props.value} is not a valid phone number!`,
         },
     },
     email: {
         type: String,
         required: true,
         unique: true,
-        validate: [validator.isEmail, "Invalid email format"],
+        validate: {
+            validator: validator.isEmail,
+            message: (props) => `${props.value} is not a valid email address!`,
+        },
     },
     password: {
         type: String,
         required: true,
     },
     image: {
-        type: String,
+        type: String, // URL or file path
+        required: false,
     },
     startTime: {
         type: String,
@@ -69,18 +73,27 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-
-// Sign-in method (plain text password comparison)
+// Sign-in method
 hospitalSchema.statics.signin = async function(email, password) {
-    if (!email || !password) throw new Error("All fields are required");
+    if (!email || !password) {
+        throw new Error("All fields are required");
+    }
 
     const hospital = await this.findOne({ email });
-    if (!hospital) throw new Error("Incorrect email");
 
-    if (password !== hospital.password) throw new Error("Incorrect password");
+    if (!hospital) {
+        throw new Error("Incorrect email");
+    }
+
+    const match = password === hospital.password;
+
+    if (!match) {
+        throw new Error("Incorrect password");
+    }
 
     return hospital;
 };
 
+const Hospital = mongoose.model("Hospital", hospitalSchema);
 
-export default mongoose.model("Hospital", hospitalSchema);
+export default Hospital;

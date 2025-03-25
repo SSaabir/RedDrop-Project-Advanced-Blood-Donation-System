@@ -1,6 +1,6 @@
 import Hospital from "../models/hospital.model.js";
 
-// ✅ Get all hospitals
+// Get all hospitals
 export const getHospitals = async(req, res) => {
     try {
         const hospitals = await Hospital.find();
@@ -10,7 +10,7 @@ export const getHospitals = async(req, res) => {
     }
 };
 
-// ✅ Get a single hospital by ID
+// Get a hospital by ID
 export const getHospitalById = async(req, res) => {
     try {
         const hospital = await Hospital.findById(req.params.id);
@@ -21,16 +21,10 @@ export const getHospitalById = async(req, res) => {
     }
 };
 
-// ✅ Create a new hospital
+// Create a new hospital
 export const createHospital = async(req, res) => {
     try {
-        const { name, city, identificationNumber, email, password, phoneNumber, address, startTime, endTime } = req.body;
-
-        if (!name || !city || !identificationNumber || !email || !password || !phoneNumber || !address || !startTime || !endTime) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const image = req.file ? req.file.path : null;
+        const { name, city, identificationNumber, email, password, phoneNumber, address, startTime, endTime, activeStatus } = req.body;
 
         const newHospital = new Hospital({
             name,
@@ -40,9 +34,10 @@ export const createHospital = async(req, res) => {
             password,
             phoneNumber,
             address,
-            image,
+            image: req.file ? req.file.path : null,
             startTime,
             endTime,
+            activeStatus: activeStatus !== undefined ? activeStatus : true,
         });
 
         await newHospital.save();
@@ -52,7 +47,7 @@ export const createHospital = async(req, res) => {
     }
 };
 
-// ✅ Update hospital details
+// Update hospital details
 export const updateHospital = async(req, res) => {
     try {
         const { id } = req.params;
@@ -62,10 +57,7 @@ export const updateHospital = async(req, res) => {
             updatedData.image = req.file.path;
         }
 
-        const updatedHospital = await Hospital.findByIdAndUpdate(id, updatedData, {
-            new: true,
-            runValidators: true,
-        });
+        const updatedHospital = await Hospital.findByIdAndUpdate(id, updatedData, { new: true, runValidators: true });
 
         if (!updatedHospital) return res.status(404).json({ message: "Hospital not found" });
 
@@ -75,10 +67,11 @@ export const updateHospital = async(req, res) => {
     }
 };
 
-// ✅ Delete a hospital
+// Delete hospital
 export const deleteHospital = async(req, res) => {
     try {
         const { id } = req.params;
+
         const deletedHospital = await Hospital.findByIdAndDelete(id);
 
         if (!deletedHospital) return res.status(404).json({ message: "Hospital not found" });
@@ -86,5 +79,25 @@ export const deleteHospital = async(req, res) => {
         res.status(200).json({ message: "Hospital deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting hospital", error: error.message });
+    }
+};
+
+// Toggle hospital active status
+export const toggleHospitalStatus = async(req, res) => {
+    try {
+        const { id } = req.params;
+
+        const hospital = await Hospital.findById(id);
+        if (!hospital) return res.status(404).json({ message: "Hospital not found" });
+
+        const newStatus = !hospital.activeStatus;
+        const updatedHospital = await Hospital.findByIdAndUpdate(id, { activeStatus: newStatus }, { new: true });
+
+        res.status(200).json({
+            message: `Hospital ${newStatus ? 'activated' : 'deactivated'} successfully`,
+            hospital: updatedHospital,
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Error toggling hospital status", error: error.message });
     }
 };
