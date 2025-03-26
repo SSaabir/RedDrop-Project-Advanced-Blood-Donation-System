@@ -9,6 +9,7 @@ import {
     arrivedForAppointment,
     completeAppointment,
     deleteAppointment,
+    cancelAppointmentDonor,
     getBloodDonationAppointmentByDonorId,
     getBloodDonationAppointmentByHospitalId
 } from "../controllers/BloodDonationAppointment.controller.js";
@@ -25,6 +26,7 @@ router.patch("/:id/cancel", cancelAppointment);
 router.patch("/:id/accept", acceptAppointment);
 router.patch("/:id/arrived", arrivedForAppointment);
 router.patch("/:id/complete", completeAppointment);
+router.patch("/:id/cancelD", cancelAppointmentDonor);
 router.delete("/:id", deleteAppointment); // Delete a blood donation appointment
 
 export default router;

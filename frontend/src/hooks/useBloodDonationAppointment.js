@@ -49,12 +49,12 @@ export const useBloodDonationAppointment = () => {
     };
 
     // ✅ Update blood donation appointment details
-    const updateAppointmentDateTime = async (id, appointmentDate, appointmentTime) => {
+    const updateAppointmentDateTime = async (id, appointmentDate, appointmentTime, hospitalAdminId) => {
         try {
-            const response = await fetch(`/api/blooddonationappointment/${id}`,{
+            const response = await fetch(`/api/blooddonationappointment/${id}/date-time`,{
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ appointmentDate, appointmentTime }),
+                body: JSON.stringify({ appointmentDate, appointmentTime, hospitalAdminId }),
             });
             if (!response.ok) throw new Error("Failed to update appointment date/time");
     
@@ -130,13 +130,9 @@ export const useBloodDonationAppointment = () => {
 
   // ✅ Complete blood donation appointment
 
-  const completeAppointment = async (id, result) => {
+  const completeAppointment = async (id) => {
     try {
-      const response = await fetch(`/api/blooddonationappointment/${id}/complete`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ result }),
-      });
+      const response = await fetch(`/api/blooddonationappointment/${id}/complete`, {method: "PATCH"});
       if (!response.ok) throw new Error("Failed to complete Appointment");
       const updatedAppointment = await response.json();
       setAppointments((prev) =>
@@ -162,6 +158,7 @@ export const useBloodDonationAppointment = () => {
             setError(err.message);
         }
     };
+
     const fetchBloodDonationAppointmentByDonorId = async (id) => {
       setLoading(true);
       try {
@@ -190,7 +187,19 @@ export const useBloodDonationAppointment = () => {
       }
     };
 
+    const cancelAppointmentDonor = async (id, hospitalAdminId) => {
+      try {
+        const response = await fetch(`/api/blooddonationappointment/${id}/cancelD`, {method: "PATCH"});
     
+        if (!response.ok) throw new Error("Failed to cancel appointment");
+        const canceledAppointment = await response.json();
+        setAppointments((prev) =>
+          prev.map((appointment) => (appointment._id === id ? canceledAppointment : appointment))
+        );
+      } catch (err) {
+        setError(err.message);
+      }
+    };
 
     return {
         appointments,

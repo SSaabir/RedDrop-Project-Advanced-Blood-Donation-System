@@ -6,7 +6,7 @@ import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function AppointmentD() {
-  const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, uploadEvaluationFile } = useHealthEvaluation();
+  const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, completeEvaluation, cancelEvaluationDonor } = useHealthEvaluation();
 
   const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
@@ -110,7 +110,7 @@ export default function AppointmentD() {
     setLoading(true);
     setErrorMessage("");
     try {
-      await uploadEvaluationFile(selectedEvaluation._id, selectedFile, evaluationResult);
+      await completeEvaluation(selectedEvaluation._id, evaluationResult, selectedFile);
       setOpenUploadModal(false);
     } catch (err) {
       setErrorMessage("Failed to upload file. Please try again.");
@@ -208,7 +208,7 @@ export default function AppointmentD() {
                       {Donor && (
                         <>
                           {(evaluation.activeStatus === "Re-Scheduled" && evaluation.activeStatus !== "Cancelled") && (
-                            <Button size="xs" color="gray" onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId)}>
+                            <Button size="xs" color="gray" onClick={() => cancelEvaluationDonor(evaluation._id)}>
                               Cancel
                             </Button>
                           )}
@@ -276,7 +276,7 @@ export default function AppointmentD() {
       <Modal show={openUploadModal} onClose={() => setOpenUploadModal(false)}>
         <Modal.Header>Upload Evaluation File</Modal.Header>
         <Modal.Body>
-          <FileInput accept=".pdf,.docx,.xlsx" id="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
+          <FileInput accept=".jpg, .pdf,.docx,.xlsx" id="file" onChange={(e) => setSelectedFile(e.target.files[0])} />
           {/* Pass/Fail Radio Group */}
           <div className="mt-4">
             <label className="font-semibold">Evaluation Result:</label>

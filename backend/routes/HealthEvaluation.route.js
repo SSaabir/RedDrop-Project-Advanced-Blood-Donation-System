@@ -13,6 +13,7 @@ import {
   arrivedForEvaluation,
   completeEvaluation,
   deleteHealthEvaluation,
+  cancelEvaluationDonor,
 } from "../controllers/HealthEvaluation.controller.js";
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.get("/:id", getHealthEvaluationById);
 router.post("/", createEvaluation);
 router.patch("/:id/date-time", updateEvaluationDateTime); 
 router.patch("/:id/cancel", cancelEvaluation); 
+router.patch("/:id/cancelD", cancelEvaluationDonor);
 router.delete("/:id", deleteHealthEvaluation);
 router.patch("/:id/accept", acceptEvaluation);
 router.patch("/:id/arrived", arrivedForEvaluation);

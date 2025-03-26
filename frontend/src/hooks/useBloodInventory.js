@@ -109,6 +109,24 @@ export const useBloodInventory = () => {
         }
     };
 
+    const toggleExpired = async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/api/blood-inventory/toggle-expired/${id}`, {
+                method: "PATCH",
+            });
+            if (!response.ok) throw new Error("Failed to toggle expired status.");
+            const updatedRecord = await response.json();
+            setBloodInventory((prev) =>
+                prev.map((record) => (record._id === id ? updatedRecord : record))
+            );
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
     
     return {
         bloodInventory,
@@ -120,5 +138,6 @@ export const useBloodInventory = () => {
         createBloodInventory,
         updateBloodInventory,
         deleteBloodInventory,
+        toggleExpired
     };
 };

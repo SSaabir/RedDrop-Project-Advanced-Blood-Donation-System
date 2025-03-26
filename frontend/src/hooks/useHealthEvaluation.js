@@ -168,12 +168,15 @@ export const useHealthEvaluation = () => {
   };
 
   // ✅ Complete evaluation
-  const completeEvaluation = async (id, result) => {
+  const completeEvaluation = async (id, result, selectedFile) => {
     try {
+      const formData = new FormData();
+      formData.append("evaluationFile", selectedFile);
+      formData.append("result", result);
+
       const response = await fetch(`/api/healthEvaluation/${id}/complete`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ result }),
+        body: formData,
       });
       if (!response.ok) throw new Error("Failed to complete evaluation");
       const updatedEvaluation = await response.json();
@@ -198,6 +201,22 @@ export const useHealthEvaluation = () => {
     }
   };
 
+    // ✅ Cancel evaluation
+    const cancelEvaluationDonor = async (id) => {
+      try {
+        const response = await fetch(`/api/healthEvaluation/${id}/cancelD`, {method: "PATCH"});
+  
+        if (!response.ok) throw new Error("Failed to cancel evaluation");
+        const canceledEvaluation = await response.json();
+        setEvaluations((prev) =>
+          prev.map((evaluation) => (evaluation._id === id ? canceledEvaluation : evaluation))
+        );
+        toast.success("Evaluation canceled successfully!"); // Success toast
+      } catch (err) {
+        handleError(err); // Show error using handleError (toast)
+      }
+    };
+  
   return {
     evaluations,
     loading,
@@ -210,6 +229,7 @@ export const useHealthEvaluation = () => {
     cancelEvaluation,
     acceptEvaluation,
     arrivedForEvaluation,
+    cancelEvaluationDonor,
     completeEvaluation,
     deleteEvaluation,
   };

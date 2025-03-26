@@ -24,19 +24,22 @@ export const getHospitalById = async(req, res) => {
 // Create a new hospital
 export const createHospital = async(req, res) => {
     try {
-        const { name, city, identificationNumber, email, password, phoneNumber, address, startTime, endTime, activeStatus } = req.body;
+        const { name, city, systemManagerId, identificationNumber, email, password, phoneNumber, address, startTime, endTime, activeStatus } = req.body;
+
+        const image = req.file ? req.file.path : null;
 
         const newHospital = new Hospital({
             name,
             city,
+            systemManagerId,
             identificationNumber,
             email,
             password,
             phoneNumber,
             address,
-            image: req.file ? req.file.path : null,
             startTime,
             endTime,
+            image,
             activeStatus: activeStatus !== undefined ? activeStatus : true,
         });
 
