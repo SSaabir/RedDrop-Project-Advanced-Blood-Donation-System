@@ -5,7 +5,8 @@ import {
     createBloodInventory,
     updateBloodInventory,
     deleteBloodInventory,
-    getBloodInventoryByHospital
+    getBloodInventoryByHospital,
+    toggleExpired
 } from "../controllers/BloodInventory.controller.js";
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get("/hospital/:id", getBloodInventoryByHospital); // Get all records by 
 router.post("/", createBloodInventory); // Create a new record
 router.patch("/:id", updateBloodInventory); // Update a record
 router.delete("/:id", deleteBloodInventory); // Delete a record
+router.patch("/toggle-expired/:id", toggleExpired); // Toggle expired status
 
 export default router;

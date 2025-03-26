@@ -20,6 +20,10 @@ const bloodInventorySchema = new mongoose.Schema({
     expirationDate: {
         type: Date,
         required: true,
+    },
+    expiredStatus: {
+        type: Boolean,
+        default: false,
     }
 }, { timestamps: true });
 
