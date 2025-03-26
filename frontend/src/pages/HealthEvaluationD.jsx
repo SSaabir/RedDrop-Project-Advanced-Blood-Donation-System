@@ -6,7 +6,7 @@ import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function AppointmentD() {
-  const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, completeEvaluation } = useHealthEvaluation();
+  const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, completeEvaluation, cancelEvaluationDonor } = useHealthEvaluation();
 
   const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
@@ -208,7 +208,7 @@ export default function AppointmentD() {
                       {Donor && (
                         <>
                           {(evaluation.activeStatus === "Re-Scheduled" && evaluation.activeStatus !== "Cancelled") && (
-                            <Button size="xs" color="gray" onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId)}>
+                            <Button size="xs" color="gray" onClick={() => cancelEvaluationDonor(evaluation._id)}>
                               Cancel
                             </Button>
                           )}

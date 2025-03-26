@@ -191,3 +191,22 @@ export const getHealthEvaluationByHospitalId = async (req, res, next) => {
         next(errorHandler(500, "Error fetching health evaluation"));
     }
 };
+
+export const cancelEvaluationDonor = async (req, res, next) => {
+    try {
+        const canceledEvaluation = await HealthEvaluation.findByIdAndUpdate(
+            req.params.id,
+            {
+                passStatus: "Cancelled",
+                activeStatus: "Cancelled",
+                progressStatus: "Cancelled"
+            },
+            { new: true }
+        );
+
+        if (!canceledEvaluation) return next(errorHandler(404, "Evaluation not found"));
+        res.status(200).json(canceledEvaluation);
+    } catch (error) {
+        next(errorHandler(500, "Error cancelling evaluation"));
+    }
+};
