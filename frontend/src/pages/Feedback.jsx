@@ -9,20 +9,7 @@ export default function Feedback() {
   const [feedback, setFeedback] = useState('');
   const [rating, setRating] = useState(0);
 
-  const feedbacks = [
-    {
-      name: "John Doe",
-      email: "john.doe@example.com",
-      rating: 4,
-      feedback: "Great service, I loved the experience!"
-    },
-    {
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      rating: 5,
-      feedback: "Amazing platform for blood donation. Highly recommend!"
-    }
-  ];
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();

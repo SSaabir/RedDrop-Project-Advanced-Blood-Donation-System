@@ -1,10 +1,7 @@
 import mongoose from 'mongoose';
 
 const inquirySchema = new mongoose.Schema({
-    inquiryId: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: true, // Automatically generated unique ID
-    },
+    
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SystemManager', // Reference to System Manager model
