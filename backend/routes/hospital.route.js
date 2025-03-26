@@ -1,20 +1,21 @@
 import express from "express";
-import upload from "../utils/multer.js";
+import upload from "../utils/Multer.js"; // Assuming you have multer setup for image uploads
 import {
     getHospitals,
     getHospitalById,
     createHospital,
     updateHospital,
     deleteHospital,
+    toggleHospitalStatus,
 } from "../controllers/hospital.controller.js";
 
 const router = express.Router();
 
-// Hospital CRUD Routes
-router.get("/", getHospitals); // Get all hospitals
-router.get("/:id", getHospitalById); // Get a single hospital by ID
-router.post("/", upload.single("image"), createHospital); // Create a new hospital with image upload
-router.put("/:id", upload.single("image"), updateHospital); // Update hospital details with image upload
-router.delete("/:id", deleteHospital); // Delete hospital
+router.get("/", getHospitals);
+router.get("/:id", getHospitalById);
+router.post("/", upload.single("image"), createHospital);
+router.put("/:id", upload.single("image"), updateHospital);
+router.delete("/:id", deleteHospital);
+router.patch("/:id/toggle-status", toggleHospitalStatus);
 
 export default router;

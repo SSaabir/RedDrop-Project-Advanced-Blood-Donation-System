@@ -8,9 +8,25 @@ export const useBloodInventory = () => {
     //  Fetch all blood inventory records
     const fetchBloodInventory = async () => {
         setLoading(true);
-        setError(null);
+        
         try {
-            const response = await fetch("/api/Blood-inventory");
+            const response = await fetch("/api/blood-inventory");
+            if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
+            const data = await response.json();
+            setBloodInventory(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    //  Fetch all blood inventory by HospitalId
+    const fetchBloodInventoryByHospital = async (id) => {
+        setLoading(true);
+        
+        try {
+            const response = await fetch(`/api/blood-inventory/hospital/${id}`);
             if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
             const data = await response.json();
             setBloodInventory(data);
@@ -25,7 +41,7 @@ export const useBloodInventory = () => {
     const fetchBloodInventoryById = async (id) => {
         setError(null);
         try {
-            const response = await fetch(`/api/Blood-inventory/${id}`);
+            const response = await fetch(`/api/blood-inventory/${id}`);
             if (!response.ok) throw new Error("Failed to fetch blood inventory record.");
             return await response.json();
         } catch (err) {
@@ -36,17 +52,17 @@ export const useBloodInventory = () => {
 
     //  Create a new blood inventory record
     const createBloodInventory = async (inventoryData) => {
-        setLoading(true);
-        setError(null);
+        
         try {
-            const response = await fetch("/api/Blood-inventory", {
+            const response = await fetch("/api/blood-inventory", {
+
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(inventoryData),
             });
             if (!response.ok) throw new Error("Failed to create blood inventory record.");
-            const newRecord = await response.json();
-            setBloodInventory((prev) => [...prev, newRecord]);
+            const newIventory = await response.json();
+            setBloodInventory((prev) => [...prev, newIventory.data]);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -59,7 +75,7 @@ export const useBloodInventory = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/Blood-inventory/${id}`, {
+            const response = await fetch(`/api/blood-inventory/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(inventoryData),
@@ -81,7 +97,7 @@ export const useBloodInventory = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/Blood-inventory/${id}`, {
+            const response = await fetch(`/api/blood-inventory/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete blood inventory record.");
@@ -93,19 +109,35 @@ export const useBloodInventory = () => {
         }
     };
 
-    // Fetch blood inventory records when the hook is used
-    useEffect(() => {
-        fetchBloodInventory();
-    }, []);
-
+    const toggleExpired = async (id) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/api/blood-inventory/toggle-expired/${id}`, {
+                method: "PATCH",
+            });
+            if (!response.ok) throw new Error("Failed to toggle expired status.");
+            const updatedRecord = await response.json();
+            setBloodInventory((prev) =>
+                prev.map((record) => (record._id === id ? updatedRecord : record))
+            );
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+    
     return {
         bloodInventory,
         loading,
         error,
         fetchBloodInventory,
         fetchBloodInventoryById,
+        fetchBloodInventoryByHospital,
         createBloodInventory,
         updateBloodInventory,
         deleteBloodInventory,
+        toggleExpired
     };
 };

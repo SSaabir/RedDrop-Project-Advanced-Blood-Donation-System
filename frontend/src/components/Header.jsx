@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Navbar, TextInput, Dropdown, Avatar, Modal, Label, Select, Textarea, Spinner } from 'flowbite-react';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo.svg';
@@ -12,9 +12,9 @@ export default function Header() {
   const path = useLocation().pathname;
   const { logout } = useLogout();
   const { user } = useAuthContext();
-  const { hospitals, loading, error } = useHospital();
-  const {createEvaluation} = useHealthEvaluation();
-  const {createAppointment} = useBloodDonationAppointment();
+  const { hospitals, loading:hLoading, error: hError, fetchHospitals } = useHospital();
+  const {createEvaluation, loading:heLoading , error:heError} = useHealthEvaluation();
+  const {createAppointment, loading, error} = useBloodDonationAppointment();
 
   
 
@@ -43,6 +43,10 @@ export default function Header() {
     donorId: userId || "",
    
   });
+
+  useEffect(() => {
+    fetchHospitals();
+}, []);
 
   
 
@@ -190,14 +194,15 @@ export default function Header() {
               <TextInput id="evaluationTime" type="time" required value={evalFormData.evaluationTime} onChange={handleEvalChange} />
             </div>
             <Modal.Footer>
-              <Button type="submit" className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center">
-                {loading ? <Spinner color="white" size="sm" /> : "Schedule Evaluation"}
+              <Button type="submit" className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center" disabled={heLoading}>
+                {heLoading ? <Spinner color="white" size="sm" /> : "Schedule Evaluation"}
               </Button>
               <Button color="gray" onClick={() => setOpenEvalModal(false)}>Cancel</Button>
             </Modal.Footer>
           </form>
         </Modal.Body>
       </Modal>
+
 
       {/* Appointment Modal */}
       <Modal show={openAppointmentModal} onClose={() => setOpenAppointmentModal(false)}>

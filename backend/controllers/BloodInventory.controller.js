@@ -3,7 +3,18 @@ import BloodInventory from "../models/BloodInventory.model.js";
 // Get all blood inventory records
 export const getBloodInventory = async (req, res) => {
     try {
-        const inventory = await BloodInventory.find().populate('hospitalId');
+        const inventory = await BloodInventory.find();
+        res.json(inventory);
+        console.log("Blood Inventory:", inventory);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching blood inventory", error });
+    }
+};
+
+//  Get all blood inventory records by Hospital ID
+export const getBloodInventoryByHospital = async (req, res) => {
+    try {
+        const inventory = await BloodInventory.find({ hospitalId: req.params.id });
         res.json(inventory);
     } catch (error) {
         res.status(500).json({ message: "Error fetching blood inventory", error });
@@ -14,7 +25,6 @@ export const getBloodInventory = async (req, res) => {
 export const getBloodInventoryById = async (req, res) => {
     try {
         const record = await BloodInventory.findById(req.params.id).populate('hospitalId');
-        if (!record) return res.status(404).json({ message: "Blood inventory record not found" });
         res.json(record);
     } catch (error) {
         res.status(500).json({ message: "Error fetching blood inventory", error });
@@ -22,12 +32,16 @@ export const getBloodInventoryById = async (req, res) => {
 };
 
 //  Create a new blood inventory record
+
+
 export const createBloodInventory = async (req, res) => {
     try {
-        const { hospitalId, bloodType,availableStocks, expirationDate } = req.body;
+        
+        const { hospitalId, bloodType, availableStocks, expirationDate } = req.body;
 
         if (!hospitalId || !bloodType || !availableStocks || !expirationDate) {
-            return res.status(400).json({ message: "All fields are required" });
+            console.error("Validation failed: Missing required fields", req.body);
+            return res.console.error(400).json({ message: "All fields are required!" });
         }
 
         const newInventory = new BloodInventory({
@@ -36,13 +50,17 @@ export const createBloodInventory = async (req, res) => {
             availableStocks,
             expirationDate,
         });
+        console.log("Received Dat:", newInventory); // Debugging
 
         await newInventory.save();
-        res.status(201).json(newInventory);
+        res.status(201).json({ success: true, data: newInventory});
     } catch (error) {
+        console.error("Error in createBloodInventory:", error);
         res.status(400).json({ message: "Error creating blood inventory record", error });
     }
 };
+
+
 
 //  Update blood inventory details
 export const updateBloodInventory = async (req, res) => {
@@ -70,5 +88,21 @@ export const deleteBloodInventory = async (req, res) => {
         res.json({ message: "Blood inventory record deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: "Error deleting blood inventory record", error });
+    }
+};
+
+
+export const toggleExpired = async (req, res) => {
+    try {
+        console.log("Received ID:", req.params.id);
+        const inventory = await BloodInventory.findByIdAndUpdate(
+            req.params.id,
+            { expiredStatus: true },
+            { new: true }
+        );
+        res.json(inventory);
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error toggling expired status", error });
     }
 };

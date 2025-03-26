@@ -40,7 +40,7 @@ const hospitalSchema = new mongoose.Schema({
         unique: true,
         validate: {
             validator: validator.isEmail,
-            message: "Invalid email format",
+            message: (props) => `${props.value} is not a valid email address!`,
         },
     },
     password: {
@@ -48,7 +48,7 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
     },
     image: {
-        type: String,
+        type: String, // URL or file path
         required: false,
     },
     startTime: {
@@ -56,7 +56,7 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: (value) => moment(value, "HH:mm", true).isValid(),
-            message: "Invalid start time format. Please use HH:mm.",
+            message: "Invalid start time format (HH:mm required)",
         },
     },
     endTime: {
@@ -64,7 +64,7 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: (value) => moment(value, "HH:mm", true).isValid(),
-            message: "Invalid end time format. Please use HH:mm.",
+            message: "Invalid end time format (HH:mm required)",
         },
     },
     activeStatus: {
@@ -73,16 +73,27 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// Sign-in method (plain text password comparison)
+// Sign-in method
 hospitalSchema.statics.signin = async function(email, password) {
-    if (!email || !password) throw new Error("All fields are required");
+    if (!email || !password) {
+        throw new Error("All fields are required");
+    }
 
     const hospital = await this.findOne({ email });
-    if (!hospital) throw new Error("Incorrect email");
 
-    if (password !== hospital.password) throw new Error("Incorrect password");
+    if (!hospital) {
+        throw new Error("Incorrect email");
+    }
+
+    const match = password === hospital.password;
+
+    if (!match) {
+        throw new Error("Incorrect password");
+    }
 
     return hospital;
 };
 
-export default mongoose.model("Hospital", hospitalSchema);
+const Hospital = mongoose.model("Hospital", hospitalSchema);
+
+export default Hospital;

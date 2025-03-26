@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { handleError } from '../services/handleError';
+import { toast } from 'react-toastify';
 
 export const useHospitalAdmin = () => {
     const [hospitalAdmins, setHospitalAdmins] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
     // Fetch all hospital admins
     const fetchHospitalAdmins = async () => {
@@ -13,20 +14,37 @@ export const useHospitalAdmin = () => {
             if (!response.ok) throw new Error(data.message || 'Something went wrong');
             setHospitalAdmins(data);
         } catch (err) {
-            setError(err.message);
+            handleError(err);
         }
     };
 
+    // Fetch all hospital admins by hospital ID
+    const fetchHospitalAdminsByHospitalId = async (id) => {
+        try {
+            const response = await fetch(`/api/healthAd/hospital/${id}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch hospital admins');
+            setHospitalAdmins(data);
+        } catch (err) {
+            handleError(err);
+        }
+    }
+
+
     // Fetch a single hospital admin by ID
     const fetchHospitalAdminById = async (id) => {
+        setLoading(true);
         try {
             const response = await fetch(`/api/healthAd/${id}`);
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Something went wrong');
             setHospitalAdmins([data]);
+            toast.success('Hospital Admin fetched successfully!');
         } catch (err) {
-            setError(err.message);
-        } 
+            handleError(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Create a new hospital admin
@@ -39,8 +57,9 @@ export const useHospitalAdmin = () => {
             const data = await response.json();
             if (!response.ok) throw new Error(data?.message || 'Failed to create admin');
             setHospitalAdmins(prevAdmins => [...prevAdmins, data]);
+            toast.success('Hospital Admin created successfully!');
         } catch (err) {
-            setError(err?.message || 'Something went wrong');
+        handleError(err);  
         }
     };
 
@@ -56,8 +75,9 @@ export const useHospitalAdmin = () => {
             setHospitalAdmins(prevAdmins =>
                 prevAdmins.map(admin => (admin._id === id ? data : admin))
             );
+            toast.success('Hospital Admin updated successfully!');
         } catch (err) {
-            setError(err.message);
+            handleError(err); 
         }
     };
 
@@ -67,8 +87,9 @@ export const useHospitalAdmin = () => {
             const response = await fetch(`/api/healthAd/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to delete admin');
             setHospitalAdmins(prevAdmins => prevAdmins.filter(admin => admin._id !== id));
+            toast.success('Hospital Admin deleted successfully!');
         } catch (err) {
-            setError(err.message);
+            handleError(err);
         }
     };
 
@@ -87,16 +108,16 @@ export const useHospitalAdmin = () => {
             )
           );
         } catch (err) {
-          console.error('ToggleHospitalAdmin error:', err.message);
+            handleError(err);    
         }
       };
 
     return {
         hospitalAdmins,
         loading,
-        error,
         fetchHospitalAdmins,
         fetchHospitalAdminById,
+        fetchHospitalAdminsByHospitalId,
         createHospitalAdmin,
         updateHospitalAdmin,
         deleteHospitalAdmin,

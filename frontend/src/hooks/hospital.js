@@ -24,7 +24,7 @@ export const useHospital = () => {
             const response = await fetch(`/api/hospital/${id}`);
             const data = await response.json();
             if (!response.ok) throw new Error("Failed to fetch hospital");
-            setHospitals(data); // Store the hospital in an array for consistency
+            setHospitals([data]); // Store the hospital in an array for consistency
         } catch (err) {
             setError(err.message);
         } finally {
@@ -115,10 +115,7 @@ export const useHospital = () => {
         }
     };
 
-    useEffect(() => {
-        fetchHospitals();
-    }, []);
-
+    
     return {
         hospitals,
         loading,

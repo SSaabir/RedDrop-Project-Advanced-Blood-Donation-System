@@ -5,7 +5,7 @@ const healthEvaluationSchema = new mongoose.Schema(
         receiptNumber: {
             type: String,
             required: false,
-            unique: true,
+            unique: false,
         },
         passStatus: {
             type: String,
@@ -14,7 +14,7 @@ const healthEvaluationSchema = new mongoose.Schema(
         },
         progressStatus: {
             type: String,
-            enum: ['Not Started', 'In Progress', 'Completed'],
+            enum: ['Not Started', 'In Progress', 'Completed', 'Cancelled'],
             default: 'Not Started',
         },
         feedbackStatus: {

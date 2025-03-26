@@ -1,27 +1,23 @@
 import express from 'express';
-import { 
-    getEmergencyRequests, 
-    getEmergencyRequestById, 
-    createEmergencyRequest, 
-    updateEmergencyRequest, 
-    deleteEmergencyRequest 
+import upload from '../utils/Multer.js';
+
+import {
+    getEmergencyRequests,
+    getEmergencyRequestById,
+    createEmergencyRequest,
+    deleteEmergencyRequest,
+    acceptEmergencyRequest,
+    declineEmergencyRequest
 } from '../controllers/EmergencyBR.controller.js';
 
 const router = express.Router();
 
-// ✅ Get all emergency requests
+// Emergency Blood Request Routes
 router.get("/", getEmergencyRequests);
-
-// ✅ Get a single emergency request by ID
-router.get("/:id", getEmergencyRequestById);
-
-// ✅ Create a new emergency request
-router.post("/", createEmergencyRequest);
-
-// ✅ Update an emergency request
-router.put("/:id", updateEmergencyRequest);
-
-// ✅ Delete an emergency request
-router.delete("/:id", deleteEmergencyRequest);
+router.get("/:emergencyBRId", getEmergencyRequestById);
+router.post("/", upload.single('proofDocument'), createEmergencyRequest);
+router.delete("/:emergencyBRId", deleteEmergencyRequest);
+router.put("/:emergencyBRId/accept", acceptEmergencyRequest);
+router.put("/:emergencyBRId/decline", declineEmergencyRequest);
 
 export default router;

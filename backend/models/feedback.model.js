@@ -17,6 +17,11 @@ const feedbackSchema = new mongoose.Schema({
         refPath: 'sessionModel', // Dynamic reference
         required: true,
     },
+    sessionModel: {
+        type: String,
+        enum: ['BloodDonationAppointment', 'HealthEvaluation'], // Define session models
+        required: true,
+    },
     subject: {
         type: String,
         required: true,

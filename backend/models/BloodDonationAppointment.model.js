@@ -16,9 +16,17 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
         ref: 'HospitalAdmin',
         required: false,
      },
+     feedbackStatus: {
+        type: Boolean, // URL or file path for the image
+        required: false,
+        default: false
+    },
     appointmentDate: {
-        type: Date, // Assuming you want to store the exact date and time
+        type: String, // Assuming you want to store the exact date and time
         required: true,
+        default: function () {
+            return new Date().toISOString().split('T')[0]; // Extracts YYYY-MM-DD
+        },
     },
     appointmentTime: {
         type: String, // Storing as a string in AM/PM format
@@ -35,18 +43,18 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
     },
     receiptNumber: {
         type: String, // Unique receipt number for the appointment
-        required: true,
-        unique: true,
+        required: false,
+        unique: false,
     },
-    passStatus: {
+    progressStatus: {
         type: String,
-        enum: ['Pending', 'Passed', 'Failed', 'Cancelled'],
-        default: 'Pending',
+        enum: ['Not Started', 'In Progress', 'Completed', 'Cancelled'],
+        default: 'Not Started',
     },
-    acceptStatus: {
+    activeStatus: {
         type: String,
-        enum: ['Pending', 'Confirmed', 'Rescheduled', 'Cancelled'], // Only these values are allowed
-        default: 'Pending', // Default to Pending if no status is provided
+        enum: ['Scheduled', 'Re-Scheduled', 'Accepted', 'Cancelled'], // Only these values are allowed
+        default: 'Scheduled', // Default to Pending if no status is provided
     },
 }, { timestamps: true });
 

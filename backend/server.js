@@ -1,13 +1,12 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import cors from 'cors'
 import authRoutes from './routes/auth.route.js';
 import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
-
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
 import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.route.js";
 import SystemManagerRoutes from './routes/SystemManager.route.js';
-import cors from 'cors'
 import hospitalRoutes from "./routes/hospital.route.js";
 import donorRoutes from "./routes/donor.route.js";
 import feedbackRoutes from "./routes/feedback.route.js";
@@ -24,6 +23,7 @@ const app = express();
 // ✅ Middleware (before routes)
 app.use(express.json());
 app.use(cors())
+
 // ✅ Multer Configuration for File Uploads
 const storage = multer.diskStorage({
     destination: './uploads/', // Directory where files will be stored
@@ -51,25 +51,22 @@ app.get('/', (req, res) => {
 });
 
 // ✅ Routes
-
 app.use('/api/auth', authRoutes);
 app.use('/api/healthEvaluation', healthEvaluationRoutes);
 app.use('/api/hospital', hospitalRoutes);
 app.use('/api/donor', donorRoutes);
-
-app.use('/api/Blood-inventory', BloodInventoryRoutes);
-app.use('/api/Blood-donation-appointment', BloodDonationAppointmentRoutes);
-
+app.use('/api/blood-inventory', BloodInventoryRoutes);
+app.use('/api/blooddonationappointment', BloodDonationAppointmentRoutes);
 app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
-
 app.use('/api/manager', SystemManagerRoutes);
 app.use('/api/emergencyBR', EmergencyBRRoutes);
 app.use('/api/healthAd', HospitalAdminRoutes);
+
 // ✅ Error handling middleware (should be last)
-app.use((err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || 'Internal Server Error';
+app.use((error, req, res, next) => {
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
     res.status(statusCode).json({
         success: false,
         statusCode,
