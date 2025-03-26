@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Button, Spinner, Table, Modal, TextInput, Label, FileInput } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function HospitalDashboard() {
   const { hospitals, loading, error, fetchHospitals, deleteHospital, updateHospital, createHospital } = useHospital();
   const [editHospital, setEditHospital] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-
+  const {user} = useAuthContext();
+  const userId = user?.userObj?._id;
   const [newHospital, setNewHospital] = useState({
     name: "",
     city: "",
@@ -75,7 +77,8 @@ export default function HospitalDashboard() {
       setErrorMessage("Please fill out all fields");
       return;
     }
-
+    newHospital.systemManagerId = userId;
+    
     const hospitalData = new FormData();
     Object.keys(newHospital).forEach((key) => {
       hospitalData.append(key, newHospital[key]);
