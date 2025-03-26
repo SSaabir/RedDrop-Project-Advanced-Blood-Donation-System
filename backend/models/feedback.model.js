@@ -1,10 +1,7 @@
 import mongoose from 'mongoose';
 
 const feedbackSchema = new mongoose.Schema({
-    feedbackId: {
-        type: mongoose.Schema.Types.ObjectId,
-        auto: true, // Automatically generated unique ID
-    },
+    
     donorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Donor', // Reference to Donor model
@@ -13,7 +10,7 @@ const feedbackSchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SystemManager', // Reference to System Manager model
-        required: true,
+        required: false,
     },
     sessionId: {
         type: mongoose.Schema.Types.ObjectId,
