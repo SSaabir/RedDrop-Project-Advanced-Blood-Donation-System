@@ -11,18 +11,18 @@ import {
 const router = express.Router();
 
 // Get all inquiries
-router.get('/inquiries', getAllInquiries);
+router.get("/", getAllInquiries);
 
 // Get a specific inquiry by ID
-router.get('/inquiries/:id', getInquiryById);
+router.get("/:id", getInquiryById);
 
 // Create a new inquiry
-router.post('/inquiries', createInquiry);
+router.post("/", createInquiry);
 
 // Update inquiry status
-router.put('/inquiries/:id/status', updateInquiryStatus);
+router.put("/:id", updateInquiryStatus);
 
 // Delete an inquiry by ID
-router.delete('/inquiries/:id', deleteInquiry);
+router.delete("/:id", deleteInquiry);
 
 export default router;
