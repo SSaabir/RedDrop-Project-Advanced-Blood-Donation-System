@@ -23,22 +23,23 @@ export const getFeedbackById = async (req, res) => {
 
 // ✅ Create a new feedback
 export const createFeedback = async (req, res) => {
+    console.log("Controller: ",req.body);
     try {
-        const { donorId, systemManagerId, sessionId, subject, comments, feedbackType, starRating } = req.body;
+        const { donorId, sessionId, sessionModel, subject, comments, feedbackType, starRating } = req.body;
 
         // Validate required fields
-        if (!donorId || !systemManagerId || !sessionId || !subject || !comments || !feedbackType) {
+        if (!donorId ||!sessionModel || !sessionId || !subject || !comments || !feedbackType) {
             return res.status(400).json({ message: "All required fields must be filled" });
         }
 
         const newFeedback = new Feedback({
             donorId,
-            systemManagerId,
+            sessionModel,
             sessionId,
             subject,
             comments,
             feedbackType,
-            starRating,
+            starRating: starRating || null,
         });
 
         await newFeedback.save();

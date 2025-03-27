@@ -5,7 +5,7 @@ const inquirySchema = new mongoose.Schema({
     systemManagerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'SystemManager', // Reference to System Manager model
-        required: true,
+        required: false,
     },
     email: {
         type: String,

@@ -10,7 +10,7 @@ const fetchInquiries = async () => {
     setLoading(true);
     setError(null); // Reset error before making the request
     try {
-        const response = await fetch("/api/inquiry/inquiries");
+        const response = await fetch("/api/inquiry");
         if (!response.ok) throw new Error("Failed to fetch inquiries");
         const data = await response.json();
         setInquiries(data);
@@ -30,7 +30,7 @@ useEffect(() => {
     // Fetch a single inquiry by ID
     const fetchInquiryById = async (id) => {
         try {
-            const response = await fetch(`/api/inquiries/${id}`);
+            const response = await fetch(`/api/inquiry/${id}`);
             if (!response.ok) throw new Error("Failed to fetch inquiry");
             return await response.json();
         } catch (err) {
@@ -42,7 +42,7 @@ useEffect(() => {
     // Create a new inquiry
     const createInquiry = async (inquiryData) => {
         try {
-            const response = await fetch("/api/inquiry/inquiries", {
+            const response = await fetch("/api/inquiry", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(inquiryData),
@@ -58,7 +58,7 @@ useEffect(() => {
     // Update an inquiry's status
     const updateInquiryStatus = async (id, status) => {
         try {
-            const response = await fetch(`/api/inquiries/${id}/status`, {
+            const response = await fetch(`/api/inquiry/${id}`, {  // Remove "/status"
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status }),
@@ -66,17 +66,17 @@ useEffect(() => {
             if (!response.ok) throw new Error("Failed to update inquiry status");
             const updatedInquiry = await response.json();
             setInquiries((prev) =>
-                prev.map((inquiry) => (inquiry._id === id ? updatedInquiry : inquiry))
+                prev.map((inquiry) => (inquiry._id === id ? updatedInquiry.inquiry : inquiry)) // Adjust to match response structure
             );
         } catch (err) {
-            console.error(err.message);
+            setError(err.message);  // Set error state instead of console.error
         }
     };
 
     // Delete an inquiry
     const deleteInquiry = async (id) => {
         try {
-            const response = await fetch(`/api/inquiries/${id}`, {
+            const response = await fetch(`/api/inquiry/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete inquiry");

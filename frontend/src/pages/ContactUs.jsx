@@ -1,31 +1,41 @@
 import React, { useState } from 'react';
-import { Button } from 'flowbite-react';
+import { Button, Spinner } from 'flowbite-react';
 import axios from 'axios';
 import map from '../assets/map.jpg';
 import contactus from '../assets/contactus.jpg';
-
+import { useInquiry } from '../hooks/useinquiry';
 export default function ContactUs() {
   const [formData, setFormData] = useState({
     email: '',
     subject: '',
     message: '',
-    category: 'General', // Default category
+    category: 'General',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { createInquiry } = useInquiry();
 
   const categories = ['General', 'Technical', 'Complaint', 'Other'];
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     try {
-      await axios.post('/api/inquiries', formData);
+      await createInquiry(formData);
       alert('Message sent successfully!');
       setFormData({ email: '', subject: '', message: '', category: 'General' });
     } catch (error) {
-      alert('Error sending message');
+      const errorMessage = error.response?.data?.message || 'Error sending message';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,8 +54,9 @@ export default function ContactUs() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Send Us a Message</h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2">Email</label>
+                <label htmlFor="email" className="block text-gray-700 mb-2">Email</label>
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -53,11 +64,13 @@ export default function ContactUs() {
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Your Email"
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2">Subject</label>
+                <label htmlFor="subject" className="block text-gray-700 mb-2">Subject</label>
                 <input
+                  id="subject"
                   type="text"
                   name="subject"
                   value={formData.subject}
@@ -65,11 +78,14 @@ export default function ContactUs() {
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Subject"
                   required
+                  disabled={loading}
                 />
               </div>
+
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2">Message</label>
+                <label htmlFor="message" className="block text-gray-700 mb-2">Message</label>
                 <textarea
+                  id="message"
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
@@ -77,24 +93,46 @@ export default function ContactUs() {
                   rows="5"
                   placeholder="Your Message"
                   required
+                  disabled={loading}
                 ></textarea>
               </div>
+
+
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2">Category</label>
+                <label htmlFor="category" className="block text-gray-700 mb-2">Category</label>
                 <select
+                  id="category"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
+                  disabled={loading}
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
-              <Button type="submit" gradientDuoTone="purpleToBlue" pill className="w-full">
-                Send Message
+             
+              {error && (
+                <div className="mb-6 text-red-500 text-sm">{error}</div>
+              )}
+              <Button 
+                type="submit" 
+                gradientDuoTone="purpleToBlue" 
+                pill 
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Message'
+                )}
               </Button>
             </form>
           </div>
@@ -103,8 +141,13 @@ export default function ContactUs() {
             <p className="text-gray-600 mb-4">BOC Merchant Tower, 28 St Michaels Rd</p>
             <p className="text-gray-600 mb-4">Email: redDrop@gmail.com</p>
             <p className="text-gray-600 mb-4">Phone: +1 (123) 456-7890</p>
-            <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-              <img src={map} alt="Location Map" className="w-full h-full object-cover" />
+            <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
+              <img 
+                src={map} 
+                alt="Location Map" 
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
           </div>
         </div>

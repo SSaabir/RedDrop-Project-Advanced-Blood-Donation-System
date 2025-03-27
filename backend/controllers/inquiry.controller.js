@@ -1,6 +1,5 @@
 // controllers/inquiryController.js
 import Inquiry from '../models/inquiry.model.js';
-import SystemManager from '../models/SystemManager.model.js';
 
 // Controller to fetch all inquiries with system manager details populated
 export const getAllInquiries = async (req, res) => {
@@ -29,24 +28,18 @@ export const getInquiryById = async (req, res) => {
 
 // Controller to create a new inquiry
 export const createInquiry = async (req, res) => {
-    const { systemManagerId, email, subject, message, category, attentiveStatus } = req.body;
-    
+    const { email, subject, message, category } = req.body;
+    console.log(req.body)
     try {
-        // Validate if the systemManagerId exists in the SystemManager collection
-        const systemManager = await SystemManager.findById(systemManagerId);
-        if (!systemManager) {
-            return res.status(400).json({ message: 'System Manager not found' });
-        }
-
+       
+       
         const newInquiry = new Inquiry({
-            systemManagerId,
             email,
             subject,
             message,
-            category,
-            attentiveStatus,
+            category
         });
-
+console.log(newInquiry);
         await newInquiry.save();
         res.status(201).json({ message: 'Inquiry created successfully', inquiry: newInquiry });
     } catch (error) {

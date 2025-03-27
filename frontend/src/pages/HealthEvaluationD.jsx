@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Button, Table, Modal, Label, TextInput, FileInput, Spinner } from "flowbite-react";
+import { Button, Table, Modal, Label, TextInput, FileInput, Spinner, Textarea, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useFeedback  } from "../hooks/usefeedback";
 
 export default function AppointmentD() {
   const { evaluations, fetchEvaluationByDonorId, fetchEvaluationByHospitalId, fetchEvaluations, deleteEvaluation, updateEvaluationDateTime, acceptEvaluation, cancelEvaluation, arrivedForEvaluation, completeEvaluation, cancelEvaluationDonor } = useHealthEvaluation();
-
+  const { createFeedback } = useFeedback();
   const [openRescheduleModal, setOpenRescheduleModal] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
   const [newDate, setNewDate] = useState("");
@@ -19,6 +20,13 @@ export default function AppointmentD() {
   const [openUploadModal, setOpenUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [evaluationResult, setEvaluationResult] = useState("");
+
+  const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [comments, setComments] = useState("");
+  const [feedbackType, setFeedbackType] = useState("");
+  const [starRating, setStarRating] = useState("");
+
 
   const { user } = useAuthContext();
   const userId = user?.userObj?._id;
@@ -54,6 +62,12 @@ export default function AppointmentD() {
     setNewTime(evaluation.evaluationTime || "");
     setOpenRescheduleModal(true);
   };
+
+  const viewFeedbackclick=(Feedback)=>
+    {
+      set
+
+    }
 
   // Handle Reschedule Submit
   const handleRescheduleSubmit = async () => {
@@ -116,6 +130,37 @@ export default function AppointmentD() {
       setErrorMessage("Failed to upload file. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFeedbackClick = (evaluation) => {
+    setSelectedEvaluation(evaluation);
+    setOpenFeedbackModal(true);
+  };
+
+  // Submit Feedback
+  const handleFeedbackSubmit = async () => {
+    if (!selectedEvaluation || !subject || !comments || !feedbackType) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const feedbackData = {
+      donorId: userId,
+      sessionId: selectedEvaluation._id,
+      sessionModel: "HealthEvaluation",
+      subject,
+      comments,
+      feedbackType,
+      starRating,
+    };
+
+    try {
+      console.log("Submitting feedback:", feedbackData);
+      await createFeedback(feedbackData); 
+      setOpenFeedbackModal(false);
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
     }
   };
 
@@ -217,6 +262,11 @@ export default function AppointmentD() {
                               Accept
                             </Button>
                           )}
+                          {evaluation.activeStatus !== "Cancelled" && (
+                            <Button size="xs" color="gray" onClick={() => handleFeedbackClick(evaluation)}>
+                              Feedback  
+                            </Button>
+                          )}
                         </>
                       )}
                     </div>
@@ -302,6 +352,29 @@ export default function AppointmentD() {
           )}
         </Modal.Footer>
       </Modal>
+
+      <Modal show={openFeedbackModal} onClose={() => setOpenFeedbackModal(false)}>
+        <Modal.Header>Submit Feedback</Modal.Header>
+        <Modal.Body>
+          <Label value="Subject" />
+          <TextInput value={subject} onChange={(e) => setSubject(e.target.value)} required />
+          <Label value="Comments" />
+          <Textarea value={comments} onChange={(e) => setComments(e.target.value)} required />
+          <Label value="Feedback Type" />
+          <Select value={feedbackType} onChange={(e) => setFeedbackType(e.target.value)} required>
+            <option value="">Select Feedback Type</option>
+            <option value="General Feedback">General Feedback</option>
+            <option value="Technical Feedback">Technical Feedback</option>
+            <option value="Complaint Feedback">Complaint Feedback</option>
+          </Select>
+          <Label value="Star Rating (Optional)" />
+          <TextInput type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={handleFeedbackSubmit}>Submit</Button>
+        </Modal.Footer>
+      </Modal>
+
 
       {/* Error Message */}
       {errorMessage && <div className="text-red-600 text-center mt-4">{errorMessage}</div>}

@@ -10,7 +10,7 @@ export const useFeedback = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch("http://localhost:3000/api/feedback");
+            const response = await fetch("/api/feedback");
             if (!response.ok) throw new Error("Failed to fetch feedback");
             const data = await response.json();
             setFeedbacks(data);
@@ -24,7 +24,7 @@ export const useFeedback = () => {
     // Fetch a single feedback by ID
     const fetchFeedbackById = useCallback(async (id) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/feedback/${id}`);
+            const response = await fetch(`/api/feedback/${id}`);
             if (!response.ok) throw new Error("Failed to fetch feedback");
             return await response.json();
         } catch (err) {
@@ -36,8 +36,9 @@ export const useFeedback = () => {
     // Create new feedback
     const createFeedback = useCallback(async (feedbackData) => {
         setLoading(true);
+        console.log("Hooks: ",feedbackData);
         try {
-            const response = await fetch("http://localhost:5000/api/feedback", {
+            const response = await fetch("/api/feedback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedbackData),
@@ -56,7 +57,7 @@ export const useFeedback = () => {
     const updateFeedback = useCallback(async (id, feedbackData) => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/feedback/${id}`, {
+            const response = await fetch(`/api/feedback/${id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(feedbackData),
@@ -77,7 +78,7 @@ export const useFeedback = () => {
     const deleteFeedback = useCallback(async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/feedback/${id}`, {
+            const response = await fetch(`/api/feedback/${id}`, {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("Failed to delete feedback");
@@ -90,10 +91,7 @@ export const useFeedback = () => {
     }, []);
 
     // Fetch feedbacks when the hook is used
-    useEffect(() => {
-        fetchFeedbacks();
-    }, [fetchFeedbacks]);
-
+   
     return {
         feedbacks,
         loading,

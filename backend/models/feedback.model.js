@@ -39,7 +39,7 @@ const feedbackSchema = new mongoose.Schema({
         type: Number,
         min: 1,
         max: 5,
-        required: false, // Optional field
+        required: true, // Optional field
     },
 }, { timestamps: true });
 
