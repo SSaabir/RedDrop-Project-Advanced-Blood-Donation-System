@@ -30,7 +30,11 @@ export const DashboardSidebar = () => {
                <Sidebar.Item href="/healthEvaluationD" icon={HiArrowSmRight}>
                  Health Evaluation
                </Sidebar.Item>
+               <Sidebar.Item href="/emerbd" icon={HiTable}>
+                 Emergency Requests
+               </Sidebar.Item>
                </>
+               
                )}
                {Hospital &&/* HospitalAdmin &&*/(<>
                 <Sidebar.Item href="/appointmentd" icon={HiReceiptTax}>

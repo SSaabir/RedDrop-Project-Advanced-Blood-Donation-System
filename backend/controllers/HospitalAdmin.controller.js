@@ -58,7 +58,7 @@ export const createHospitalAdmin = async (req, res, next) => {
             hospitalId: hospitalId,
             address: address,
             nic: nic,
-            image: image, // Include the image path
+            image: image, // Include the image 
             password: password,
             activeStatus: true // Default to active
         });

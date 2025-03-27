@@ -1,19 +1,6 @@
 import mongoose from 'mongoose';
 
-// Function to generate a unique emergencyBRId
-const generateEmergencyBRId = () => {
-  const timestamp = Date.now().toString(36);
-  const randomStr = Math.random().toString(36).substring(2, 8);
-  return `EBR-${timestamp}-${randomStr}`;
-};
-
 const emergencyBRSchema = new mongoose.Schema({
-  emergencyBRId: {
-    type: String,
-    required: true,
-    unique: true, // This creates the index implicitly
-    default: generateEmergencyBRId,
-  },
   name: {
     type: String,
     required: true,
@@ -29,7 +16,6 @@ const emergencyBRSchema = new mongoose.Schema({
   proofOfIdentificationNumber: {
     type: String,
     required: true,
-    unique: true, // This also creates an index
   },
   proofDocument: {
     type: String,
@@ -46,10 +32,6 @@ const emergencyBRSchema = new mongoose.Schema({
     required: true,
     min: 1,
   },
-  reason: {
-    type: String,
-    required: true,
-  },
   criticalLevel: {
     type: String,
     enum: ['Low', 'Medium', 'High'],
@@ -62,8 +44,8 @@ const emergencyBRSchema = new mongoose.Schema({
   },
   activeStatus: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Declined'],
-    default: 'Pending',
+    enum: ["Active", "Inactive"],
+    default: "Inactive",
   },
   hospitalName: {
     type: String,
@@ -73,7 +55,7 @@ const emergencyBRSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  activeStatus: {
+  acceptStatus: {
     type: String,
     enum: ["Pending", "Accepted", "Declined"],
     default: "Pending",
@@ -83,10 +65,19 @@ const emergencyBRSchema = new mongoose.Schema({
     required: false,
     default: null,
   },
+  acceptedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    refPath: 'acceptedByType', // Dynamically reference the model based on acceptedByType
+    default: null,
+  },
+  acceptedByType: {
+    type: String,
+    required: false,
+    enum: ['Hospital', 'Donor'], // Restrict to these two models
+    default: null,
+  },
 }, { timestamps: true });
-
-// Only keep the index for patientBlood (not covered by unique: true)
-emergencyBRSchema.index({ patientBlood: 1 });
 
 const EmergencyBR = mongoose.model('EmergencyBR', emergencyBRSchema);
 

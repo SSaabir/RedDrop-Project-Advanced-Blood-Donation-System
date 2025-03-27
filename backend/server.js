@@ -60,7 +60,7 @@ app.use('/api/blooddonationappointment', BloodDonationAppointmentRoutes);
 app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/manager', SystemManagerRoutes);
-app.use('/api/emergencyBR', EmergencyBRRoutes);
+app.use('/api/emergency-requests', EmergencyBRRoutes);
 app.use('/api/healthAd', HospitalAdminRoutes);
 
 // ✅ Error handling middleware (should be last)

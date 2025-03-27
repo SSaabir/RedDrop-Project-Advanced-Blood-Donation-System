@@ -1,34 +1,38 @@
 import React, { useState } from "react";
-import { Button, Card, Label, TextInput, Textarea, Select, Datepicker } from "flowbite-react";
-import { useEmergencyBR } from "../hooks/useEmergencyBR";  // Importing the hook
+import { Button, Card, Label, TextInput, Select, Datepicker } from "flowbite-react";
+import { useEmergencyBR } from "../hooks/useEmergencyBR"; // Importing the hook
 import background from '../assets/bg1.jpg';
 
-
 export default function EmergencyBloodRequest() {
-  const { createEmergencyRequest } = useEmergencyBR();
+  const { createEmergencyRequest, loading, error } = useEmergencyBR();
+
   const [formData, setFormData] = useState({
     name: '',
-    proofOfIdentificationNumber: '', // Renamed from 'id'
+    proofOfIdentificationNumber: '',
     hospitalName: '',
     address: '',
-    phoneNumber: '', 
-    patientBlood: '', 
+    phoneNumber: '',
+    patientBlood: '',
     units: '',
-    reason: '',
-    criticalLevel: 'Medium', 
-    withinDate: null, 
+    criticalLevel: 'Medium',
+    withinDate: null,
   });
-  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null); // For image preview
+  const [file, setFile] = useState(null); // Store the raw File object
 
   // Handle image change
   const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
+    const selectedFile = event.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile); // Store the raw file
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImage(e.target.result);
+        setImagePreview(e.target.result); // Set preview
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setFile(null);
+      setImagePreview(null);
     }
   };
 
@@ -41,14 +45,6 @@ export default function EmergencyBloodRequest() {
     }));
   };
 
-  // Handle date change
-  const handleDateChange = (date) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      withinDate: date ? date.toISOString().split("T")[0] : null, // "YYYY-MM-DD" or null
-    }));
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,29 +52,31 @@ export default function EmergencyBloodRequest() {
       alert("Please select a date for 'Needed By'");
       return;
     }
-  
-    const fileInput = document.querySelector("#image");
-    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
-  
-    const requestData = {
-      ...formData,
-      proofDocument: file ? file : null, // Ensure file or null
-    };
-  
-    await createEmergencyRequest(requestData, file);
-    setFormData({
-      name: '',
-      proofOfIdentificationNumber: '',
-      hospitalName: '',
-      address: '',
-      phoneNumber: '',
-      patientBlood: '',
-      units: '',
-      reason: '',
-      criticalLevel: 'Medium',
-      withinDate: null,
-    });
-    setImage(null);
+
+    const requestData = { ...formData };
+
+    try {
+      await createEmergencyRequest(requestData, file); // Pass form data and file separately
+      // Reset form on success
+      setFormData({
+        name: '',
+        proofOfIdentificationNumber: '',
+        hospitalName: '',
+        address: '',
+        phoneNumber: '',
+        patientBlood: '',
+        units: '',
+        criticalLevel: 'Medium',
+        withinDate: null,
+      });
+      setImagePreview(null);
+      setFile(null);
+      document.querySelector("#image").value = ""; // Clear file input
+      alert("Emergency blood request submitted successfully!");
+    } catch (err) {
+      console.error("Submission error:", err);
+      // Error is already set by the hook
+    }
   };
 
   return (
@@ -90,6 +88,9 @@ export default function EmergencyBloodRequest() {
         <h2 className="text-4xl font-extrabold text-center text-red-700 mb-8">
           Emergency Blood Request
         </h2>
+
+        {loading && <p className="text-center text-gray-600">Submitting...</p>}
+        {error && <p className="text-center text-red-600">Error: {error}</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="bg-gray-100 p-6 rounded-lg shadow-lg">
@@ -125,10 +126,11 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter your full name"
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="proofOfIdentificationNumber" value="ID Number" /> {/* Updated */}
+                  <Label htmlFor="proofOfIdentificationNumber" value="ID Number" />
                   <TextInput
                     id="proofOfIdentificationNumber"
                     type="text"
@@ -138,6 +140,7 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter your ID number"
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -154,6 +157,7 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter hospital name"
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
                 <div>
@@ -167,13 +171,14 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter your address"
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="phoneNumber" value="Phone Number" /> {/* Updated */}
+                  <Label htmlFor="phoneNumber" value="Phone Number" />
                   <TextInput
                     id="phoneNumber"
                     type="tel"
@@ -182,12 +187,13 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter 10-digit phone number"
                     required
-                    pattern="\d{10}" // Added validation
+                    pattern="\d{10}"
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="patientBlood" value="Blood Type Needed" /> {/* Updated */}
+                  <Label htmlFor="patientBlood" value="Blood Type Needed" />
                   <Select
                     id="patientBlood"
                     name="patientBlood"
@@ -195,6 +201,7 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   >
                     <option value="">Select Blood Type</option>
                     {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((type) => (
@@ -215,12 +222,13 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter required units"
                     required
-                    min="1" // Added validation
+                    min="1"
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="criticalLevel" value="Critical Level" /> {/* Added */}
+                  <Label htmlFor="criticalLevel" value="Critical Level" />
                   <Select
                     id="criticalLevel"
                     name="criticalLevel"
@@ -228,6 +236,7 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     required
                     className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    disabled={loading}
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -237,28 +246,18 @@ export default function EmergencyBloodRequest() {
               </div>
 
               <div>
-                <Label htmlFor="withinDate" value="Needed By" /> {/* Added */}
+                <Label htmlFor="withinDate" value="Needed By" />
                 <Datepicker
-                  id="withinDate"
-                  name="withinDate"
-                  onSelectedDateChanged={handleDateChange}
-                  minDate={new Date()} // Prevent past dates
-                  required
-                  className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
-                />
-              </div>
+  id="withinDate"
+  name="withinDate"
+  selected={formData.withinDate}  // Ensure it binds correctly
+  onChange={(date) => setFormData({ ...formData, withinDate: date })}  // Store raw date object
+  minDate={new Date()}
+  required
+  className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+  disabled={loading}
+/>
 
-              <div>
-                <Label htmlFor="reason" value="Reason for Request" />
-                <Textarea
-                  id="reason"
-                  name="reason"
-                  value={formData.reason}
-                  onChange={handleInputChange}
-                  placeholder="Provide details"
-                  required
-                  className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
-                />
               </div>
 
               <div>
@@ -269,11 +268,12 @@ export default function EmergencyBloodRequest() {
                   accept="image/*"
                   onChange={handleImageChange}
                   className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm"
+                  disabled={loading}
                 />
-                {image && (
+                {imagePreview && (
                   <div className="mt-4">
                     <img
-                      src={image}
+                      src={imagePreview}
                       alt="Uploaded Preview"
                       className="max-w-xs border-2 border-gray-300 rounded-lg"
                     />
@@ -281,8 +281,12 @@ export default function EmergencyBloodRequest() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white p-3 mt-6 rounded-lg shadow-lg">
-                Submit Request
+              <Button
+                type="submit"
+                className="w-full bg-red-600 hover:bg-red-700 text-white p-3 mt-6 rounded-lg shadow-lg"
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Request"}
               </Button>
             </form>
           </div>
