@@ -6,7 +6,7 @@ export const useEmergencyBR = () => {
     const [error, setError] = useState(null);
 
     // Fetch all emergency requests
-    const fetchEmergencyRequests = async () => {
+    const fetchEmergencyRequests = useCallback(async() => {
         setError(null);
         try {
             const response = await fetch("/api/emergency-requests");
@@ -16,10 +16,10 @@ export const useEmergencyBR = () => {
         } catch (err) {
             setError(err.message);
         }
-    };
+    }, []);
 
     // Fetch a single emergency request by ID
-    const fetchEmergencyRequestById = async (id) => {
+    const fetchEmergencyRequestById = useCallback(async(id) => {
         try {
             const response = await fetch(`/api/emergency-requests/${id}`);
             if (!response.ok) throw new Error("Failed to fetch emergency request.");
@@ -28,11 +28,11 @@ export const useEmergencyBR = () => {
             setError(err.message);
             return null;
         }
-    };
+    }, []);
 
     // Create a new emergency request (with file upload support)
-    const createEmergencyRequest = async (requestData, proofDocumentFile) => {
-        console.log("first: ",requestData);
+    const createEmergencyRequest = async(requestData, proofDocumentFile) => {
+        console.log("first: ", requestData);
         try {
             const formData = new FormData();
             // Append all fields from requestData
@@ -46,7 +46,7 @@ export const useEmergencyBR = () => {
 
             const response = await fetch("/api/emergency-requests", {
                 method: "POST",
-                body: formData, 
+                body: formData,
             });
             if (!response.ok) throw new Error("Failed to create emergency request.");
             const newRequest = await response.json();
@@ -60,7 +60,7 @@ export const useEmergencyBR = () => {
     };
 
     // Delete an emergency request
-    const deleteEmergencyRequest = async (id) => {
+    const deleteEmergencyRequest = async(id) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/emergency-requests/${id}`, {
@@ -76,7 +76,7 @@ export const useEmergencyBR = () => {
     };
 
     // Validate (activate) an emergency request
-    const validateEmergencyRequest = async (id) => {
+    const validateEmergencyRequest = async(id) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/emergency-requests/${id}/validate`, {
@@ -95,7 +95,7 @@ export const useEmergencyBR = () => {
     };
 
     // Accept an emergency request
-    const acceptEmergencyRequest = async (id, acceptedBy, acceptedByType) => {
+    const acceptEmergencyRequest = async(id, acceptedBy, acceptedByType) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/emergency-requests/${id}/accept`, {
@@ -116,7 +116,7 @@ export const useEmergencyBR = () => {
     };
 
     // Decline an emergency request
-    const declineEmergencyRequest = async (id, declineReason) => {
+    const declineEmergencyRequest = async(id, declineReason) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/emergency-requests/${id}/decline`, {
@@ -135,7 +135,10 @@ export const useEmergencyBR = () => {
             setLoading(false);
         }
     };
-   
+
+    // Fetch emergency requests on mount
+
+
     return {
         emergencyRequests,
         loading,

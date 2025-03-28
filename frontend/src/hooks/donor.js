@@ -6,7 +6,7 @@ export const useDonor = () => {
     const [error, setError] = useState(null);
 
     // Fetch all donors
-    const fetchDonors = async() => {
+    const fetchDonors = useCallback(async() => {
         setLoading(false);
         try {
             const response = await fetch("/api/donor");
@@ -18,10 +18,10 @@ export const useDonor = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Fetch a single donor by ID
-    const fetchDonorById = async(id) => {
+    const fetchDonorById = useCallback(async(id) => {
         setLoading(false);
         try {
             const response = await fetch(`/api/donor/${id}`);
@@ -33,7 +33,7 @@ export const useDonor = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Create a new donor
     const createDonor = async(donorData) => {

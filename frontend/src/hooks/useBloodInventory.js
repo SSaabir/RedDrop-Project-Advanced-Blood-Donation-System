@@ -6,9 +6,9 @@ export const useBloodInventory = () => {
     const [error, setError] = useState(null);
 
     //  Fetch all blood inventory records
-    const fetchBloodInventory = async () => {
+    const fetchBloodInventory = useCallback(async() => {
         setLoading(true);
-        
+
         try {
             const response = await fetch("/api/blood-inventory");
             if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
@@ -19,12 +19,12 @@ export const useBloodInventory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     //  Fetch all blood inventory by HospitalId
-    const fetchBloodInventoryByHospital = async (id) => {
+    const fetchBloodInventoryByHospital = useCallback(async(id) => {
         setLoading(true);
-        
+
         try {
             const response = await fetch(`/api/blood-inventory/hospital/${id}`);
             if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
@@ -35,10 +35,10 @@ export const useBloodInventory = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     //  Fetch a single blood inventory record by ID
-    const fetchBloodInventoryById = async (id) => {
+    const fetchBloodInventoryById = useCallback(async(id) => {
         setError(null);
         try {
             const response = await fetch(`/api/blood-inventory/${id}`);
@@ -48,11 +48,11 @@ export const useBloodInventory = () => {
             setError(err.message);
             return null;
         }
-    };
+    }, []);
 
     //  Create a new blood inventory record
-    const createBloodInventory = async (inventoryData) => {
-        
+    const createBloodInventory = async(inventoryData) => {
+
         try {
             const response = await fetch("/api/blood-inventory", {
 
@@ -71,7 +71,7 @@ export const useBloodInventory = () => {
     };
 
     //  Update a blood inventory record
-    const updateBloodInventory = async (id, inventoryData) => {
+    const updateBloodInventory = async(id, inventoryData) => {
         setLoading(true);
         setError(null);
         try {
@@ -93,7 +93,7 @@ export const useBloodInventory = () => {
     };
 
     //  Delete a blood inventory record
-    const deleteBloodInventory = async (id) => {
+    const deleteBloodInventory = async(id) => {
         setLoading(true);
         setError(null);
         try {
@@ -109,7 +109,7 @@ export const useBloodInventory = () => {
         }
     };
 
-    const toggleExpired = async (id) => {
+    const toggleExpired = async(id) => {
         setLoading(true);
         setError(null);
         try {
@@ -127,7 +127,7 @@ export const useBloodInventory = () => {
             setLoading(false);
         }
     }
-    
+
     return {
         bloodInventory,
         loading,
