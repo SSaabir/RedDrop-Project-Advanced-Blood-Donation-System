@@ -101,7 +101,6 @@ export const acceptEmergencyRequest = async (req, res) => {
         acceptStatus: "Accepted",
         acceptedBy: acceptedBy, // ObjectId of Hospital or Donor
         acceptedByType: acceptedByType, // "Hospital" or "Donor"
-        declineReason: "accepted", // As per your requirement
       },
       { new: true } // Returns the updated document
     ).populate("acceptedBy");

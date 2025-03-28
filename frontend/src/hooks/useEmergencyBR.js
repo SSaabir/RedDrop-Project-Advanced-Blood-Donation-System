@@ -46,7 +46,7 @@ export const useEmergencyBR = () => {
 
             const response = await fetch("/api/emergency-requests", {
                 method: "POST",
-                body: formData, // No Content-Type header; FormData sets it automatically
+                body: formData, 
             });
             if (!response.ok) throw new Error("Failed to create emergency request.");
             const newRequest = await response.json();
@@ -135,8 +135,6 @@ export const useEmergencyBR = () => {
             setLoading(false);
         }
     };
-
-    // Fetch emergency requests on mount
    
     return {
         emergencyRequests,

@@ -1,7 +1,9 @@
-import { useEffect, useState, useMemo,  } from "react";
-import { Table, Button, Modal, Textarea, Label, Badge, Spinner, Select, TextInput } from "flowbite-react";
+import { useEffect, useState, useMemo } from "react";
+import { Table, Button, Modal, Textarea, Badge, Spinner } from "flowbite-react";
 import { useEmergencyBR } from "../hooks/useEmergencyBR";
 import { useAuthContext } from "../hooks/useAuthContext";
+
+//usage of hooks to connect to the backend 
 const EmergencyBRAdmin = () => {
   const {
     emergencyRequests,
@@ -17,21 +19,24 @@ const EmergencyBRAdmin = () => {
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [validateId, setValidateId] = useState(null);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
-  const [acceptData, setAcceptData] = useState({ acceptedBy: '', acceptedByType: '' });
+  const [acceptData, setAcceptData] = useState({ acceptedBy: "", acceptedByType: "" });
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [declineId, setDeclineId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const { user } = useAuthContext();
   const userId = user?.userObj?._id;
   const Donor = user?.userObj?.role === "Donor";
   const Hospital = user?.userObj?.role === "Hospital";
   const Manager = user?.userObj?.role === "Manager";
-  
+
   useEffect(() => {
     fetchEmergencyRequests();
-}, [fetchEmergencyRequests]);
+  }, [fetchEmergencyRequests]);
 
   const handleValidate = async () => {
     await validateEmergencyRequest(validateId);
@@ -39,9 +44,10 @@ const EmergencyBRAdmin = () => {
   };
 
   const handleAccept = async (acceptId) => {
-    let Type, by = null;
-    if(user.role === "Donor"){
-      by = user.userObj._id
+    let Type = null,
+      by = null;
+    if (user.role === "Donor") {
+      by = user.userObj._id;
       Type = "Donor";
     } else if (user.role === "Hospital") {
       Type = "Hospital";
@@ -77,17 +83,28 @@ const EmergencyBRAdmin = () => {
     setShowDeleteModal(false);
   };
 
-  const criticalLevelColors = useMemo(() => ({
-    High: "failure",
-    Medium: "warning",
-    Low: "success",
-  }), []);
+  const handleViewDetails = (request) => {
+    setSelectedRequest(request);
+    setShowDetailsModal(true);
+  };
 
-  const statusColors = useMemo(() => ({
-    Pending: "warning",
-    Accepted: "success",
-    Declined: "failure",
-  }), []);
+  const criticalLevelColors = useMemo(
+    () => ({
+      High: "failure",
+      Medium: "warning",
+      Low: "success",
+    }),
+    []
+  );
+
+  const statusColors = useMemo(
+    () => ({
+      Pending: "warning",
+      Accepted: "success",
+      Declined: "failure",
+    }),
+    []
+  );
 
   return (
     <div className="p-4">
@@ -104,62 +121,77 @@ const EmergencyBRAdmin = () => {
           <Table.HeadCell>Actions</Table.HeadCell>
         </Table.Head>
         <Table.Body>
-          {emergencyRequests.map((request) => (
-            <Table.Row key={request._id} className="even:bg-gray-50">
-              <Table.Cell>{request.name}</Table.Cell>
-              <Table.Cell>{request.hospitalName}</Table.Cell>
-              <Table.Cell>{request.patientBlood}</Table.Cell>
-              <Table.Cell>
-                <Badge color={criticalLevelColors[request.criticalLevel] || "gray"}>
-                  {request.criticalLevel}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell>
-                <Badge color={statusColors[request.acceptStatus] || "gray"}>
-                  {request.acceptStatus}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell className="space-x-2">
-                <Button
-                  size="xs"
-                  color="purple"
-                  onClick={() => {
-                    setValidateId(request._id);
-                    setShowValidateModal(true);
-                  }}
-                  disabled={request.activeStatus === "Active"}
-                >
-                  Validate
-                </Button>
-                <Button
-                  size="xs"
-                  color="success"
-                  onClick={() => {handleAccept(request._id, Donor, Hospital)}}
-                  disabled={request.acceptStatus === "Accepted"}
-                >
-                  Accept
-                </Button>
-                <Button
-                  size="xs"
-                  color="failure"
-                  onClick={() => {
-                    setDeclineId(request._id);
-                    setShowDeclineModal(true);
-                  }}
-                  disabled={request.acceptStatus === "Declined"}
-                >
-                  Decline
-                </Button>
-                <Button
-                  size="xs"
-                  color="gray"
-                  onClick={() => confirmDelete(request._id)}
-                >
-                  Delete
-                </Button>
-              </Table.Cell>
-            </Table.Row>
-          ))}
+          {emergencyRequests.map((request) => {
+            const isActionDisabled = request.acceptStatus !== "Pending"; // Both buttons disappear if not Pending
+
+            return (
+              <Table.Row key={request._id} className="even:bg-gray-50">
+                <Table.Cell>{request.name}</Table.Cell>
+                <Table.Cell>{request.hospitalName}</Table.Cell>
+                <Table.Cell>{request.patientBlood}</Table.Cell>
+                <Table.Cell>
+                  <Badge color={criticalLevelColors[request.criticalLevel] || "gray"}>
+                    {request.criticalLevel}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <Badge color={statusColors[request.acceptStatus] || "gray"}>
+                    {request.acceptStatus}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="xs"
+                      color="purple"
+                      onClick={() => {
+                        setValidateId(request._id);
+                        setShowValidateModal(true);
+                      }}
+                      disabled={request.activeStatus === "Active"}
+                    >
+                      Validate
+                    </Button>
+                    <Button
+                      size="xs"
+                      color="gray"
+                      onClick={() => confirmDelete(request._id)}
+                    >
+                      Delete
+                    </Button>
+                    {!isActionDisabled ? (
+                      <>
+                        <Button
+                          size="xs"
+                          color="success"
+                          onClick={() => handleAccept(request._id)}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="xs"
+                          color="failure"
+                          onClick={() => {
+                            setDeclineId(request._id);
+                            setShowDeclineModal(true);
+                          }}
+                        >
+                          Decline
+                        </Button>
+                      </>
+                    ) : null}
+                    <Button
+                      size="xs"
+                      color="blue"
+                      onClick={() => handleViewDetails(request)}
+                    >
+                      Details
+                    </Button>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            );
+          })}
         </Table.Body>
       </Table>
 
@@ -178,7 +210,7 @@ const EmergencyBRAdmin = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-      
+
       {/* Decline Modal */}
       <Modal show={showDeclineModal} onClose={() => setShowDeclineModal(false)}>
         <Modal.Header>Decline Request</Modal.Header>
@@ -212,6 +244,86 @@ const EmergencyBRAdmin = () => {
           </Button>
           <Button color="failure" onClick={executeDelete}>
             Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Details Modal */}
+      <Modal show={showDetailsModal} onClose={() => setShowDetailsModal(false)} size="lg">
+        <Modal.Header>Emergency Blood Request Details</Modal.Header>
+        <Modal.Body>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-gray-600 font-semibold">Request ID:</p>
+                  <p>{selectedRequest._id}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold">Patient Name:</p>
+                  <p>{selectedRequest.name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold">Hospital:</p>
+                  <p>{selectedRequest.hospitalName}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold">Blood Group:</p>
+                  <p>{selectedRequest.patientBlood}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold">Critical Level:</p>
+                  <Badge color={criticalLevelColors[selectedRequest.criticalLevel] || "gray"}>
+                    {selectedRequest.criticalLevel}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-gray-600 font-semibold">Status:</p>
+                  <Badge color={statusColors[selectedRequest.acceptStatus] || "gray"}>
+                    {selectedRequest.acceptStatus}
+                  </Badge>
+                </div>
+                {selectedRequest.units && (
+                  <div>
+                    <p className="text-gray-600 font-semibold">Units:</p>
+                    <p>{selectedRequest.units}</p>
+                  </div>
+                )}
+                {selectedRequest.reason && (
+                  <div>
+                    <p className="text-gray-600 font-semibold">Reason:</p>
+                    <p>{selectedRequest.reason}</p>
+                  </div>
+                )}
+                {selectedRequest.withinDate && (
+                  <div>
+                    <p className="text-gray-600 font-semibold">Needed By:</p>
+                    <p>
+                      {new Date(selectedRequest.withinDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                )}
+                {selectedRequest.proofDocument && (
+                  <div className="col-span-2">
+                    <p className="text-gray-600 font-semibold">Proof Document:</p>
+                    <img
+                      src={selectedRequest.proofDocument}
+                      alt="Proof Document"
+                      className="w-32 h-32 object-cover rounded-lg shadow-sm border border-gray-200 mt-2"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button color="gray" onClick={() => setShowDetailsModal(false)}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>
