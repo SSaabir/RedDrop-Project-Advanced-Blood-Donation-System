@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, TextInput, Select, Spinner } from "flowbite-react";
+import { Table, TextInput, Select, Spinner, Button } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useFeedback } from "../hooks/usefeedback.js";
 
@@ -8,7 +8,7 @@ export default function FeedbackDashboard() {
     const [filteredFeedbacks, setFilteredFeedbacks] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('');
-
+ 
     // Fetch feedbacks on component mount
     useEffect(() => {
         fetchFeedbacks();
@@ -36,6 +36,25 @@ export default function FeedbackDashboard() {
             setFilteredFeedbacks(feedbacks.filter(feedback => feedback.feedbackType === value));
         } else {
             setFilteredFeedbacks(feedbacks);
+        }
+    };
+    
+    // Handle delete feedback
+    const handleDelete = async (feedbackId) => {
+        if (window.confirm('Are you sure you want to delete this feedback?')) {
+            try {
+                const response = await fetch(`/api/feedback/${feedbackId}`, {
+                    method: 'DELETE',
+                });
+                
+                if (response.ok) {
+                    fetchFeedbacks(); // Refresh the feedback list
+                } else {
+                    console.error('Failed to delete feedback');
+                }
+            } catch (error) {
+                console.error('Error deleting feedback:', error);
+            }
         }
     };
 
@@ -72,6 +91,7 @@ export default function FeedbackDashboard() {
                             <Table.HeadCell>Comments</Table.HeadCell>
                             <Table.HeadCell>Type</Table.HeadCell>
                             <Table.HeadCell>Rating</Table.HeadCell>
+                            <Table.HeadCell>Actions</Table.HeadCell>
                         </Table.Head>
                         <Table.Body>
                             {filteredFeedbacks.length > 0 ? (
@@ -81,11 +101,16 @@ export default function FeedbackDashboard() {
                                         <Table.Cell>{feedback.comments}</Table.Cell>
                                         <Table.Cell>{feedback.feedbackType}</Table.Cell>
                                         <Table.Cell>{feedback.starRating ? `${feedback.starRating} ⭐` : 'N/A'}</Table.Cell>
+                                        <Table.Cell>
+                                            <Button size="xs" color="failure" onClick={() => handleDelete(feedback._id)}>
+                                                Delete
+                                            </Button>
+                                        </Table.Cell>
                                     </Table.Row>
                                 ))
                             ) : (
                                 <Table.Row>
-                                    <Table.Cell colSpan="4" className="text-center">
+                                    <Table.Cell colSpan="5" className="text-center">
                                         No feedback found.
                                     </Table.Cell>
                                 </Table.Row>

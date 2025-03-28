@@ -5,7 +5,8 @@ import { useBloodDonationAppointment } from "../hooks/useBloodDonationAppointmen
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { cancelAppointmentDonor } from "../../../backend/controllers/BloodDonationAppointment.controller";
-
+import { useFeedback } from "../hooks/usefeedback";
+import { set } from "mongoose";
 
 export default function HealthEvaluationD() {
   const {
@@ -27,6 +28,8 @@ export default function HealthEvaluationD() {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
 
+   const { createFeedback } = useFeedback();
+
   const [openArrivedModal, setOpenArrivedModal] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState("");
   
@@ -47,10 +50,15 @@ export default function HealthEvaluationD() {
   const SecondUserId = secondUser?.userObj?._id;
   const [hospitalAdminId, sethospitalAdminId] = useState(SecondUserId);
 
+  const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [comments, setComments] = useState("");
+  const [feedbackType, setFeedbackType] = useState("");
+  const [starRating, setStarRating] = useState("");  
+  
   useEffect(() => {
-      if (!userId) {
-        return;
-    }
+      if (!userId) return;
+    
     if (Donor) {
       fetchBloodDonationAppointmentByDonorId(userId);
     }
@@ -59,8 +67,7 @@ export default function HealthEvaluationD() {
     } else {
       fetchAppointments();
     }
-    }, [userId, Donor, Hospital, fetchAppointments, fetchBloodDonationAppointmentByDonorId, fetchBloodDonationAppointmentByHospitalId]);
-
+    }, [userId, Donor, Hospital]);
 
   // Handle Reschedule Click
   const handleRescheduleClick = (appointment) => {
@@ -69,16 +76,25 @@ export default function HealthEvaluationD() {
     setNewTime(appointment.appointmentTime || "");
     setOpenRescheduleModal(true);
   };
+  const viewFeedbackclick=(Feedback)=>
+    {
+      set
+
+    }
 
   // Handle Reschedule Submit
   const handleRescheduleSubmit = async () => {
+    setLoading(true);
+    setErrorMessage("");
     try {
       if (selectedAppointment) {
         await updateAppointmentDateTime(selectedAppointment._id, newDate, newTime, hospitalAdminId);
         setOpenRescheduleModal(false);
       }  
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      setErrorMessage("Failed to reschedule. Please try again.");
+    } finally {
+      serLoading(false);
     }
     
   };
@@ -90,13 +106,77 @@ export default function HealthEvaluationD() {
     setOpenArrivedModal(true);
   };
 
-  // Submit Arrived Status
-  const handleArrivedSubmit = async () => {
+ // Submit Arrived Status
+ const handleArrivedSubmit = async () => {
+  setLoading(true);
+  setErrorMessage("");
+  try {
     if (selectedAppointment) {
-      await arrivedForAppointment(selectedAppointment._id, receiptNumber);
+      await arrivedForEvaluation(selectedAppointment._id, receiptNumber);
       setOpenArrivedModal(false);
     }
+  } catch (err) {
+    setErrorMessage("Failed to confirm arrival. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+  // Handle File Upload Click
+  const handleUploadClick = (appointment) => {
+    setSelectedEvaluation(appointment);
+    setOpenUploadModal(true);
   };
+
+  // Submit File Upload
+  const handleUploadSubmit = async () => {
+    if (!selectedAppointment || !selectedFile || !appointmentResult) {
+      alert("Please select a file and an evaluation result before uploading.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      await completeEvaluation(selectedAppointment._id, appointmentResult, selectedFile);
+      setOpenUploadModal(false);
+    } catch (err) {
+      setErrorMessage("Failed to upload file. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFeedbackClick = (appointment) => {
+    setSelectedEvaluation(appointment);
+    setOpenFeedbackModal(true);
+  };
+
+  // Submit Feedback
+  const handleFeedbackSubmit = async () => {
+    if (!selectedAppointment || !subject || !comments || !feedbackType) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const feedbackData = {
+      donorId: userId,
+      sessionId: selectedAppointment._id,
+      sessionModel: "Appointment",
+      subject,
+      comments,
+      feedbackType,
+      starRating,
+    };
+
+    try {
+      console.log("Submitting feedback:", feedbackData);
+      await createFeedback(feedbackData); 
+      setOpenFeedbackModal(false);
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+    }
+  };
+
 
   return (
     <div className="flex min-h-screen">
@@ -161,13 +241,11 @@ export default function HealthEvaluationD() {
                                     Accept
                                   </Button>
                                 )}
-                               {((appointment.activeStatus === "Accepted" && appointment.progressStatus === "Completed") || 
-  (appointment.activeStatus === "Cancelled" && appointment.progressStatus === "Cancelled")) && (
-  <Button size="xs" color="failure" onClick={() => deleteAppointment(appointment._id)}>
-    Delete
-  </Button>
-)}
-
+                               {(appointment.progressStatus === "Completed" || appointment.activeStatus === "Cancelled") && (
+                                 <Button size="xs" color="failure" onClick={() => deleteAppointment(appointment._id)}>
+                                     Delete
+                                 </Button>
+                               )}
 
                                 {(appointment.progressStatus === "Not Started" && appointment.activeStatus === "Accepted") && (
                                   <Button size="xs" color="success" onClick={() => handleArrivedClick(appointment)}>
@@ -196,6 +274,11 @@ export default function HealthEvaluationD() {
                                                   Accept
                                                 </Button>
                                                 )}
+                                                {appointment.activeStatus !== "Cancelled" && (
+                                                <Button size="xs" color="gray" onClick={() => handleFeedbackClick(appointment)}>
+                                                   Feedback  
+                                                </Button>
+                                                 )}
                                   </>
                                   )}
                     </div>
@@ -238,6 +321,34 @@ export default function HealthEvaluationD() {
                 <Button onClick={handleArrivedSubmit}>Confirm</Button>
               </Modal.Footer>
             </Modal>
+
+      
+
+       <Modal show={openFeedbackModal} onClose={() => setOpenFeedbackModal(false)}>
+              <Modal.Header>Submit Feedback</Modal.Header>
+              <Modal.Body>
+                <Label value="Subject" />
+                <TextInput value={subject} onChange={(e) => setSubject(e.target.value)} required />
+                <Label value="Comments" />
+                <Textarea value={comments} onChange={(e) => setComments(e.target.value)} required />
+                <Label value="Feedback Type" />
+                <Select value={feedbackType} onChange={(e) => setFeedbackType(e.target.value)} required>
+                  <option value="">Select Feedback Type</option>
+                  <option value="General Feedback">General Feedback</option>
+                  <option value="Technical Feedback">Technical Feedback</option>
+                  <option value="Complaint Feedback">Complaint Feedback</option>
+                </Select>
+                <Label value="Star Rating (Optional)" />
+                <TextInput type="number" min="1" max="5" value={starRating} onChange={(e) => setStarRating(e.target.value)} />
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleFeedbackSubmit}>Submit</Button>
+              </Modal.Footer>
+            </Modal>
+        
+         {/* Error Message */}
+      {errorMessage && <div className="text-red-600 text-center mt-4">{errorMessage}</div>}
+    
     </div>
   );
 }
