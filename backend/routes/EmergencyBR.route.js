@@ -8,7 +8,7 @@ import {
     deleteEmergencyRequest,
     acceptEmergencyRequest,
     declineEmergencyRequest,
-    validateEmergencyRequest // Added new method
+    validateEmergencyRequest 
 } from '../controllers/EmergencyBR.controller.js';
 
 const router = express.Router();
