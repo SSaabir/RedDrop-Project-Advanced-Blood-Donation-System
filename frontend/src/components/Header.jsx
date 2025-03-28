@@ -46,7 +46,7 @@ export default function Header() {
 
   useEffect(() => {
     fetchHospitals();
-}, []);
+}, [fetchHospitals]);
 
   
 
