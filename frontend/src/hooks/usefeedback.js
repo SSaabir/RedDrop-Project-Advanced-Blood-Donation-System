@@ -11,7 +11,7 @@ export const useFeedback = () => {
         setError(null);
         try {
             const response = await fetch("/api/feedback");
-            if (!response.ok) throw new Error("Failed to fetch feedback");
+            if (!response.ok) throw new Error("Failed to fetch feedbac");
             const data = await response.json();
             setFeedbacks(data);
         } catch (err) {

@@ -4,8 +4,7 @@ import Inquiry from '../models/inquiry.model.js';
 // Controller to fetch all inquiries with system manager details populated
 export const getAllInquiries = async (req, res) => {
     try {
-        const inquiries = await Inquiry.find()
-            .populate('systemManagerId', 'name email');  // Populate system manager's name and email
+        const inquiries = await Inquiry.find();
         res.json(inquiries);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching inquiries', error });
