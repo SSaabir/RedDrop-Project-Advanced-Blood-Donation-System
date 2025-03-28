@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { handleError } from '../services/handleError';
 import { toast } from 'react-toastify';
 
@@ -7,7 +7,7 @@ export const useHospitalAdmin = () => {
     const [loading, setLoading] = useState(false);
 
     // Fetch all hospital admins
-    const fetchHospitalAdmins = async () => {
+    const fetchHospitalAdmins = useCallback( async () => {
         try {
             const response = await fetch('/api/healthAd');
             const data = await response.json();
@@ -16,10 +16,10 @@ export const useHospitalAdmin = () => {
         } catch (err) {
             handleError(err);
         }
-    };
+    },[]);
 
     // Fetch all hospital admins by hospital ID
-    const fetchHospitalAdminsByHospitalId = async (id) => {
+    const fetchHospitalAdminsByHospitalId = useCallback( async (id) => {
         try {
             const response = await fetch(`/api/healthAd/hospital/${id}`);
             const data = await response.json();
@@ -28,11 +28,11 @@ export const useHospitalAdmin = () => {
         } catch (err) {
             handleError(err);
         }
-    }
+    },[]);
 
 
     // Fetch a single hospital admin by ID
-    const fetchHospitalAdminById = async (id) => {
+    const fetchHospitalAdminById = useCallback( async (id) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/healthAd/${id}`);
@@ -45,7 +45,7 @@ export const useHospitalAdmin = () => {
         } finally {
             setLoading(false);
         }
-    };
+    },[]);
 
     // Create a new hospital admin
     const createHospitalAdmin = async (formData) => {

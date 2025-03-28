@@ -5,22 +5,6 @@ export const useInquiry = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch all inquiries
-    const fetchInquiries = async() => {
-        setLoading(true);
-        setError(null); // Reset error before making the request
-        try {
-            const response = await fetch("/api/inquiry");
-            if (!response.ok) throw new Error("Failed to fetch inquiries");
-            const data = await response.json();
-            setInquiries(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Use effect to fetch inquiries once on mount
     useEffect(() => {
         fetchInquiries(); // Fetch inquiries when the component is mounted
@@ -39,7 +23,7 @@ export const useInquiry = () => {
 
 
     // Fetch a single inquiry by ID
-    const fetchInquiryById = async(id) => {
+    const fetchInquiryById = useCallback(async(id) => {
             try {
                 const response = await fetch(`/api/inquiry/${id}`);
                 if (!response.ok) throw new Error("Failed to fetch inquiry");
