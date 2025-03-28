@@ -6,7 +6,7 @@ export const useSystemManager = () => {
     const [error, setError] = useState(null);
 
     // ✅ Fetch all system managers
-    const fetchManagers = async () => {
+    const fetchManagers = useCallback(async() => {
         try {
             const response = await fetch("/api/manager");
             const data = await response.json();
@@ -15,10 +15,10 @@ export const useSystemManager = () => {
         } catch (err) {
             setError(err.message);
         }
-    };
+    }, []);
 
     // ✅ Fetch a single system manager by ID
-    const fetchManagerById = async (id) => {
+    const fetchManagerById = useCallback(async(id) => {
         try {
             const response = await fetch(`/api/manager/${id}`);
             if (!response.ok) throw new Error("Failed to fetch manager");
@@ -27,10 +27,10 @@ export const useSystemManager = () => {
         } catch (err) {
             setError(err.message);
         }
-    };
+    }, []);
 
     // ✅ Create a new system manager
-    const createManager = async (formData) => {
+    const createManager = async(formData) => {
         try {
             const response = await fetch("/api/manager", {
                 method: 'POST',
@@ -45,7 +45,7 @@ export const useSystemManager = () => {
     };
 
     // ✅ Update system manager details
-    const updateManager = async (id, formData) => {
+    const updateManager = async(id, formData) => {
         try {
             console.log('Updating manager with ID:', id, 'Data:', [...formData.entries()]);
             const response = await fetch(`/api/manager/${id}`, {
@@ -64,9 +64,9 @@ export const useSystemManager = () => {
     };
 
     // ✅ Delete a system manager
-    const deleteManager = async (id) => {
+    const deleteManager = async(id) => {
         try {
-            const response = await fetch(`/api/manager/${id}`, {method: "DELETE" });
+            const response = await fetch(`/api/manager/${id}`, { method: "DELETE" });
             if (!response.ok) throw new Error("Failed to delete manager");
             setManagers((prev) => prev.filter((manager) => manager._id !== id));
         } catch (err) {
@@ -74,7 +74,7 @@ export const useSystemManager = () => {
         }
     };
 
-    const activateDeactivateManager = async (id) => {
+    const activateDeactivateManager = async(id) => {
         console.log('useSystemManager initialized');
         try {
             console.log('Toggling status for manager ID:', id);
@@ -85,8 +85,8 @@ export const useSystemManager = () => {
             console.log('Toggle response:', response.status, result);
             if (!response.ok) throw new Error(result.message || "Failed to toggle manager status");
             setManagers((prev) =>
-                prev.map((manager) => 
-                    manager._id === id ? { ...manager, activeStatus: !manager.activeStatus } : manager
+                prev.map((manager) =>
+                    manager._id === id ? {...manager, activeStatus: !manager.activeStatus } : manager
                 )
             );
         } catch (err) {

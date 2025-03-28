@@ -6,7 +6,7 @@ export const useHospital = () => {
     const [error, setError] = useState(null);
 
     // Fetch all hospitals
-    const fetchHospitals = async() => {
+    const fetchHospitals = useCallback(async() => {
         try {
             const response = await fetch("/api/hospital");
             const data = await response.json();
@@ -15,10 +15,10 @@ export const useHospital = () => {
         } catch (err) {
             setError(err.message);
         }
-    };
+    }, []);
 
     // Fetch a single hospital by ID
-    const fetchHospitalById = async(id) => {
+    const fetchHospitalById = useCallback(async(id) => {
         setLoading(true);
         try {
             const response = await fetch(`/api/hospital/${id}`);
@@ -30,7 +30,7 @@ export const useHospital = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Create a new hospital
     const createHospital = async(hospitalData) => {
@@ -115,7 +115,7 @@ export const useHospital = () => {
         }
     };
 
-    
+
     return {
         hospitals,
         loading,
