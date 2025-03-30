@@ -1,101 +1,88 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useFeedback = () => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    // Fetch all feedback
     const fetchFeedbacks = useCallback(async () => {
         setLoading(true);
-        setError(null);
         try {
-            const response = await fetch("/api/feedback");
-            if (!response.ok) throw new Error("Failed to fetch feedbac");
-            const data = await response.json();
-            setFeedbacks(data);
+            const response = await axios.get("/api/feedback");
+            setFeedbacks(response.data);
+            toast.success("Feedbacks fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching feedbacks:", err);
+            toast.error(err?.response?.data?.message || "Error fetching feedbacks");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Fetch a single feedback by ID
     const fetchFeedbackById = useCallback(async (id) => {
         try {
-            const response = await fetch(`/api/feedback/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch feedback");
-            return await response.json();
+            const response = await axios.get(`/api/feedback/${id}`);
+            toast.success("Feedback fetched successfully!");
+            return response.data;
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching feedback:", err);
+            toast.error(err?.response?.data?.message || "Error fetching feedback");
             return null;
         }
     }, []);
 
-    // Create new feedback
     const createFeedback = useCallback(async (feedbackData) => {
         setLoading(true);
-        console.log("Hooks: ",feedbackData);
         try {
-            const response = await fetch("/api/feedback", {
-                method: "POST",
+            const response = await axios.post("/api/feedback", feedbackData, {
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(feedbackData),
             });
-            if (!response.ok) throw new Error("Failed to create feedback");
-            const newFeedback = await response.json();
-            setFeedbacks((prev) => [...prev, newFeedback]);
+            setFeedbacks((prev) => [...prev, response.data]);
+            toast.success("Feedback created successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error creating feedback:", err);
+            toast.error(err?.response?.data?.message || "Error creating feedback");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Update feedback details
     const updateFeedback = useCallback(async (id, feedbackData) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/feedback/${id}`, {
-                method: "PATCH",
+            const response = await axios.patch(`/api/feedback/${id}`, feedbackData, {
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(feedbackData),
             });
-            if (!response.ok) throw new Error("Failed to update feedback");
-            const updatedFeedback = await response.json();
             setFeedbacks((prev) =>
-                prev.map((feedback) => (feedback._id === id ? updatedFeedback : feedback))
+                prev.map((feedback) => (feedback._id === id ? response.data : feedback))
             );
+            toast.success("Feedback updated successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error updating feedback:", err);
+            toast.error(err?.response?.data?.message || "Error updating feedback");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Delete a feedback
     const deleteFeedback = useCallback(async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/feedback/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) throw new Error("Failed to delete feedback");
+            await axios.delete(`/api/feedback/${id}`);
             setFeedbacks((prev) => prev.filter((feedback) => feedback._id !== id));
+            toast.success("Feedback deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting feedback:", err);
+            toast.error(err?.response?.data?.message || "Error deleting feedback");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Fetch feedbacks when the hook is used
-   
     return {
         feedbacks,
         loading,
-        error,
         fetchFeedbacks,
         fetchFeedbackById,
         createFeedback,

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Button, Spinner } from 'flowbite-react';
-import axios from 'axios';
+import { Button, Spinner, TextInput, Textarea } from 'flowbite-react';
+import { toast } from 'react-toastify'; // Added for consistent feedback
 import map from '../assets/map.jpg';
 import contactus from '../assets/contactus.jpg';
 import { useInquiry } from '../hooks/useinquiry';
+
 export default function ContactUs() {
   const [formData, setFormData] = useState({
     email: '',
@@ -11,31 +12,41 @@ export default function ContactUs() {
     message: '',
     category: 'General',
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const { createInquiry } = useInquiry();
+  const [errors, setErrors] = useState({});
+  const { createInquiry, loading } = useInquiry(); // Assuming hook provides loading, no error
 
   const categories = ['General', 'Technical', 'Complaint', 'Other'];
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
+    if (!formData.subject) newErrors.subject = 'Subject is required';
+    if (!formData.message) newErrors.message = 'Message is required';
+    if (!categories.includes(formData.category)) newErrors.category = 'Invalid category';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(null);
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' })); // Clear error on change
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
 
     try {
       await createInquiry(formData);
-      alert('Message sent successfully!');
+      toast.success('Message sent successfully!');
       setFormData({ email: '', subject: '', message: '', category: 'General' });
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Error sending message';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error sending message');
     }
   };
 
@@ -52,53 +63,53 @@ export default function ContactUs() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Send Us a Message</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
                 <label htmlFor="email" className="block text-gray-700 mb-2">Email</label>
-                <input
+                <TextInput
                   id="email"
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Your Email"
                   required
                   disabled={loading}
+                  color={errors.email ? 'failure' : 'gray'}
                 />
+                {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
               </div>
-              <div className="mb-6">
+              <div>
                 <label htmlFor="subject" className="block text-gray-700 mb-2">Subject</label>
-                <input
+                <TextInput
                   id="subject"
                   type="text"
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Subject"
                   required
                   disabled={loading}
+                  color={errors.subject ? 'failure' : 'gray'}
                 />
+                {errors.subject && <p className="text-red-600 text-sm mt-1">{errors.subject}</p>}
               </div>
-
-              <div className="mb-6">
+              <div>
                 <label htmlFor="message" className="block text-gray-700 mb-2">Message</label>
-                <textarea
+                <Textarea
                   id="message"
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows="5"
+                  rows={5}
                   placeholder="Your Message"
                   required
                   disabled={loading}
-                ></textarea>
+                  color={errors.message ? 'failure' : 'gray'}
+                />
+                {errors.message && <p className="text-red-600 text-sm mt-1">{errors.message}</p>}
               </div>
-
-
-              <div className="mb-6">
+              <div>
                 <label htmlFor="category" className="block text-gray-700 mb-2">Category</label>
                 <select
                   id="category"
@@ -113,15 +124,12 @@ export default function ContactUs() {
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
+                {errors.category && <p className="text-red-600 text-sm mt-1">{errors.category}</p>}
               </div>
-             
-              {error && (
-                <div className="mb-6 text-red-500 text-sm">{error}</div>
-              )}
-              <Button 
-                type="submit" 
-                gradientDuoTone="purpleToBlue" 
-                pill 
+              <Button
+                type="submit"
+                gradientDuoTone="purpleToBlue"
+                pill
                 className="w-full"
                 disabled={loading}
               >
@@ -142,9 +150,9 @@ export default function ContactUs() {
             <p className="text-gray-600 mb-4">Email: redDrop@gmail.com</p>
             <p className="text-gray-600 mb-4">Phone: +1 (123) 456-7890</p>
             <div className="w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
-              <img 
-                src={map} 
-                alt="Location Map" 
+              <img
+                src={map}
+                alt="Location Map"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />

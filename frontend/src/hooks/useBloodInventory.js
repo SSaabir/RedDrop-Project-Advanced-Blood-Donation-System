@@ -1,143 +1,123 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useBloodInventory = () => {
     const [bloodInventory, setBloodInventory] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    //  Fetch all blood inventory records
-    const fetchBloodInventory = useCallback(async() => {
+    const fetchBloodInventory = useCallback(async () => {
         setLoading(true);
-
         try {
-            const response = await fetch("/api/blood-inventory");
-            if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
-            const data = await response.json();
-            setBloodInventory(data);
+            const response = await axios.get("/api/blood-inventory");
+            setBloodInventory(response.data);
+            toast.success("Blood inventory records fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching blood inventory records:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch blood inventory records");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    //  Fetch all blood inventory by HospitalId
-    const fetchBloodInventoryByHospital = useCallback(async(id) => {
+    const fetchBloodInventoryByHospital = useCallback(async (id) => {
         setLoading(true);
-
         try {
-            const response = await fetch(`/api/blood-inventory/hospital/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch blood inventory records.");
-            const data = await response.json();
-            setBloodInventory(data);
+            const response = await axios.get(`/api/blood-inventory/hospital/${id}`);
+            setBloodInventory(response.data);
+            toast.success("Blood inventory records by hospital fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching blood inventory records by hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch blood inventory records");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    //  Fetch a single blood inventory record by ID
-    const fetchBloodInventoryById = useCallback(async(id) => {
-        setError(null);
+    const fetchBloodInventoryById = useCallback(async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/blood-inventory/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch blood inventory record.");
-            return await response.json();
+            const response = await axios.get(`/api/blood-inventory/${id}`);
+            toast.success("Blood inventory record fetched successfully!");
+            return response.data;
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching blood inventory record:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch blood inventory record");
             return null;
+        } finally {
+            setLoading(false);
         }
     }, []);
 
-    //  Create a new blood inventory record
-    const createBloodInventory = async(inventoryData) => {
-
+    const createBloodInventory = async (inventoryData) => {
+        setLoading(true);
         try {
-            const response = await fetch("/api/blood-inventory", {
-
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(inventoryData),
-            });
-            if (!response.ok) throw new Error("Failed to create blood inventory record.");
-            const newIventory = await response.json();
-            setBloodInventory((prev) => [...prev, newIventory.data]);
+            const response = await axios.post("/api/blood-inventory", inventoryData);
+            setBloodInventory((prev) => [...prev, response.data]);
+            toast.success("Blood inventory record created successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error creating blood inventory record:", err);
+            toast.error(err?.response?.data?.message || "Failed to create blood inventory record");
         } finally {
             setLoading(false);
         }
     };
 
-    //  Update a blood inventory record
-    const updateBloodInventory = async(id, inventoryData) => {
+    const updateBloodInventory = async (id, inventoryData) => {
         setLoading(true);
-        setError(null);
         try {
-            const response = await fetch(`/api/blood-inventory/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(inventoryData),
-            });
-            if (!response.ok) throw new Error("Failed to update blood inventory record.");
-            const updatedRecord = await response.json();
+            const response = await axios.patch(`/api/blood-inventory/${id}`, inventoryData);
             setBloodInventory((prev) =>
-                prev.map((record) => (record._id === id ? updatedRecord : record))
+                prev.map((record) => (record._id === id ? response.data : record))
             );
+            toast.success("Blood inventory record updated successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error updating blood inventory record:", err);
+            toast.error(err?.response?.data?.message || "Failed to update blood inventory record");
         } finally {
             setLoading(false);
         }
     };
 
-    //  Delete a blood inventory record
-    const deleteBloodInventory = async(id) => {
+    const deleteBloodInventory = async (id) => {
         setLoading(true);
-        setError(null);
         try {
-            const response = await fetch(`/api/blood-inventory/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) throw new Error("Failed to delete blood inventory record.");
+            await axios.delete(`/api/blood-inventory/${id}`);
             setBloodInventory((prev) => prev.filter((record) => record._id !== id));
+            toast.success("Blood inventory record deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting blood inventory record:", err);
+            toast.error(err?.response?.data?.message || "Failed to delete blood inventory record");
         } finally {
             setLoading(false);
         }
     };
 
-    const toggleExpired = async(id) => {
+    const toggleExpired = async (id) => {
         setLoading(true);
-        setError(null);
         try {
-            const response = await fetch(`/api/blood-inventory/toggle-expired/${id}`, {
-                method: "PATCH",
-            });
-            if (!response.ok) throw new Error("Failed to toggle expired status.");
-            const updatedRecord = await response.json();
+            const response = await axios.patch(`/api/blood-inventory/toggle-expired/${id}`);
             setBloodInventory((prev) =>
-                prev.map((record) => (record._id === id ? updatedRecord : record))
+                prev.map((record) => (record._id === id ? response.data : record))
             );
+            toast.success("Expired status toggled successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error toggling expired status:", err);
+            toast.error(err?.response?.data?.message || "Failed to toggle expired status");
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     return {
         bloodInventory,
         loading,
-        error,
         fetchBloodInventory,
         fetchBloodInventoryById,
         fetchBloodInventoryByHospital,
         createBloodInventory,
         updateBloodInventory,
         deleteBloodInventory,
-        toggleExpired
+        toggleExpired,
     };
 };

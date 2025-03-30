@@ -1,116 +1,114 @@
 import { useCallback, useState } from 'react';
-import { handleError } from '../services/handleError';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 
 export const useHospitalAdmin = () => {
     const [hospitalAdmins, setHospitalAdmins] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Fetch all hospital admins
-    const fetchHospitalAdmins = useCallback( async () => {
-        try {
-            const response = await fetch('/api/healthAd');
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Something went wrong');
-            setHospitalAdmins(data);
-        } catch (err) {
-            handleError(err);
-        }
-    },[]);
-
-    // Fetch all hospital admins by hospital ID
-    const fetchHospitalAdminsByHospitalId = useCallback( async (id) => {
-        try {
-            const response = await fetch(`/api/healthAd/hospital/${id}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to fetch hospital admins');
-            setHospitalAdmins(data);
-        } catch (err) {
-            handleError(err);
-        }
-    },[]);
-
-
-    // Fetch a single hospital admin by ID
-    const fetchHospitalAdminById = useCallback( async (id) => {
+    const fetchHospitalAdmins = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/healthAd/${id}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Something went wrong');
-            setHospitalAdmins([data]);
-            toast.success('Hospital Admin fetched successfully!');
+            const response = await axios.get('/api/healthAd');
+            setHospitalAdmins(response.data);
+            toast.success('Hospital Admins fetched successfully!');
         } catch (err) {
-            handleError(err);
+            console.error("Error fetching hospital admins:", err);
+            toast.error(err?.response?.data?.message || 'Error fetching hospital admins');
         } finally {
             setLoading(false);
         }
-    },[]);
+    }, []);
 
-    // Create a new hospital admin
-    const createHospitalAdmin = async (formData) => {
+    const fetchHospitalAdminsByHospitalId = useCallback(async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch('/api/healthAd', {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data?.message || 'Failed to create admin');
-            setHospitalAdmins(prevAdmins => [...prevAdmins, data]);
+            const response = await axios.get(`/api/healthAd/hospital/${id}`);
+            setHospitalAdmins(response.data);
+            toast.success('Hospital Admins fetched successfully!');
+        } catch (err) {
+            console.error("Error fetching hospital admins by hospital ID:", err);
+            toast.error(err?.response?.data?.message || 'Failed to fetch hospital admins');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchHospitalAdminById = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/healthAd/${id}`);
+            setHospitalAdmins([response.data]);
+            toast.success('Hospital Admin fetched successfully!');
+        } catch (err) {
+            console.error("Error fetching hospital admin by ID:", err);
+            toast.error(err?.response?.data?.message || 'Something went wrong');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createHospitalAdmin = async (formData) => {
+        setLoading(true);
+        try {
+            const response = await axios.post('/api/healthAd', formData);
+            setHospitalAdmins(prevAdmins => [...prevAdmins, response.data]);
             toast.success('Hospital Admin created successfully!');
         } catch (err) {
-        handleError(err);  
+            console.error("Error creating hospital admin:", err);
+            toast.error(err?.response?.data?.message || 'Failed to create admin');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Update hospital admin details
     const updateHospitalAdmin = async (id, formData) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/healthAd/${id}`, {
-                method: 'PUT',
-                body: formData,
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data?.message || 'Failed to update admin');
+            const response = await axios.put(`/api/healthAd/${id}`, formData);
             setHospitalAdmins(prevAdmins =>
-                prevAdmins.map(admin => (admin._id === id ? data : admin))
+                prevAdmins.map(admin => (admin._id === id ? response.data : admin))
             );
             toast.success('Hospital Admin updated successfully!');
         } catch (err) {
-            handleError(err); 
+            console.error("Error updating hospital admin:", err);
+            toast.error(err?.response?.data?.message || 'Failed to update admin');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Delete a hospital admin
     const deleteHospitalAdmin = async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/healthAd/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Failed to delete admin');
+            await axios.delete(`/api/healthAd/${id}`);
             setHospitalAdmins(prevAdmins => prevAdmins.filter(admin => admin._id !== id));
             toast.success('Hospital Admin deleted successfully!');
         } catch (err) {
-            handleError(err);
+            console.error("Error deleting hospital admin:", err);
+            toast.error(err?.response?.data?.message || 'Failed to delete admin');
+        } finally {
+            setLoading(false);
         }
     };
 
     const activateDeactivateHospitalAdmin = async (id) => {
+        setLoading(true);
         try {
-          console.log('Toggling status for hospital admin ID:', id);
-          const response = await fetch(`/api/healthAd/${id}/toggle-status`, {
-            method: 'PATCH',
-          });
-          const result = await response.json();
-          console.log('Toggle response:', response.status, result);
-          if (!response.ok) throw new Error(result.message || "Failed to toggle hospital admin status");
-          setHospitalAdmins((prev) =>
-            prev.map((admin) =>
-              admin._id === id ? { ...admin, activeStatus: !admin.activeStatus } : admin
-            )
-          );
+            const response = await axios.patch(`/api/healthAd/${id}/toggle-status`);
+            setHospitalAdmins(prevAdmins =>
+                prevAdmins.map(admin =>
+                    admin._id === id ? { ...admin, activeStatus: !admin.activeStatus } : admin
+                )
+            );
+            toast.success('Hospital Admin status toggled successfully!');
         } catch (err) {
-            handleError(err);    
+            console.error("Error toggling hospital admin status:", err);
+            toast.error(err?.response?.data?.message || 'Failed to toggle hospital admin status');
+        } finally {
+            setLoading(false);
         }
-      };
+    };
 
     return {
         hospitalAdmins,

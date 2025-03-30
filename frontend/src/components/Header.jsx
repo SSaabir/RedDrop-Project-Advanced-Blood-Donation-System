@@ -1,34 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Navbar, TextInput, Dropdown, Avatar, Modal, Label, Select, Textarea, Spinner } from 'flowbite-react';
+import { Button, Navbar, TextInput, Dropdown, Avatar, Modal, Label, Select, Spinner } from 'flowbite-react';
 import { Link, useLocation } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Logo from '../assets/logo.svg';
 import { useLogout } from '../hooks/useLogout';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { useHospital } from '../hooks/hospital';
-import {useHealthEvaluation} from '../hooks/useHealthEvaluation';
-import{useBloodDonationAppointment} from '../hooks/useBloodDonationAppointment';
+import { useHealthEvaluation } from '../hooks/useHealthEvaluation';
+import { useBloodDonationAppointment } from '../hooks/useBloodDonationAppointment';
 
 export default function Header() {
   const path = useLocation().pathname;
   const { logout } = useLogout();
   const { user } = useAuthContext();
-  const { hospitals, loading:hLoading, error: hError, fetchHospitals } = useHospital();
-  const {createEvaluation, loading:heLoading , error:heError} = useHealthEvaluation();
-  const {createAppointment, loading, error} = useBloodDonationAppointment();
-
-  
-
-
+  const { hospitals, loading: hLoading, fetchHospitals } = useHospital();
+  const { createEvaluation, loading: heLoading } = useHealthEvaluation();
+  const { createAppointment, loading } = useBloodDonationAppointment();
 
   // State for modals and form data
   const [openEvalModal, setOpenEvalModal] = useState(false);
   const [openAppointmentModal, setOpenAppointmentModal] = useState(false);
   const userId = user?.userObj?._id;
   const Donor = user?.role === 'Donor';
-  const Hospital = user?.role === 'Hospital';
-  const Manager = user?.role === 'Manager';
-  const HospitalAdmin = user?.role === 'HospitalAdmin';
-  
+  // Removed unused role checks: Hospital, Manager, HospitalAdmin
+
   const [evalFormData, setEvalFormData] = useState({
     hospitalId: "",
     evaluationDate: "",
@@ -41,35 +36,53 @@ export default function Header() {
     appointmentDate: "",
     appointmentTime: "",
     donorId: userId || "",
-   
   });
+
+  const [evalErrors, setEvalErrors] = useState({});
+  const [appointmentErrors, setAppointmentErrors] = useState({});
 
   useEffect(() => {
     fetchHospitals();
-}, [fetchHospitals]);
+    if (hLoading) toast.info('Loading hospitals...'); // Optional: Feedback for hospital loading
+  }, [fetchHospitals, hLoading]);
 
-  
+  // Today's date for validation
+  const today = new Date().toISOString().split('T')[0];
+
+  // Validate Evaluation Form
+  const validateEvalForm = () => {
+    const errors = {};
+    if (!evalFormData.hospitalId) errors.hospitalId = 'Hospital is required';
+    if (!evalFormData.evaluationDate) errors.evaluationDate = 'Date is required';
+    else if (evalFormData.evaluationDate < today) errors.evaluationDate = 'Date must be today or in the future';
+    if (!evalFormData.evaluationTime) errors.evaluationTime = 'Time is required';
+    setEvalErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Validate Appointment Form
+  const validateAppointmentForm = () => {
+    const errors = {};
+    if (!appointmentFormData.hospitalId) errors.hospitalId = 'Hospital is required';
+    if (!appointmentFormData.appointmentDate) errors.appointmentDate = 'Date is required';
+    else if (appointmentFormData.appointmentDate < today) errors.appointmentDate = 'Date must be today or in the future';
+    if (!appointmentFormData.appointmentTime) errors.appointmentTime = 'Time is required';
+    setAppointmentErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   // Handle form field change for evaluation
   const handleEvalChange = (e) => {
-   
     const { id, value } = e.target;
-
-    setEvalFormData(prev => ({
-      ...prev,
-      [id]: value,
-    }));
+    setEvalFormData((prev) => ({ ...prev, [id]: value }));
+    setEvalErrors((prev) => ({ ...prev, [id]: '' }));
   };
-  
 
   // Handle form field change for appointment
   const handleAppointmentChange = (e) => {
-    const { id, value} = e.target;
-
-    setAppointmentFormData(prev => ({
-      ...prev,
-      [id]: value
-    }));
+    const { id, value } = e.target;
+    setAppointmentFormData((prev) => ({ ...prev, [id]: value }));
+    setAppointmentErrors((prev) => ({ ...prev, [id]: '' }));
   };
 
   // Handle Logout
@@ -78,34 +91,39 @@ export default function Header() {
   };
 
   // Handle form submission for evaluation
-  const handleEvalSubmit = (e) => {
+  const handleEvalSubmit = async (e) => {
     e.preventDefault();
-    
-    const evaluationData = { 
-      ...evalFormData, 
-      donorId: userId || "" // Ensure donorId is included before submitting
-    };
+    if (!validateEvalForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
 
-    console.log("Submitting Evaluation:", evaluationData);
-  createEvaluation(evaluationData);
-    // Close modal after submission
-    setOpenEvalModal(false);
+    const evaluationData = { ...evalFormData, donorId: userId || "" };
+    try {
+      await createEvaluation(evaluationData);
+      toast.success('Evaluation scheduled successfully');
+      setOpenEvalModal(false);
+    } catch (err) {
+      toast.error('Error scheduling evaluation'); // No heError, so generic message
+    }
   };
 
   // Handle form submission for appointment
-  const handleAppointmentSubmit = (e) => {
+  const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
+    if (!validateAppointmentForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
 
-    const appointmentData = { 
-      ...appointmentFormData, 
-      donorId: userId || "" // Ensure donorId is included before submitting
-    };
-    // Handle the appointment scheduling logic here
-    console.log("Scheduling appointment", appointmentFormData);
-    createAppointment(appointmentData);
-
-    // Close modal after submission
-    setOpenAppointmentModal(false);
+    const appointmentData = { ...appointmentFormData, donorId: userId || "" };
+    try {
+      await createAppointment(appointmentData);
+      toast.success('Appointment scheduled successfully');
+      setOpenAppointmentModal(false);
+    } catch (err) {
+      toast.error('Error scheduling appointment'); // No error, so generic message
+    }
   };
 
   return (
@@ -113,12 +131,12 @@ export default function Header() {
       {/* Brand Logo */}
       <Link to="/" className='self-center whitespace-nowrap text-sm sm:text-xl font-semibold dark:text-white'>
         <div className='flex flex-wrap self-center content-center justify-center gap-1'>
-          <img src={Logo} alt="logo" className='w-8 '/>
-          <span className=''>Red Drop</span>
+          <img src={Logo} alt="logo" className='w-8' />
+          <span>Red Drop</span>
         </div>
       </Link>
 
-      {/* Right Side: Search, Theme Toggle, and Cart */}
+      {/* Right Side: Buttons and User Dropdown */}
       <div className='flex gap-2 md:order-2'>
         {!user && (
           <Link to='/donor-login'>
@@ -127,13 +145,13 @@ export default function Header() {
         )}
         {Donor && (
           <>
-        <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenEvalModal(true)}>
-          Evaluation
-        </Button>
-        <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenAppointmentModal(true)}>
-          Appointment
-        </Button>
-        </>
+            <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenEvalModal(true)}>
+              Evaluation
+            </Button>
+            <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenAppointmentModal(true)}>
+              Appointment
+            </Button>
+          </>
         )}
         {user && (
           <Dropdown
@@ -151,7 +169,6 @@ export default function Header() {
             <Dropdown.Item>
               <Link to="/dashboard">Dashboard</Link>
             </Dropdown.Item>
-            
             <Dropdown.Divider />
             <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
           </Dropdown>
@@ -176,25 +193,53 @@ export default function Header() {
         <Modal.Header>Schedule Health Evaluation</Modal.Header>
         <Modal.Body>
           <form onSubmit={handleEvalSubmit}>
-            <div>
+            <div className="mb-4">
               <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-medium" />
-              <Select id="hospitalId" required value={evalFormData.hospitalId} onChange={handleEvalChange}>
+              <Select
+                id="hospitalId"
+                required
+                value={evalFormData.hospitalId}
+                onChange={handleEvalChange}
+                color={evalErrors.hospitalId ? 'failure' : 'gray'}
+              >
                 <option value="" disabled>Select a hospital</option>
-                {hospitals && hospitals.map(hospital => (
+                {hospitals && hospitals.map((hospital) => (
                   <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
                 ))}
               </Select>
+              {evalErrors.hospitalId && <p className="text-red-600 text-sm mt-1">{evalErrors.hospitalId}</p>}
             </div>
-            <div>
+            <div className="mb-4">
               <Label htmlFor="evaluationDate" value="Evaluation Date" className="text-gray-700 font-medium" />
-              <TextInput id="evaluationDate" type="date" required value={evalFormData.evaluationDate} onChange={handleEvalChange} />
+              <TextInput
+                id="evaluationDate"
+                type="date"
+                required
+                min={today}
+                value={evalFormData.evaluationDate}
+                onChange={handleEvalChange}
+                color={evalErrors.evaluationDate ? 'failure' : 'gray'}
+              />
+              {evalErrors.evaluationDate && <p className="text-red-600 text-sm mt-1">{evalErrors.evaluationDate}</p>}
             </div>
-            <div>
+            <div className="mb-4">
               <Label htmlFor="evaluationTime" value="Evaluation Time" className="text-gray-700 font-medium" />
-              <TextInput id="evaluationTime" type="time" required value={evalFormData.evaluationTime} onChange={handleEvalChange} />
+              <TextInput
+                id="evaluationTime"
+                type="time"
+                required
+                value={evalFormData.evaluationTime}
+                onChange={handleEvalChange}
+                color={evalErrors.evaluationTime ? 'failure' : 'gray'}
+              />
+              {evalErrors.evaluationTime && <p className="text-red-600 text-sm mt-1">{evalErrors.evaluationTime}</p>}
             </div>
             <Modal.Footer>
-              <Button type="submit" className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center" disabled={heLoading}>
+              <Button
+                type="submit"
+                className="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center"
+                disabled={heLoading}
+              >
                 {heLoading ? <Spinner color="white" size="sm" /> : "Schedule Evaluation"}
               </Button>
               <Button color="gray" onClick={() => setOpenEvalModal(false)}>Cancel</Button>
@@ -203,32 +248,58 @@ export default function Header() {
         </Modal.Body>
       </Modal>
 
-
       {/* Appointment Modal */}
       <Modal show={openAppointmentModal} onClose={() => setOpenAppointmentModal(false)}>
         <Modal.Header>Schedule an Appointment</Modal.Header>
         <Modal.Body>
           <form onSubmit={handleAppointmentSubmit}>
-          <div>
+            <div className="mb-4">
               <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-medium" />
-              <Select id="hospitalId" required value={appointmentFormData.hospitalId} onChange={handleAppointmentChange}>
+              <Select
+                id="hospitalId"
+                required
+                value={appointmentFormData.hospitalId}
+                onChange={handleAppointmentChange}
+                color={appointmentErrors.hospitalId ? 'failure' : 'gray'}
+              >
                 <option value="" disabled>Select a hospital</option>
-                {hospitals && hospitals.map(hospital => (
+                {hospitals && hospitals.map((hospital) => (
                   <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
                 ))}
               </Select>
+              {appointmentErrors.hospitalId && <p className="text-red-600 text-sm mt-1">{appointmentErrors.hospitalId}</p>}
             </div>
-            <div>
-              <Label htmlFor="appointmentDate" value="AppointmentDate" className="text-gray-700 font-medium" />
-              <TextInput id="appointmentDate" type="date" required value={appointmentFormData.appointmentDate} onChange={handleAppointmentChange} />
+            <div className="mb-4">
+              <Label htmlFor="appointmentDate" value="Appointment Date" className="text-gray-700 font-medium" />
+              <TextInput
+                id="appointmentDate"
+                type="date"
+                required
+                min={today}
+                value={appointmentFormData.appointmentDate}
+                onChange={handleAppointmentChange}
+                color={appointmentErrors.appointmentDate ? 'failure' : 'gray'}
+              />
+              {appointmentErrors.appointmentDate && <p className="text-red-600 text-sm mt-1">{appointmentErrors.appointmentDate}</p>}
             </div>
-            <div>
-              <Label htmlFor="appointmentTime" value="AppointmentTime " className="text-gray-700 font-medium" />
-              <TextInput id="appointmentTime" type="time" required value={appointmentFormData.appointmentTime} onChange={handleAppointmentChange} />
+            <div className="mb-4">
+              <Label htmlFor="appointmentTime" value="Appointment Time" className="text-gray-700 font-medium" />
+              <TextInput
+                id="appointmentTime"
+                type="time"
+                required
+                value={appointmentFormData.appointmentTime}
+                onChange={handleAppointmentChange}
+                color={appointmentErrors.appointmentTime ? 'failure' : 'gray'}
+              />
+              {appointmentErrors.appointmentTime && <p className="text-red-600 text-sm mt-1">{appointmentErrors.appointmentTime}</p>}
             </div>
-           
             <Modal.Footer>
-              <Button type="submit" className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center">
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 rounded-lg shadow-lg transition-all flex items-center justify-center"
+                disabled={loading}
+              >
                 {loading ? <Spinner color="white" size="sm" /> : "Schedule Appointment"}
               </Button>
               <Button color="gray" onClick={() => setOpenAppointmentModal(false)}>Cancel</Button>

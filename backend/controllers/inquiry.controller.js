@@ -1,17 +1,16 @@
-// controllers/inquiryController.js
 import Inquiry from '../models/inquiry.model.js';
 
-// Controller to fetch all inquiries with system manager details populated
+// Fetch all inquiries
 export const getAllInquiries = async (req, res) => {
     try {
         const inquiries = await Inquiry.find();
         res.json(inquiries);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching inquiries', error });
+        res.status(500).json({ message: 'Error fetching inquiries' });
     }
 };
 
-// Controller to fetch a specific inquiry by ID
+// Fetch a specific inquiry by ID
 export const getInquiryById = async (req, res) => {
     try {
         const inquiry = await Inquiry.findById(req.params.id)
@@ -21,32 +20,30 @@ export const getInquiryById = async (req, res) => {
         }
         res.json(inquiry);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching inquiry', error });
+        res.status(500).json({ message: 'Error fetching inquiry' });
     }
 };
 
-// Controller to create a new inquiry
+// Create a new inquiry
 export const createInquiry = async (req, res) => {
     const { email, subject, message, category } = req.body;
-    console.log(req.body)
+
     try {
-       
-       
         const newInquiry = new Inquiry({
             email,
             subject,
             message,
             category
         });
-console.log(newInquiry);
+
         await newInquiry.save();
         res.status(201).json({ message: 'Inquiry created successfully', inquiry: newInquiry });
     } catch (error) {
-        res.status(500).json({ message: 'Error creating inquiry', error });
+        res.status(500).json({ message: 'Error creating inquiry' });
     }
 };
 
-// Controller to update an inquiry's status
+// Update an inquiry's status
 export const updateInquiryStatus = async (req, res) => {
     const { status } = req.body;
     const validStatuses = ['Pending', 'In Progress', 'Resolved'];
@@ -68,11 +65,11 @@ export const updateInquiryStatus = async (req, res) => {
 
         res.json({ message: 'Inquiry updated successfully', inquiry });
     } catch (error) {
-        res.status(500).json({ message: 'Error updating inquiry', error });
+        res.status(500).json({ message: 'Error updating inquiry' });
     }
 };
 
-// Controller to delete an inquiry by ID
+// Delete an inquiry by ID
 export const deleteInquiry = async (req, res) => {
     try {
         const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
@@ -81,6 +78,6 @@ export const deleteInquiry = async (req, res) => {
         }
         res.json({ message: 'Inquiry deleted successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Error deleting inquiry', error });
+        res.status(500).json({ message: 'Error deleting inquiry' });
     }
 };

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import bcryptjs from 'bcryptjs'; // Uncommented for password hashing
+import bcryptjs from 'bcryptjs'; // Kept imported but unused
 import validator from 'validator';
-import moment from 'moment'; // Uncommented for DOB validation
+import moment from 'moment';
 
 const hospitalAdminSchema = new mongoose.Schema({
     email: {
@@ -30,20 +30,21 @@ const hospitalAdminSchema = new mongoose.Schema({
         required: true,
         unique: true,
         validate: {
-            validator: (value) => /^\d{10}$/.test(value), // Assumes 10-digit phone numbers
+            validator: (value) => /^\d{10}$/.test(value),
             message: (props) => `${props.value} is not a valid phone number!`,
         },
     },
     image: {
-        type: String, // URL or file path for the image
+        type: String,
         required: false,
     },
     nic: {
-        type: String, // URL or file path for the image
+        type: String,
         required: true,
+        unique: true, // Added unique constraint (optional)
     },
     address: {
-        type: String, // URL or file path for the image
+        type: String,
         required: false,
     },
     dob: {
@@ -51,7 +52,7 @@ const hospitalAdminSchema = new mongoose.Schema({
         required: true,
         validate: {
             validator: function (value) {
-                return moment().diff(value, 'years') >= 18; // User must be at least 18
+                return moment().diff(value, 'years') >= 18;
             },
             message: 'User must be at least 18 years old!',
         },
@@ -63,35 +64,28 @@ const hospitalAdminSchema = new mongoose.Schema({
     },
     activeStatus: {
         type: Boolean,
-        default: true, // Default to active
+        default: true,
     },
-}, {timestamps: true});
+}, { timestamps: true });
 
-
-// Signin method
+// Signin method (plaintext comparison, to be updated with bcrypt later)
 hospitalAdminSchema.statics.signin = async function (email, password, hospitalId) {
-    if (!email || !password) {
-        throw new Error("All Fields are Required");
+    if (!email || !password || !hospitalId) {
+        throw new Error("All fields are required");
     }
-
     const hospitalAdmin = await this.findOne({ email });
-
     if (!hospitalAdmin) {
-        throw new Error('Incorrect Email');
+        throw new Error('Incorrect email');
     }
-
-    if (hospitalAdmin.hospitalId != hospitalId) {
-        throw new Error('Incorrect Email');
-      }
-
+    if (hospitalAdmin.hospitalId.toString() !== hospitalId) {
+        throw new Error('Incorrect hospital ID');
+    }
     const match = (password === hospitalAdmin.password);
-
     if (!match) {
-        throw new Error('Incorrect Password');
+        throw new Error('Incorrect password');
     }
-
     return hospitalAdmin;
-}
+};
 
 const HospitalAdmin = mongoose.model('HospitalAdmin', hospitalAdminSchema);
 

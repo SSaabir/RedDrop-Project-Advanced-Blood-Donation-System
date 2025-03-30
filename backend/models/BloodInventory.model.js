@@ -11,7 +11,6 @@ const bloodInventorySchema = new mongoose.Schema({
         enum: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
         required: true,
     },
-   
     availableStocks: {
         type: Number,
         required: true,
@@ -20,13 +19,17 @@ const bloodInventorySchema = new mongoose.Schema({
     expirationDate: {
         type: Date,
         required: true,
+        validate: {
+            validator: (value) => value > new Date(),
+            message: "Expiration date must be in the future",
+        },
     },
     expiredStatus: {
         type: Boolean,
         default: false,
-    }
+    },
 }, { timestamps: true });
 
 const BloodInventory = mongoose.model('BloodInventory', bloodInventorySchema);
 
-export default BloodInventory;
+export default BloodInventory;

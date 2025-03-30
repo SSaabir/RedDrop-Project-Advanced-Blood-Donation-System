@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Button, Card, Label, TextInput, Select, Datepicker } from "flowbite-react";
-import { useEmergencyBR } from "../hooks/useEmergencyBR"; // Importing the hook
+import { Button, Card, Label, TextInput, Select, Datepicker, Spinner } from "flowbite-react";
+import { useEmergencyBR } from "../hooks/useEmergencyBR";
+import { toast } from 'react-toastify';
 import background from '../assets/bg1.jpg';
 
 export default function EmergencyBloodRequest() {
-  const { createEmergencyRequest, loading, error } = useEmergencyBR();
+  const { createEmergencyRequest, loading } = useEmergencyBR();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -17,18 +18,40 @@ export default function EmergencyBloodRequest() {
     criticalLevel: 'Medium',
     withinDate: null,
   });
-  const [imagePreview, setImagePreview] = useState(null); // For image preview
-  const [file, setFile] = useState(null); // Store the raw File object
+  const [errors, setErrors] = useState({});
+  const [imagePreview, setImagePreview] = useState(null);
+  const [file, setFile] = useState(null);
 
-  // Handle image change
+  const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+  const criticalLevels = ['Low', 'Medium', 'High'];
+  const today = new Date();
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name) newErrors.name = 'Name is required';
+    if (!formData.proofOfIdentificationNumber) newErrors.proofOfIdentificationNumber = 'ID number is required';
+    else if (!/^\d+$/.test(formData.proofOfIdentificationNumber)) newErrors.proofOfIdentificationNumber = 'ID must be numeric';
+    if (!formData.hospitalName) newErrors.hospitalName = 'Hospital name is required';
+    if (!formData.address) newErrors.address = 'Address is required';
+    if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+    else if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.phoneNumber = 'Must be a 10-digit number';
+    if (!formData.patientBlood) newErrors.patientBlood = 'Blood type is required';
+    else if (!bloodTypes.includes(formData.patientBlood)) newErrors.patientBlood = 'Invalid blood type';
+    if (!formData.units) newErrors.units = 'Units are required';
+    else if (isNaN(formData.units) || formData.units <= 0) newErrors.units = 'Must be a positive number';
+    if (!formData.criticalLevel || !criticalLevels.includes(formData.criticalLevel)) newErrors.criticalLevel = 'Invalid critical level';
+    if (!formData.withinDate) newErrors.withinDate = 'Needed by date is required';
+    else if (new Date(formData.withinDate) < today) newErrors.withinDate = 'Date must be today or in the future';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleImageChange = (event) => {
     const selectedFile = event.target.files[0];
     if (selectedFile) {
-      setFile(selectedFile); // Store the raw file
+      setFile(selectedFile);
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result); // Set preview
-      };
+      reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(selectedFile);
     } else {
       setFile(null);
@@ -36,28 +59,28 @@ export default function EmergencyBloodRequest() {
     }
   };
 
-  // Handle form input change
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Handle form submission
+  const handleDateChange = (date) => {
+    setFormData((prev) => ({ ...prev, withinDate: date }));
+    setErrors((prev) => ({ ...prev, withinDate: '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.withinDate) {
-      alert("Please select a date for 'Needed By'");
+    if (!validateForm()) {
+      toast.error('Please fix the errors in the form');
       return;
     }
 
     const requestData = { ...formData };
-
     try {
-      await createEmergencyRequest(requestData, file); // Pass form data and file separately
-      // Reset form on success
+      await createEmergencyRequest(requestData, file);
+      toast.success('Emergency blood request submitted successfully!');
       setFormData({
         name: '',
         proofOfIdentificationNumber: '',
@@ -71,11 +94,9 @@ export default function EmergencyBloodRequest() {
       });
       setImagePreview(null);
       setFile(null);
-      document.querySelector("#image").value = ""; // Clear file input
-      alert("Emergency blood request submitted successfully!");
+      document.querySelector("#image").value = "";
     } catch (err) {
-      console.error("Submission error:", err);
-      // Error is already set by the hook
+      toast.error(err?.response?.data?.message || 'Error submitting request');
     }
   };
 
@@ -84,39 +105,47 @@ export default function EmergencyBloodRequest() {
       className="flex min-h-screen items-center justify-center p-6 bg-cover bg-center"
       style={{ backgroundImage: `url(${background})` }}
     >
-      <Card className="w-full max-w-6xl p-8 shadow-2xl rounded-2xl bg-white bg-opacity-90 backdrop-blur-md">
+      <Card className="w-full max-w-6xl p-8 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-lg">
         <h2 className="text-4xl font-extrabold text-center text-red-700 mb-8">
           Emergency Blood Request
         </h2>
 
-        {loading && <p className="text-center text-gray-600">Submitting...</p>}
-        {error && <p className="text-center text-red-600">Error: {error}</p>}
+        {loading && (
+          <div className="flex justify-center mb-4">
+            <Spinner size="md" color="red" />
+            <span className="ml-2 text-gray-600">Submitting...</span>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="bg-gray-100 p-6 rounded-lg shadow-lg">
-            <h3 className="text-2xl font-semibold text-red-600 mb-4">Information</h3>
-            <div className="bg-white p-5 rounded-lg shadow-md mb-4">
-              <h4 className="text-xl font-semibold text-red-600">Stock Availability</h4>
-              <p className="text-gray-700">Current available blood units will be displayed here.</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-md mb-4">
-              <h4 className="text-xl font-semibold text-red-600">Donor Information</h4>
-              <p className="text-gray-700">Details about our registered donors.</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-md">
-              <h4 className="text-xl font-semibold text-red-600">Why Donate?</h4>
-              <p className="text-gray-700">
-                Blood donation saves lives. If you require emergency blood, please complete the request form.
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Info Section */}
+          <div className="bg-gray-50 p-6 rounded-lg shadow-md">
+            <h3 className="text-2xl font-semibold text-red-600 mb-6">Information</h3>
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <h4 className="text-xl font-semibold text-red-600">Stock Availability</h4>
+                <p className="text-gray-700 mt-2">Current available blood units will be displayed here.</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <h4 className="text-xl font-semibold text-red-600">Donor Information</h4>
+                <p className="text-gray-700 mt-2">Details about our registered donors.</p>
+              </div>
+              <div className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <h4 className="text-xl font-semibold text-red-600">Why Donate?</h4>
+                <p className="text-gray-700 mt-2">
+                  Blood donation saves lives. If you require emergency blood, please complete the request form.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-gray-100 p-6 rounded-lg shadow-lg">
-            <h3 className="text-2xl font-semibold text-red-600 mb-4">Request Form</h3>
+          {/* Form Section */}
+          <div className="bg-gray-50 p-6 rounded-lg shadow-md">
+            <h3 className="text-2xl font-semibold text-red-600 mb-6">Request Form</h3>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name" value="Full Name" />
+                  <Label htmlFor="name" value="Full Name" className="text-gray-700" />
                   <TextInput
                     id="name"
                     type="text"
@@ -125,12 +154,14 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.name ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="proofOfIdentificationNumber" value="ID Number" />
+                  <Label htmlFor="proofOfIdentificationNumber" value="ID Number" className="text-gray-700" />
                   <TextInput
                     id="proofOfIdentificationNumber"
                     type="text"
@@ -139,15 +170,18 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter your ID number"
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
+                    pattern="\d+"
                     disabled={loading}
+                    color={errors.proofOfIdentificationNumber ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.proofOfIdentificationNumber && <p className="text-red-600 text-sm mt-1">{errors.proofOfIdentificationNumber}</p>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="hospitalName" value="Hospital Name" />
+                  <Label htmlFor="hospitalName" value="Hospital Name" className="text-gray-700" />
                   <TextInput
                     id="hospitalName"
                     type="text"
@@ -156,12 +190,14 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter hospital name"
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.hospitalName ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.hospitalName && <p className="text-red-600 text-sm mt-1">{errors.hospitalName}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="address" value="Address" />
+                  <Label htmlFor="address" value="Address" className="text-gray-700" />
                   <TextInput
                     id="address"
                     type="text"
@@ -170,15 +206,17 @@ export default function EmergencyBloodRequest() {
                     onChange={handleInputChange}
                     placeholder="Enter your address"
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.address ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.address && <p className="text-red-600 text-sm mt-1">{errors.address}</p>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="phoneNumber" value="Phone Number" />
+                  <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700" />
                   <TextInput
                     id="phoneNumber"
                     type="tel"
@@ -188,32 +226,36 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter 10-digit phone number"
                     required
                     pattern="\d{10}"
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.phoneNumber ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.phoneNumber && <p className="text-red-600 text-sm mt-1">{errors.phoneNumber}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="patientBlood" value="Blood Type Needed" />
+                  <Label htmlFor="patientBlood" value="Blood Type Needed" className="text-gray-700" />
                   <Select
                     id="patientBlood"
                     name="patientBlood"
                     value={formData.patientBlood}
                     onChange={handleInputChange}
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.patientBlood ? 'failure' : 'gray'}
+                    className="mt-1"
                   >
                     <option value="">Select Blood Type</option>
-                    {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((type) => (
+                    {bloodTypes.map((type) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </Select>
+                  {errors.patientBlood && <p className="text-red-600 text-sm mt-1">{errors.patientBlood}</p>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="units" value="Number of Units" />
+                  <Label htmlFor="units" value="Number of Units" className="text-gray-700" />
                   <TextInput
                     id="units"
                     type="number"
@@ -223,59 +265,63 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter required units"
                     required
                     min="1"
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.units ? 'failure' : 'gray'}
+                    className="mt-1"
                   />
+                  {errors.units && <p className="text-red-600 text-sm mt-1">{errors.units}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="criticalLevel" value="Critical Level" />
+                  <Label htmlFor="criticalLevel" value="Critical Level" className="text-gray-700" />
                   <Select
                     id="criticalLevel"
                     name="criticalLevel"
                     value={formData.criticalLevel}
                     onChange={handleInputChange}
                     required
-                    className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
                     disabled={loading}
+                    color={errors.criticalLevel ? 'failure' : 'gray'}
+                    className="mt-1"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    {criticalLevels.map((level) => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
                   </Select>
+                  {errors.criticalLevel && <p className="text-red-600 text-sm mt-1">{errors.criticalLevel}</p>}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="withinDate" value="Needed By" />
+                <Label htmlFor="withinDate" value="Needed By" className="text-gray-700" />
                 <Datepicker
-  id="withinDate"
-  name="withinDate"
-  selected={formData.withinDate}  // Ensure it binds correctly
-  onChange={(date) => setFormData({ ...formData, withinDate: date })}  // Store raw date object
-  minDate={new Date()}
-  required
-  className="mt-2 p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500"
-  disabled={loading}
-/>
-
+                  id="withinDate"
+                  name="withinDate"
+                  selected={formData.withinDate}
+                  onSelectedDateChanged={handleDateChange}
+                  minDate={today}
+                  required
+                  disabled={loading}
+                  className={`mt-1 ${errors.withinDate ? 'border-red-500' : ''}`}
+                />
+                {errors.withinDate && <p className="text-red-600 text-sm mt-1">{errors.withinDate}</p>}
               </div>
 
               <div>
-                <Label htmlFor="image" value="Upload Image (Optional)" />
+                <Label htmlFor="image" value="Upload Image (Optional)" className="text-gray-700" />
                 <input
                   type="file"
                   id="image"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm"
+                  className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 disabled:opacity-50"
                   disabled={loading}
                 />
                 {imagePreview && (
-                  <div className="mt-4">
+                  <div className="mt-4 flex justify-center">
                     <img
                       src={imagePreview}
                       alt="Uploaded Preview"
-                      className="max-w-xs border-2 border-gray-300 rounded-lg"
+                      className="max-w-xs border-2 border-red-300 rounded-lg shadow-sm"
                     />
                   </div>
                 )}
@@ -283,10 +329,19 @@ export default function EmergencyBloodRequest() {
 
               <Button
                 type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white p-3 mt-6 rounded-lg shadow-lg"
+                gradientDuoTone="redToPink"
+                size="lg"
+                className="w-full mt-6 shadow-lg hover:shadow-xl transition-shadow"
                 disabled={loading}
               >
-                {loading ? "Submitting..." : "Submit Request"}
+                {loading ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Request'
+                )}
               </Button>
             </form>
           </div>

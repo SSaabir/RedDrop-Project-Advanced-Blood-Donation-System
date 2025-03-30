@@ -1,72 +1,79 @@
-import {Footer} from 'flowbite-react';
-import {Link} from 'react-router-dom';
-import {BsFacebook} from 'react-icons/bs';
-import { BsInstagram } from 'react-icons/bs';
-import { BsLinkedin } from 'react-icons/bs';
-import { BsGithub } from 'react-icons/bs';
-import Logo from '../assets/logo.svg'
+import { Footer } from 'flowbite-react';
+import { Link } from 'react-router-dom';
+import { BsFacebook, BsInstagram, BsLinkedin, BsGithub } from 'react-icons/bs';
+import Logo from '../assets/logo.svg';
+
 export default function FooterCom() {
   return (
-   <Footer container className='border border-t-8 border-colour4 bg-colour2 text-colour1'>
-    <div className='w-full max-w-7xl mx-auto'>
-      <div className='grid w-full justify-between sm:flex md:grid-cols-1'>
-        <div className='mt-5'>
-        <Link to="/" className='self-center whitespace-nowrap text-lg sm:text-xl font-semibold dark:text-white'>
-    <div className='flex flex-wrap self-center content-center justify-center gap-1'>
-          <img src={Logo} alt="logo" className= 'w-8 '/>
-            <span className=''>Red Drop</span>
-            </div>
-    </Link>
-        </div>
-        <div className='grid grid-cols-2 gap-8 mt-4 sm:grid-cols-3 sm:gap-6'>
-          <div>
-          <Footer.Title title='About'/>
-        <Footer.LinkGroup col>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-        </Footer.LinkGroup>
+    <Footer container className='border-t-8 border-red-500 bg-gray-800 text-white'>
+      <div className='w-full max-w-7xl mx-auto'>
+        <div className='grid w-full justify-between sm:flex md:grid-cols-1'>
+          {/* Logo Section */}
+          <div className='mt-5'>
+            <Link to="/" className='self-center whitespace-nowrap text-lg sm:text-xl font-semibold dark:text-white'>
+              <div className='flex flex-wrap self-center content-center justify-center gap-1'>
+                <img src={Logo} alt="Red Drop Logo" className='w-8' />
+                <span>Red Drop</span>
+              </div>
+            </Link>
           </div>
-        <div>
-        <Footer.Title title='About'/>
-        <Footer.LinkGroup col>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-        </Footer.LinkGroup>
-        </div>
-        <div>
-        <Footer.Title title='About'/>
-        <Footer.LinkGroup col>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-          <Footer.Link href='https://www.google.com' target='_blank' rel='noopener noreferrer'>
-            DAMN it is
-          </Footer.Link>
-        </Footer.LinkGroup>
-        </div>
-        </div>
-      </div>
-      <Footer.Divider />
-      <div className='w-full sm:flex sm:items-center sm:justify-between'>
-        <Footer.Copyright href='#' by='Group01@Metro' year={new Date().getFullYear()}/>
-       
-        <div className='flex gap-6 sm:mt-0 mt-4 sm:justify-center'>
-          <Footer.Icon href='#' icon={BsFacebook}/>
-          <Footer.Icon href='#' icon={BsLinkedin}/>
-          <Footer.Icon href='#' icon={BsInstagram}/>
-          <Footer.Icon href='#' icon={BsGithub}/>
 
+          {/* Footer Links */}
+          <div className='grid grid-cols-2 gap-8 mt-4 sm:grid-cols-3 sm:gap-6'>
+            {/* About Section */}
+            <div>
+              <Footer.Title title='About' />
+              <Footer.LinkGroup col>
+                <Footer.Link href='/about' rel='noopener noreferrer'>
+                  Our Mission
+                </Footer.Link>
+                <Footer.Link href='/team' rel='noopener noreferrer'>
+                  Our Team
+                </Footer.Link>
+              </Footer.LinkGroup>
+            </div>
+
+            {/* Resources Section */}
+            <div>
+              <Footer.Title title='Resources' />
+              <Footer.LinkGroup col>
+                <Footer.Link href='/faq' rel='noopener noreferrer'>
+                  FAQ
+                </Footer.Link>
+                <Footer.Link href='/contactus' rel='noopener noreferrer'>
+                  Contact Us
+                </Footer.Link>
+              </Footer.LinkGroup>
+            </div>
+
+            {/* Legal Section */}
+            <div>
+              <Footer.Title title='Legal' />
+              <Footer.LinkGroup col>
+                <Footer.Link href='/privacy' rel='noopener noreferrer'>
+                  Privacy Policy
+                </Footer.Link>
+                <Footer.Link href='/terms' rel='noopener noreferrer'>
+                  Terms of Service
+                </Footer.Link>
+              </Footer.LinkGroup>
+            </div>
+          </div>
+        </div>
+
+        <Footer.Divider />
+
+        {/* Copyright and Social Icons */}
+        <div className='w-full sm:flex sm:items-center sm:justify-between'>
+          <Footer.Copyright href='#' by='Group01@Metro' year={new Date().getFullYear()} />
+          <div className='flex gap-6 sm:mt-0 mt-4 sm:justify-center'>
+            <Footer.Icon href='https://facebook.com' icon={BsFacebook} aria-label="Facebook" />
+            <Footer.Icon href='https://linkedin.com' icon={BsLinkedin} aria-label="LinkedIn" />
+            <Footer.Icon href='https://instagram.com' icon={BsInstagram} aria-label="Instagram" />
+            <Footer.Icon href='https://github.com' icon={BsGithub} aria-label="GitHub" />
+          </div>
         </div>
       </div>
-    </div>
-   </Footer>
-  )
+    </Footer>
+  );
 }
