@@ -2,164 +2,58 @@ import { useAuthContext } from "./useAuthContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSecondAuth } from "./useSecondAuth";
+import axios from "axios";
+import { toast } from "react-toastify";
+
 export const useSignin = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // ✅ Renamed for consistency
-  const { dispatch: authDispatch } = useAuthContext(); // Renamed to authDispatch
-    const { dispatch: secondAuthDispatch} = useSecondAuth(); // Renamed to secondAuthDispatch
+  const { dispatch: authDispatch } = useAuthContext();
+  const { dispatch: secondAuthDispatch } = useSecondAuth();
   const navigate = useNavigate();
 
-  const signinD = async (formData) => {
+  const handleSignIn = async (url, formData, userId = null, redirectPath) => {
     setLoading(true);
-    setError(null);
 
     try {
-      const res = await fetch('/api/auth/signind', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+      const response = await axios.post(url, userId ? { ...formData, userId } : formData, {
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      const text = await res.text();
-      console.log("Raw response:", text);
+      const json = response.data;
 
-      if (!text) {
-        throw new Error("Empty response from server"); // ✅ Handle empty responses
+      if (userId) {
+        localStorage.setItem('secondUser', JSON.stringify(json));
+        secondAuthDispatch({ type: 'LOGIN', payload: json });
+      } else {
+        localStorage.setItem('user', JSON.stringify(json));
+        authDispatch({ type: 'LOGIN', payload: json });
       }
 
-      const json = JSON.parse(text);
-
-      if (!res.ok) {
-        setLoading(false);
-        setError(json.error || "Sign-in failed");
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify(json));
-      authDispatch({ type: 'LOGIN', payload: json });
-
       setLoading(false);
-      navigate('/dashboard');
-    } catch (err) {
+      toast.success("Sign-in successful!");
+      navigate(redirectPath);
+    } catch (error) {
       setLoading(false);
-      setError(err.message || "Network error. Please try again."); // ✅ Improved error handling
-      console.error(err);
+      console.error("Error during sign-in:", error);
+      toast.error(error.response?.data?.error || "Network error. Please try again.");
     }
+  };
+
+  const signinD = async (formData) => {
+    handleSignIn('/api/auth/signind', formData, null, '/dashboard');
   };
 
   const signinA = async (formData) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/auth/signina', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const text = await res.text();
-      console.log("Raw response:", text);
-
-      if (!text) {
-        throw new Error("Empty response from server"); // ✅ Handle empty responses
-      }
-
-      const json = JSON.parse(text);
-
-      if (!res.ok) {
-        setLoading(false);
-        setError(json.error || "Sign-in failed");
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify(json));
-      authDispatch({ type: 'LOGIN', payload: json });
-
-      setLoading(false);
-      navigate('/dashboard');
-    } catch (err) {
-      setLoading(false);
-      setError(err.message || "Network error. Please try again."); // ✅ Improved error handling
-      console.error(err);
-    }
+    handleSignIn('/api/auth/signina', formData, null, '/dashboard');
   };
 
   const signinH = async (formData) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/auth/signinh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      const text = await res.text();
-      console.log("Raw response:", text);
-
-      if (!text) {
-        throw new Error("Empty response from server"); // ✅ Handle empty responses
-      }
-
-      const json = JSON.parse(text);
-
-      if (!res.ok) {
-        setLoading(false);
-        setError(json.error || "Sign-in failed");
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify(json));
-      authDispatch({ type: 'LOGIN', payload: json });
-
-      setLoading(false);
-      navigate('/HospitalAdminLogin');
-    } catch (err) {
-      setLoading(false);
-      setError(err.message || "Network error. Please try again."); // ✅ Improved error handling
-      console.error(err);
-    }
+    handleSignIn('/api/auth/signinh', formData, null, '/HospitalAdminLogin');
   };
 
   const signinHD = async (formData, userId) => {
-    setLoading(true);
-    setError(null);
+    handleSignIn('/api/auth/signinhd', formData, userId, '/dashboard');
+  };
 
-    try {
-        const res = await fetch('/api/auth/signinhd', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({...formData, userId}),
-        });
-
-        const text = await res.text();
-        console.log("Raw response:", text);
-
-        if (!text) {
-            throw new Error("Empty response from server");
-        }
-
-        const json = JSON.parse(text);
-
-        if (!res.ok) {
-            setLoading(false);
-            setError(json.error || "Sign-in failed");
-            return;
-        }
-
-        localStorage.setItem('secondUser', JSON.stringify(json)); // ✅ Store as 'secondUser'
-        secondAuthDispatch({ type: 'LOGIN', payload: json }); // ✅ Use SecondAuthContext
-
-        setLoading(false);
-        navigate('/dashboard');
-    } catch (err) {
-        setLoading(false);
-        setError(err.message || "Network error. Please try again.");
-        console.error(err);
-    }
-};
-
-  return { signinD, signinA, signinH, signinHD, loading, error };
+  return { signinD, signinA, signinH, signinHD, loading };
 };

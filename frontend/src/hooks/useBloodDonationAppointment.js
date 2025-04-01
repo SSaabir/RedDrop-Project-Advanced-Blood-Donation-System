@@ -1,210 +1,189 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useBloodDonationAppointment = () => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    // ✅ Fetch all blood donation appointments
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch("/api/blooddonationappointment");
-            if (!response.ok) throw new Error("Failed to fetch appointments");
-            const data = await response.json();
-            setAppointments(data);
+            const response = await axios.get("/api/blooddonationappointment");
+            setAppointments(response.data);
+            toast.success("Appointments fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching appointments:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch appointments");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchAppointmentById = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/blooddonationappointment/${id}`);
+            toast.success("Appointment fetched successfully!");
+            return response.data;
+        } catch (err) {
+            console.error("Error fetching appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch appointment");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createAppointment = async (appointmentData) => {
+        setLoading(true);
+        try {
+            const response = await axios.post("/api/blooddonationappointment", appointmentData);
+            setAppointments((prev) => [...prev, response.data]);
+            toast.success("Blood donation appointment created successfully!");
+        } catch (err) {
+            console.error("Error creating appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to create appointment");
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ Fetch a single blood donation appointment by ID
-    const fetchAppointmentById = async (id) => {
-        try {
-            const response = await fetch(`/api/blooddonationappointment/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch appointment");
-            return await response.json();
-        } catch (err) {
-            setError(err.message);
-            return null;
-        }
-    };
-
-    // ✅ Create a new blood donation appointment
-    const createAppointment = async (appointmentData) => {
-        try {
-            const response = await fetch("/api/blooddonationappointment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(appointmentData),
-            });
-            if (!response.ok) throw new Error("Failed to create appointment");
-            const newAppointment = await response.json();
-            setAppointments((prev) => [...prev, newAppointment]);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    // ✅ Update blood donation appointment details
     const updateAppointmentDateTime = async (id, appointmentDate, appointmentTime, hospitalAdminId) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/blooddonationappointment/${id}/date-time`,{
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ appointmentDate, appointmentTime, hospitalAdminId }),
+            const response = await axios.patch(`/api/blooddonationappointment/${id}/date-time`, {
+                appointmentDate,
+                appointmentTime,
+                hospitalAdminId,
             });
-            if (!response.ok) throw new Error("Failed to update appointment date/time");
-    
-            const updatedAppointment = await response.json();
             setAppointments((prev) =>
-                prev.map((appointment) =>(appointment._id === id ? updatedAppointment : appointment))
+                prev.map((appointment) => (appointment._id === id ? response.data : appointment))
             );
+            toast.success("Appointment date and time updated successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error updating appointment date/time:", err);
+            toast.error(err?.response?.data?.message || "Failed to update appointment date/time");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // ✅ Cancel cancelAppointment
-  const cancelAppointment = async (id, hospitalAdminId) => {
-    try {
-      const response = await fetch(`/api/blooddonationappointment/${id}/cancel`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
-      });
-  
-      if (!response.ok) throw new Error("Failed to cancel appointment");
-      const canceledAppointment = await response.json();
-      setAppointments((prev) =>
-        prev.map((appointment) => (appointment._id === id ? canceledAppointment : appointment))
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-  
-
-  // ✅ Accept acceptAppointment
-  const acceptAppointment = async (id, hospitalAdminId) => {
-    try {
-      const response = await fetch(`/api/blooddonationappointment/${id}/accept`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ hospitalAdminId }) // Send hospitalAdminId in the request body
-      });
-  
-      if (!response.ok) throw new Error("Failed to accept Appointments");
-      const acceptedAppointment = await response.json();
-      setAppointments((prev) =>
-        prev.map((appointment) => (appointment._id === id ? acceptedAppointment : appointment))
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-  
-  // ✅ Mark as arrivedForAppointment
-  const arrivedForAppointment = async (id, receiptNumber) => {
-    try {
-      const response = await fetch(`/api/blooddonationappointment/${id}/arrived`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ receiptNumber }),
-      });
-      if (!response.ok) throw new Error("Failed to mark as arrived");
-      const updatedappointment = await response.json();
-      setAppointments((prev) =>
-        prev.map((appointment) => (appointment._id === id ? updatedappointment : appointment))
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  // ✅ Complete blood donation appointment
-
-  const completeAppointment = async (id) => {
-    try {
-      const response = await fetch(`/api/blooddonationappointment/${id}/complete`, {method: "PATCH"});
-      if (!response.ok) throw new Error("Failed to complete Appointment");
-      const updatedAppointment = await response.json();
-      setAppointments((prev) =>
-        prev.map((appointment) => (appointment._id === id ? updatedAppointment : appointment))
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-
-    // ✅ Delete a blood donation appointment
-    const deleteAppointment = async (id) => {
+    const cancelAppointment = async (id, hospitalAdminId) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/blooddonationappointment/${id}`, {
-                method: "DELETE",
+            const response = await axios.patch(`/api/blooddonationappointment/${id}/cancel`, {
+                hospitalAdminId,
             });
-            if (!response.ok) throw new Error("Failed to delete appointment");
             setAppointments((prev) =>
-                prev.filter((appointment) => appointment._id !== id));
-
+                prev.map((appointment) => (appointment._id === id ? response.data : appointment))
+            );
+            toast.success("Appointment canceled successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error canceling appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to cancel appointment");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const fetchBloodDonationAppointmentByDonorId = async (id) => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/blooddonationappointment/donor/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch Appointment");
-        const data = await response.json();
-        setAppointments(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    const fetchBloodDonationAppointmentByHospitalId = async (id) => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/blooddonationappointment/hospital/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch Appointment");
-        const data = await response.json();
-        setAppointments(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    const acceptAppointment = async (id, hospitalAdminId) => {
+        setLoading(true);
+        try {
+            const response = await axios.patch(`/api/blooddonationappointment/${id}/accept`, {
+                hospitalAdminId,
+            });
+            setAppointments((prev) =>
+                prev.map((appointment) => (appointment._id === id ? response.data : appointment))
+            );
+            toast.success("Appointment accepted successfully!");
+        } catch (err) {
+            console.error("Error accepting appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to accept appointment");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const cancelAppointmentDonor = async (id, hospitalAdminId) => {
-      try {
-        const response = await fetch(`/api/blooddonationappointment/${id}/cancelD`, {method: "PATCH"});
-    
-        if (!response.ok) throw new Error("Failed to cancel appointment");
-        const canceledAppointment = await response.json();
-        setAppointments((prev) =>
-          prev.map((appointment) => (appointment._id === id ? canceledAppointment : appointment))
-        );
-      } catch (err) {
-        setError(err.message);
-      }
+    const arrivedForAppointment = async (id, receiptNumber) => {
+        setLoading(true);
+        try {
+            const response = await axios.patch(`/api/blooddonationappointment/${id}/arrived`, {
+                receiptNumber,
+            });
+            setAppointments((prev) =>
+                prev.map((appointment) => (appointment._id === id ? response.data : appointment))
+            );
+            toast.success("Appointment marked as arrived successfully!");
+        } catch (err) {
+            console.error("Error marking appointment as arrived:", err);
+            toast.error(err?.response?.data?.message || "Failed to mark as arrived");
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const completeAppointment = async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.patch(`/api/blooddonationappointment/${id}/complete`);
+            setAppointments((prev) =>
+                prev.map((appointment) => (appointment._id === id ? response.data : appointment))
+            );
+            toast.success("Appointment completed successfully!");
+        } catch (err) {
+            console.error("Error completing appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to complete appointment");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteAppointment = async (id) => {
+        setLoading(true);
+        try {
+            await axios.delete(`/api/blooddonationappointment/${id}`);
+            setAppointments((prev) => prev.filter((appointment) => appointment._id !== id));
+            toast.success("Appointment deleted successfully!");
+        } catch (err) {
+            console.error("Error deleting appointment:", err);
+            toast.error(err?.response?.data?.message || "Failed to delete appointment");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchBloodDonationAppointmentByDonorId =useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/blooddonationappointment/donor/${id}`);
+            setAppointments(response.data);
+            toast.success("Appointments by donor fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching appointments by donor:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch appointments by donor");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchBloodDonationAppointmentByHospitalId = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/blooddonationappointment/hospital/${id}`);
+            setAppointments(response.data);
+            toast.success("Appointments by hospital fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching appointments by hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch appointments by hospital");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     return {
         appointments,
         loading,
-        error,
         fetchAppointments,
         fetchAppointmentById,
         createAppointment,

@@ -12,12 +12,7 @@ export default function FeedbackDashboard() {
     // Fetch feedbacks on component mount
     useEffect(() => {
         fetchFeedbacks();
-    }, [fetchFeedbacks]);
-
-    // Update filtered feedbacks when data changes
-    useEffect(() => {
-        setFilteredFeedbacks(feedbacks);
-    }, [feedbacks]);
+    }, []);
 
     // Handle search input
     const handleSearch = (value) => {

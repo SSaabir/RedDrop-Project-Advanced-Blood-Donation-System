@@ -1,88 +1,95 @@
 import { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useInquiry = () => {
     const [inquiries, setInquiries] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-// Fetch all inquiries
-const fetchInquiries = useCallback(async () => {
-    try {
-        const response = await fetch("/api/inquiry");
-        const data = await response.json();
-        if (!response.ok) throw new Error("Failed to fetch inquiries");
-        setInquiries(data);
-    } catch (err) {
-        setError(err.message);
-    } 
-}, []);
+    useEffect(() => {
+        fetchInquiries();
+    }, []);
 
+    const fetchInquiries = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get("/api/inquiry");
+            setInquiries(response.data);
+            toast.success("Inquiries fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching inquiries:", err);
+            toast.error(err?.response?.data?.message || "Error fetching inquiries");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    // Fetch a single inquiry by ID
     const fetchInquiryById = useCallback(async (id) => {
         try {
-            const response = await fetch(`/api/inquiry/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch inquiry");
-            return await response.json();
+            const response = await axios.get(`/api/inquiry/${id}`);
+            toast.success("Inquiry fetched successfully!");
+            return response.data;
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching inquiry:", err);
+            toast.error(err?.response?.data?.message || "Error fetching inquiry");
             return null;
         }
-    },[]);
+    }, []);
 
-    // Create a new inquiry
     const createInquiry = async (inquiryData) => {
+        setLoading(true);
         try {
-            const response = await fetch("/api/inquiry", {
-                method: "POST",
+            const response = await axios.post("/api/inquiry", inquiryData, {
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(inquiryData),
             });
-            if (!response.ok) throw new Error("Failed to create inquiry");
-            const newInquiry = await response.json();
-            setInquiries((prev) => [...prev, newInquiry]);
+            setInquiries((prev) => [...prev, response.data]);
+            toast.success("Inquiry created successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error creating inquiry:", err);
+            toast.error(err?.response?.data?.message || "Error creating inquiry");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Update an inquiry's status
     const updateInquiryStatus = async (id, status) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/inquiry/${id}`, {  // Remove "/status"
-                method: "PUT",
+            const response = await axios.put(`/api/inquiry/${id}`, { status }, {
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status }),
             });
-            if (!response.ok) throw new Error("Failed to update inquiry status");
-            const updatedInquiry = await response.json();
             setInquiries((prev) =>
-                prev.map((inquiry) => (inquiry._id === id ? updatedInquiry.inquiry : inquiry)) // Adjust to match response structure
+                prev.map((inquiry) =>
+                    inquiry._id === id ? response.data : inquiry
+                )
             );
+            toast.success("Inquiry status updated successfully!");
         } catch (err) {
-            setError(err.message);  // Set error state instead of console.error
+            console.error("Error updating inquiry status:", err);
+            toast.error(err?.response?.data?.message || "Error updating inquiry status");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Delete an inquiry
     const deleteInquiry = async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/inquiry/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) throw new Error("Failed to delete inquiry");
+            await axios.delete(`/api/inquiry/${id}`);
             setInquiries((prev) => prev.filter((inquiry) => inquiry._id !== id));
+            toast.success("Inquiry deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting inquiry:", err);
+            toast.error(err?.response?.data?.message || "Error deleting inquiry");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Fetch inquiries when the hook is used (only once on mount)
-     return {
+    return {
         inquiries,
         loading,
-        error,
-        fetchInquiries,  // Return the fetch function for manual refetching if needed
+        fetchInquiries,
         fetchInquiryById,
         createInquiry,
         updateInquiryStatus,

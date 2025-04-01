@@ -1,121 +1,101 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useDonor = () => {
     const [donors, setDonors] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    // Fetch all donors
-    const fetchDonors = async() => {
-        setLoading(false);
-        try {
-            const response = await fetch("/api/donor");
-            if (!response.ok) throw new Error("Failed to fetch donors");
-            const data = await response.json();
-            setDonors(data);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch a single donor by ID
-    const fetchDonorById = async(id) => {
-        setLoading(false);
-        try {
-            const response = await fetch(`/api/donor/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch donor");
-            const data = await response.json();
-            setDonors([data]);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Create a new donor
-    const createDonor = async(donorData) => {
-        try {
-            const response = await fetch("/api/donor", {
-                method: "POST",
-                body: donorData,
-            });
-
-            const newDonor = await response.json();
-            if (!response.ok) throw new Error(newDonor.message || 'Failed to create admin');
-            setDonors((prev) => [...prev, newDonor]);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    //update
-    const updateDonor = async(id, donorData) => {
+    const fetchDonors = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/donor/${id}`, {
-                method: "PUT",
+            const response = await axios.get("/api/donor");
+            setDonors(response.data);
+            toast.success("Donors fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching donors:", err);
+            toast.error(err?.response?.data?.message || "Error fetching donors");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchDonorById = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/donor/${id}`);
+            setDonors([response.data]);
+            toast.success("Donor fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching donor:", err);
+            toast.error(err?.response?.data?.message || "Error fetching donor");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createDonor = async (donorData) => {
+        try {
+            const response = await axios.post("/api/donor", donorData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            setDonors((prev) => [...prev, response.data]);
+            toast.success("Donor created successfully!");
+        } catch (err) {
+            console.error("Error creating donor:", err);
+            toast.error(err?.response?.data?.message || "Error creating donor");
+        }
+    };
+
+    const updateDonor = async (id, donorData) => {
+        setLoading(true);
+        try {
+            const response = await axios.put(`/api/donor/${id}`, donorData, {
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(donorData),
             });
-
-            if (!response.ok) {
-                throw new Error("Failed to update donor");
-            }
-
-            const updatedDonor = await response.json();
-
             setDonors((prev) =>
                 prev.map((donor) =>
-                    donor._id === id ? {...donor, ...updatedDonor } : donor
+                    donor._id === id ? { ...donor, ...response.data } : donor
                 )
             );
+            toast.success("Donor updated successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error updating donor:", err);
+            toast.error(err?.response?.data?.message || "Error updating donor");
         } finally {
             setLoading(false);
         }
     };
 
-
-    // Delete a donor
-    const deleteDonor = async(id) => {
+    const deleteDonor = async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/donor/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) {
-                throw new Error("Failed to delete donor");
-            }
+            await axios.delete(`/api/donor/${id}`);
             setDonors((prev) => prev.filter((donor) => donor._id !== id));
+            toast.success("Donor deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting donor:", err);
+            toast.error(err?.response?.data?.message || "Error deleting donor");
         } finally {
             setLoading(false);
         }
     };
 
-    // Activate/Deactivate a donor
-    const activateDeactivateDonor = async(id) => {
+    const activateDeactivateDonor = async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/donor/${id}/toggle-status`, {
-                method: "PATCH",
-            });
-
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Failed to toggle donor status");
-
+            const response = await axios.patch(`/api/donor/${id}/toggle-status`);
             setDonors((prev) =>
                 prev.map((donor) =>
-                    donor._id === id ? {...donor, activeStatus: !donor.activeStatus } : donor
+                    donor._id === id ? { ...donor, activeStatus: !donor.activeStatus } : donor
                 )
             );
+            toast.success("Donor status toggled successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error toggling donor status:", err);
+            toast.error(err?.response?.data?.message || "Error toggling donor status");
         } finally {
             setLoading(false);
         }
@@ -124,7 +104,6 @@ export const useDonor = () => {
     return {
         donors,
         loading,
-        error,
         fetchDonors,
         fetchDonorById,
         createDonor,

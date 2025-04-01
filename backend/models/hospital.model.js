@@ -48,7 +48,7 @@ const hospitalSchema = new mongoose.Schema({
         required: true,
     },
     image: {
-        type: String, // URL or file path
+        type: String,
         required: false,
     },
     startTime: {
@@ -73,24 +73,19 @@ const hospitalSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// Sign-in method
+// Sign-in method (plaintext comparison, to be updated with bcrypt later)
 hospitalSchema.statics.signin = async function(email, password) {
     if (!email || !password) {
         throw new Error("All fields are required");
     }
-
     const hospital = await this.findOne({ email });
-
     if (!hospital) {
         throw new Error("Incorrect email");
     }
-
     const match = password === hospital.password;
-
     if (!match) {
         throw new Error("Incorrect password");
     }
-
     return hospital;
 };
 

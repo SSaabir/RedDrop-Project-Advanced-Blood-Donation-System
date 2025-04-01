@@ -1,108 +1,116 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useSystemManager = () => {
     const [managers, setManagers] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    // ✅ Fetch all system managers
-    const fetchManagers = async () => {
+    const fetchManagers = useCallback(async () => {
+        setLoading(true);
         try {
-            const response = await fetch("/api/manager");
-            const data = await response.json();
-            if (!response.ok) throw new Error("Failed to fetch managers");
-            setManagers(data);
+            const response = await axios.get("/api/manager");
+            setManagers(response.data);
+            toast.success("Managers fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching managers:", err);
+            toast.error(err?.response?.data?.message || "Error fetching managers");
+        } finally {
+            setLoading(false);
         }
-    };
+    }, []);
 
-    // ✅ Fetch a single system manager by ID
-    const fetchManagerById = async (id) => {
+    const fetchManagerById = useCallback(async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/manager/${id}`);
-            if (!response.ok) throw new Error("Failed to fetch manager");
-            const data = await response.json();
-            setManagers([data])
+            const response = await axios.get(`/api/manager/${id}`);
+            setManagers([response.data]);
+            toast.success("Manager fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching manager by ID:", err);
+            toast.error(err?.response?.data?.message || "Error fetching manager by ID");
+        } finally {
+            setLoading(false);
         }
-    };
+    }, []);
 
-    // ✅ Create a new system manager
     const createManager = async (formData) => {
         try {
-            const response = await fetch("/api/manager", {
-                method: 'POST',
-                body: formData,
+            const response = await axios.post("/api/manager", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
             });
-            const newManager = await response.json();
-            if (!response.ok) throw new Error("Failed to create manager");
-            setManagers((prev) => [...prev, newManager]);
+            setManagers((prev) => [...prev, response.data]);
+            toast.success("Manager created successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error creating manager:", err);
+            toast.error(err?.response?.data?.message || "Error creating manager");
         }
     };
 
-    // ✅ Update system manager details
     const updateManager = async (id, formData) => {
+        setLoading(true);
         try {
-            console.log('Updating manager with ID:', id, 'Data:', [...formData.entries()]);
-            const response = await fetch(`/api/manager/${id}`, {
-                method: 'PUT',
-                body: formData,
+            const response = await axios.put(`/api/manager/${id}`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
             });
-            const updatedManager = await response.json();
-            console.log('Response:', response.status, updatedManager);
-            if (!response.ok) throw new Error(updatedManager.message || "Failed to update manager");
             setManagers((prev) =>
-                prev.map((manager) => (manager._id === id ? updatedManager : manager))
+                prev.map((manager) =>
+                    manager._id === id ? { ...manager, ...response.data } : manager
+                )
             );
+            toast.success("Manager updated successfully!");
         } catch (err) {
-            console.error('UpdateManager error:', err.message);
+            console.error("Error updating manager:", err);
+            toast.error(err?.response?.data?.message || "Error updating manager");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // ✅ Delete a system manager
     const deleteManager = async (id) => {
+        setLoading(true);
         try {
-            const response = await fetch(`/api/manager/${id}`, {method: "DELETE" });
-            if (!response.ok) throw new Error("Failed to delete manager");
+            await axios.delete(`/api/manager/${id}`);
             setManagers((prev) => prev.filter((manager) => manager._id !== id));
+            toast.success("Manager deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting manager:", err);
+            toast.error(err?.response?.data?.message || "Error deleting manager");
+        } finally {
+            setLoading(false);
         }
     };
 
     const activateDeactivateManager = async (id) => {
-        console.log('useSystemManager initialized');
+        setLoading(true);
         try {
-            console.log('Toggling status for manager ID:', id);
-            const response = await fetch(`/api/manager/${id}/toggle-status`, {
-                method: 'PATCH',
-            });
-            const result = await response.json();
-            console.log('Toggle response:', response.status, result);
-            if (!response.ok) throw new Error(result.message || "Failed to toggle manager status");
+            const response = await axios.patch(`/api/manager/${id}/toggle-status`);
             setManagers((prev) =>
-                prev.map((manager) => 
+                prev.map((manager) =>
                     manager._id === id ? { ...manager, activeStatus: !manager.activeStatus } : manager
                 )
             );
+            toast.success("Manager status toggled successfully!");
         } catch (err) {
-            console.error('ToggleManager error:', err.message);
+            console.error("Error toggling manager status:", err);
+            toast.error(err?.response?.data?.message || "Error toggling manager status");
+        } finally {
+            setLoading(false);
         }
     };
 
     return {
         managers,
         loading,
-        error,
-        activateDeactivateManager,
         fetchManagers,
         fetchManagerById,
         createManager,
         updateManager,
         deleteManager,
+        activateDeactivateManager,
     };
 };

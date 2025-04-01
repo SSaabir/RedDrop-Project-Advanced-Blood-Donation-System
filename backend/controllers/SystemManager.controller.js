@@ -1,26 +1,27 @@
 import SystemManager from "../models/SystemManager.model.js";
 
-// ✅ Get all system managers
+// Get all system managers
 export const getSystemManagers = async (req, res) => {
     try {
         const managers = await SystemManager.find();
         res.json(managers);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching system managers", error });
+        res.status(500).json({ message: "Error fetching system managers" });
     }
 };
 
-// ✅ Get a single system manager by ID
+// Get a single system manager by ID
 export const getSystemManagerById = async (req, res) => {
     try {
         const manager = await SystemManager.findById(req.params.id);
         if (!manager) return res.status(404).json({ message: "System Manager not found" });
         res.json(manager);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching system manager", error });
+        res.status(500).json({ message: "Error fetching system manager" });
     }
 };
 
+// Create a new system manager
 export const createSystemManager = async (req, res) => {
     try {
         const { 
@@ -71,34 +72,29 @@ export const createSystemManager = async (req, res) => {
             nic,
             address,
             image,
-            dob: new Date(dob), // Ensure dob is a Date object
+            dob: new Date(dob),
             role,
-            activeStatus: activeStatus !== undefined ? activeStatus : true // Use schema default if omitted
+            activeStatus: activeStatus !== undefined ? activeStatus : true
         });
 
         await newManager.save();
 
-        // Remove password from response
         const responseManager = newManager.toObject();
         delete responseManager.password;
 
         res.status(201).json(responseManager);
     } catch (error) {
-        console.error('Create error:', error); // Log for debugging
         if (error.name === 'ValidationError') {
             return res.status(400).json({ 
                 message: "Validation failed", 
                 errors: Object.values(error.errors).map(err => err.message) 
             });
         }
-        res.status(500).json({ 
-            message: "Error creating system manager", 
-            error: error.message 
-        });
+        res.status(500).json({ message: "Error creating system manager" });
     }
 };
 
-// ✅ Update system manager details
+// Update system manager details
 export const updateSystemManager = async (req, res) => {
     try {
         const updates = { ...req.body };
@@ -112,11 +108,11 @@ export const updateSystemManager = async (req, res) => {
 
         res.status(200).json(updatedManager);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating manager', error });
+        res.status(500).json({ message: 'Error updating system manager' });
     }
 };
 
-// ✅ Delete a system manager
+// Delete a system manager
 export const deleteSystemManager = async (req, res) => {
     try {
         const deletedManager = await SystemManager.findByIdAndDelete(req.params.id);
@@ -124,39 +120,32 @@ export const deleteSystemManager = async (req, res) => {
 
         res.json({ message: "System Manager deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting system manager", error });
+        res.status(500).json({ message: "Error deleting system manager" });
     }
 };
 
+// Activate/Deactivate a system manager
 export const activateDeactivateSystemManager = async (req, res) => {
     try {
-      console.log('Toggle route hit for ID:', req.params.id);
-      const { id } = req.params;
-  
-      const manager = await SystemManager.findById(id);
-      if (!manager) {
-        console.log('Manager not found for ID:', id);
-        return res.status(404).json({ message: "System Manager not found" });
-      }
-  
-      const newStatus = !manager.activeStatus;
-      const updatedManager = await SystemManager.findByIdAndUpdate(
-        id,
-        { $set: { activeStatus: newStatus } },
-        { new: true } // Return the updated document
-      );
-  
-      console.log('Manager updated:', updatedManager);
-  
-      res.status(200).json({
-        message: `System Manager ${newStatus ? 'activated' : 'deactivated'} successfully`,
-        manager: updatedManager,
-      });
+        const { id } = req.params;
+
+        const manager = await SystemManager.findById(id);
+        if (!manager) {
+            return res.status(404).json({ message: "System Manager not found" });
+        }
+
+        const newStatus = !manager.activeStatus;
+        const updatedManager = await SystemManager.findByIdAndUpdate(
+            id,
+            { $set: { activeStatus: newStatus } },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: `System Manager ${newStatus ? 'activated' : 'deactivated'} successfully`,
+            manager: updatedManager,
+        });
     } catch (error) {
-      console.error('Activate/Deactivate error:', error);
-      res.status(500).json({
-        message: "Error toggling system manager status",
-        error: error.message,
-      });
+        res.status(500).json({ message: "Error toggling system manager status" });
     }
-  };
+};

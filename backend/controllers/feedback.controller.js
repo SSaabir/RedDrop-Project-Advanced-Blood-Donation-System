@@ -1,34 +1,33 @@
 import Feedback from "../models/feedback.model.js";
 
-// ✅ Get all feedbacks
+// Get all feedbacks
 export const getFeedbacks = async (req, res) => {
     try {
-        const feedbacks = await Feedback.find().populate("donorId systemManagerId sessionId");
+        const feedbacks = await Feedback.find();
         res.json(feedbacks);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching feedbacks", error: error.message });
+        res.status(500).json({ message: "Error fetching feedbacks" });
     }
 };
 
-// ✅ Get a single feedback by ID
+// Get a single feedback by ID
 export const getFeedbackById = async (req, res) => {
     try {
         const feedback = await Feedback.findById(req.params.id).populate("donorId systemManagerId sessionId");
         if (!feedback) return res.status(404).json({ message: "Feedback not found" });
         res.json(feedback);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching feedback", error: error.message });
+        res.status(500).json({ message: "Error fetching feedback" });
     }
 };
 
-// ✅ Create a new feedback
+// Create a new feedback
 export const createFeedback = async (req, res) => {
-    console.log("Controller: ",req.body);
     try {
         const { donorId, sessionId, sessionModel, subject, comments, feedbackType, starRating } = req.body;
 
         // Validate required fields
-        if (!donorId ||!sessionModel || !sessionId || !subject || !comments || !feedbackType) {
+        if (!donorId || !sessionModel || !sessionId || !subject || !comments || !feedbackType) {
             return res.status(400).json({ message: "All required fields must be filled" });
         }
 
@@ -45,11 +44,11 @@ export const createFeedback = async (req, res) => {
         await newFeedback.save();
         res.status(201).json(newFeedback);
     } catch (error) {
-        res.status(400).json({ message: "Error creating feedback", error: error.message });
+        res.status(400).json({ message: "Error creating feedback" });
     }
 };
 
-// ✅ Update feedback details
+// Update feedback details
 export const updateFeedback = async (req, res) => {
     try {
         const updatedFeedback = await Feedback.findByIdAndUpdate(
@@ -62,11 +61,11 @@ export const updateFeedback = async (req, res) => {
 
         res.status(200).json(updatedFeedback);
     } catch (error) {
-        res.status(500).json({ message: "Error updating feedback", error: error.message });
+        res.status(500).json({ message: "Error updating feedback" });
     }
 };
 
-// ✅ Delete a feedback
+// Delete a feedback
 export const deleteFeedback = async (req, res) => {
     try {
         const deletedFeedback = await Feedback.findByIdAndDelete(req.params.id);
@@ -74,6 +73,6 @@ export const deleteFeedback = async (req, res) => {
 
         res.json({ message: "Feedback deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting feedback", error: error.message });
+        res.status(500).json({ message: "Error deleting feedback" });
     }
 };

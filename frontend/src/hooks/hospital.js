@@ -1,125 +1,106 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export const useHospital = () => {
     const [hospitals, setHospitals] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    // Fetch all hospitals
-    const fetchHospitals = async() => {
-        try {
-            const response = await fetch("/api/hospital");
-            const data = await response.json();
-            if (!response.ok) throw new Error("Failed to fetch hospitals");
-            setHospitals(data);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    // Fetch a single hospital by ID
-    const fetchHospitalById = async(id) => {
+    const fetchHospitals = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/hospital/${id}`);
-            const data = await response.json();
-            if (!response.ok) throw new Error("Failed to fetch hospital");
-            setHospitals([data]); // Store the hospital in an array for consistency
+            const response = await axios.get("/api/hospital");
+            setHospitals(response.data);
+            toast.success("Hospitals fetched successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error fetching hospitals:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch hospitals");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchHospitalById = useCallback(async (id) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/hospital/${id}`);
+            setHospitals([response.data]);
+            toast.success("Hospital fetched successfully!");
+        } catch (err) {
+            console.error("Error fetching hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to fetch hospital");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const createHospital = async (hospitalData) => {
+        setLoading(true);
+        try {
+            const response = await axios.post("/api/hospital", hospitalData);
+            setHospitals((prev) => [...prev, response.data]);
+            toast.success("Hospital created successfully!");
+        } catch (err) {
+            console.error("Error creating hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to create hospital");
         } finally {
             setLoading(false);
         }
     };
 
-    // Create a new hospital
-    const createHospital = async(hospitalData) => {
+    const updateHospital = async (id, hospitalData) => {
         setLoading(true);
         try {
-            const response = await fetch("/api/hospital", {
-                method: "POST",
-                body: hospitalData, // Send FormData directly
-            });
-
-            const newHospital = await response.json();
-            if (!response.ok) throw new Error(newHospital.message || "Failed to create hospital");
-            setHospitals((prev) => [...prev, newHospital]);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Update a hospital
-    const updateHospital = async(id, hospitalData) => {
-        setLoading(true);
-        try {
-            const response = await fetch(`/api/hospital/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(hospitalData),
-            });
-
-            if (!response.ok) throw new Error("Failed to update hospital");
-            const updatedHospital = await response.json();
-
+            const response = await axios.put(`/api/hospital/${id}`, hospitalData);
             setHospitals((prev) =>
                 prev.map((hospital) =>
-                    hospital._id === id ? {...hospital, ...updatedHospital } : hospital
+                    hospital._id === id ? { ...hospital, ...response.data } : hospital
                 )
             );
+            toast.success("Hospital updated successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error updating hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to update hospital");
         } finally {
             setLoading(false);
         }
     };
 
-    // Delete a hospital
-    const deleteHospital = async(id) => {
+    const deleteHospital = async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/hospital/${id}`, {
-                method: "DELETE",
-            });
-            if (!response.ok) throw new Error("Failed to delete hospital");
+            await axios.delete(`/api/hospital/${id}`);
             setHospitals((prev) => prev.filter((hospital) => hospital._id !== id));
+            toast.success("Hospital deleted successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error deleting hospital:", err);
+            toast.error(err?.response?.data?.message || "Failed to delete hospital");
         } finally {
             setLoading(false);
         }
     };
 
-    // Activate/Deactivate a hospital
-    const activateDeactivateHospital = async(id) => {
+    const activateDeactivateHospital = async (id) => {
         setLoading(true);
         try {
-            const response = await fetch(`/api/hospital/${id}/toggle-status`, {
-                method: "PATCH",
-            });
-
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Failed to toggle hospital status");
-
+            const response = await axios.patch(`/api/hospital/${id}/toggle-status`);
             setHospitals((prev) =>
                 prev.map((hospital) =>
-                    hospital._id === id ? {...hospital, activeStatus: !hospital.activeStatus } : hospital
+                    hospital._id === id ? { ...hospital, activeStatus: !hospital.activeStatus } : hospital
                 )
             );
+            toast.success("Hospital status toggled successfully!");
         } catch (err) {
-            setError(err.message);
+            console.error("Error toggling hospital status:", err);
+            toast.error(err?.response?.data?.message || "Failed to toggle hospital status");
         } finally {
             setLoading(false);
         }
     };
 
-    
     return {
         hospitals,
         loading,
-        error,
         fetchHospitals,
         fetchHospitalById,
         createHospital,

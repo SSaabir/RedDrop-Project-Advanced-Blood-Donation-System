@@ -1,28 +1,28 @@
 import Hospital from "../models/hospital.model.js";
 
 // Get all hospitals
-export const getHospitals = async(req, res) => {
+export const getHospitals = async (req, res) => {
     try {
         const hospitals = await Hospital.find();
         res.json(hospitals);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching hospitals", error });
+        res.status(500).json({ message: "Error fetching hospitals" });
     }
 };
 
 // Get a hospital by ID
-export const getHospitalById = async(req, res) => {
+export const getHospitalById = async (req, res) => {
     try {
         const hospital = await Hospital.findById(req.params.id);
         if (!hospital) return res.status(404).json({ message: "Hospital not found" });
         res.json(hospital);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching hospital", error });
+        res.status(500).json({ message: "Error fetching hospital" });
     }
 };
 
 // Create a new hospital
-export const createHospital = async(req, res) => {
+export const createHospital = async (req, res) => {
     try {
         const { name, city, systemManagerId, identificationNumber, email, password, phoneNumber, address, startTime, endTime, activeStatus } = req.body;
 
@@ -46,12 +46,12 @@ export const createHospital = async(req, res) => {
         await newHospital.save();
         res.status(201).json(newHospital);
     } catch (error) {
-        res.status(400).json({ message: "Error creating hospital", error: error.message });
+        res.status(400).json({ message: "Error creating hospital" });
     }
 };
 
 // Update hospital details
-export const updateHospital = async(req, res) => {
+export const updateHospital = async (req, res) => {
     try {
         const { id } = req.params;
         const updatedData = req.body;
@@ -66,12 +66,12 @@ export const updateHospital = async(req, res) => {
 
         res.status(200).json(updatedHospital);
     } catch (error) {
-        res.status(500).json({ message: "Error updating hospital", error: error.message });
+        res.status(500).json({ message: "Error updating hospital" });
     }
 };
 
 // Delete hospital
-export const deleteHospital = async(req, res) => {
+export const deleteHospital = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -81,12 +81,12 @@ export const deleteHospital = async(req, res) => {
 
         res.status(200).json({ message: "Hospital deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error deleting hospital", error: error.message });
+        res.status(500).json({ message: "Error deleting hospital" });
     }
 };
 
 // Toggle hospital active status
-export const toggleHospitalStatus = async(req, res) => {
+export const toggleHospitalStatus = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -101,6 +101,6 @@ export const toggleHospitalStatus = async(req, res) => {
             hospital: updatedHospital,
         });
     } catch (error) {
-        res.status(500).json({ message: "Error toggling hospital status", error: error.message });
+        res.status(500).json({ message: "Error toggling hospital status" });
     }
 };
