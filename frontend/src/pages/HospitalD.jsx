@@ -81,12 +81,15 @@ export default function HospitalDashboard() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+
     if (!editHospital?._id) return;
 
-    const errors = validateForm(editHospital);
+    const updatedData = { ...editHospital };
+    delete updatedData.image; // Remove _id from the data to be sent
+        
+    const errors = validateForm(updatedData);
     setEditErrors(errors);
     if (Object.keys(errors).length > 0) return;
-
     setActionLoading(true);
     try {
       await updateHospital(editHospital._id, editHospital);

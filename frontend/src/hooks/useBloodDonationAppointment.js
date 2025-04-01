@@ -153,7 +153,7 @@ export const useBloodDonationAppointment = () => {
         }
     };
 
-    const fetchBloodDonationAppointmentByDonorId = async (id) => {
+    const fetchBloodDonationAppointmentByDonorId =useCallback(async (id) => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/blooddonationappointment/donor/${id}`);
@@ -165,7 +165,7 @@ export const useBloodDonationAppointment = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     const fetchBloodDonationAppointmentByHospitalId = useCallback(async (id) => {
         setLoading(true);

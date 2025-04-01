@@ -74,6 +74,7 @@ export default function InquiryDashboard() {
     if (!selectedInquiry?._id) return;
 
     setActionLoading(true);
+    
     try {
       await updateInquiryStatus(selectedInquiry._id, newStatus);
       setOpenStatusModal(false);
@@ -83,6 +84,8 @@ export default function InquiryDashboard() {
     } finally {
       setActionLoading(false);
     }
+    console.log('selectedInquiry:', selectedInquiry);
+    console.log('newStatus:', newStatus);
   };
 
   // Handle inquiry deletion

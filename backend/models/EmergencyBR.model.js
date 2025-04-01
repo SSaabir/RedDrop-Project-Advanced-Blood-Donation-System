@@ -23,7 +23,7 @@ const emergencyBRSchema = new mongoose.Schema({
         enum: ['Low', 'Medium', 'High'],
         required: true,
     },
-    withinDate: { type: Date, required: true }, // Removed default
+    withinDate: { type: String, required: true }, // Removed default
     activeStatus: {
         type: String,
         enum: ["Active", "Inactive"],

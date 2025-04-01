@@ -22,7 +22,7 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
         default: false
     },
     appointmentDate: {
-        type: Date, // Changed to Date for better handling
+        type: String, // Changed to Date for better handling
         required: true,
     },
     appointmentTime: {

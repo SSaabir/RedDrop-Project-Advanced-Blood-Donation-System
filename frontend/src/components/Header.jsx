@@ -101,7 +101,6 @@ export default function Header() {
     const evaluationData = { ...evalFormData, donorId: userId || "" };
     try {
       await createEvaluation(evaluationData);
-      toast.success('Evaluation scheduled successfully');
       setOpenEvalModal(false);
     } catch (err) {
       toast.error('Error scheduling evaluation'); // No heError, so generic message
@@ -119,7 +118,6 @@ export default function Header() {
     const appointmentData = { ...appointmentFormData, donorId: userId || "" };
     try {
       await createAppointment(appointmentData);
-      toast.success('Appointment scheduled successfully');
       setOpenAppointmentModal(false);
     } catch (err) {
       toast.error('Error scheduling appointment'); // No error, so generic message

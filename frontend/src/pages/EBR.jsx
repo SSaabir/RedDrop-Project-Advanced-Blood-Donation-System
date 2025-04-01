@@ -297,7 +297,7 @@ export default function EmergencyBloodRequest() {
                   id="withinDate"
                   name="withinDate"
                   selected={formData.withinDate}
-                  onSelectedDateChanged={handleDateChange}
+                  onChange={handleDateChange}
                   minDate={today}
                   required
                   disabled={loading}

@@ -3,7 +3,7 @@ import Feedback from "../models/feedback.model.js";
 // Get all feedbacks
 export const getFeedbacks = async (req, res) => {
     try {
-        const feedbacks = await Feedback.find().populate("donorId systemManagerId sessionId");
+        const feedbacks = await Feedback.find();
         res.json(feedbacks);
     } catch (error) {
         res.status(500).json({ message: "Error fetching feedbacks" });

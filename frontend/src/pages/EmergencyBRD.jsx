@@ -66,11 +66,11 @@ const EmergencyBRAdmin = () => {
     try {
       let type = null;
       let by = null;
-      if (Donor) {
-        by = userId;
+      if (user?.role === "Donor") {
+        by = user?.userObj?._id;
         type = "Donor";
-      } else if (Hospital) {
-        by = userId;
+      } else if (user?.role === "Hospital") {
+        by = user?.userObj?._id;
         type = "Hospital";
       }
       if (!by || !type) {
