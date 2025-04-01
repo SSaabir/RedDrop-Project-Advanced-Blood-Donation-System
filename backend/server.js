@@ -1,12 +1,9 @@
-import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-import multer from "multer";
-import authRoutes from "./routes/auth.route.js";
-import healthEvaluationRoutes from "./routes/HealthEvaluation.route.js";
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors'
+import authRoutes from './routes/auth.route.js';
+import healthEvaluationRoutes from './routes/HealthEvaluation.route.js';
 import BloodInventoryRoutes from "./routes/BloodInventory.route.js";
 import BloodDonationAppointmentRoutes from "./routes/BloodDonationAppointment.route.js";
 import SystemManagerRoutes from "./routes/SystemManager.route.js";
@@ -43,66 +40,54 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Serve Uploaded Files Statically
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Routes
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the RedDrop API" }); // Updated to JSON for consistency
-});
-
-app.post("/api/upload", upload.single("file"), (req, res, next) => {
-  try {
+// ✅ Route to Handle File Upload
+app.post('/api/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
     res.status(200).json({ success: true, filePath: `/uploads/${req.file.filename}` });
-  } catch (err) {
-    next(err);
-  }
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/healthEvaluation", healthEvaluationRoutes);
-app.use("/api/hospital", hospitalRoutes);
-app.use("/api/donor", donorRoutes);
-app.use("/api/blood-inventory", BloodInventoryRoutes);
-app.use("/api/blooddonationappointment", BloodDonationAppointmentRoutes);
-app.use("/api/inquiry", inquiryRoutes);
-app.use("/api/feedback", feedbackRoutes);
-app.use("/api/manager", SystemManagerRoutes);
-app.use("/api/emergency-requests", EmergencyBRRoutes);
-app.use("/api/healthAd", HospitalAdminRoutes);
+// ✅ Serve Uploaded Files Statically
+app.use('/uploads', express.static('uploads'));
 
-// 404 Handler
-app.use((req, res, next) => {
-  res.status(404).json({ success: false, message: "Route not found" });
+// Default route for homepage
+app.get('/', (req, res) => {
+    res.send('Welcome to the API');
 });
 
-// Global Error Handling Middleware
+// ✅ Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/healthEvaluation', healthEvaluationRoutes);
+app.use('/api/hospital', hospitalRoutes);
+app.use('/api/donor', donorRoutes);
+app.use('/api/blood-inventory', BloodInventoryRoutes);
+app.use('/api/blooddonationappointment', BloodDonationAppointmentRoutes);
+app.use('/api/inquiry', inquiryRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/manager', SystemManagerRoutes);
+app.use('/api/emergency-requests', EmergencyBRRoutes);
+app.use('/api/healthAd', HospitalAdminRoutes);
+
+// ✅ Error handling middleware (should be last)
 app.use((error, req, res, next) => {
-  console.error("Error:", error.message);
-  const statusCode = error.statusCode || 500;
-  const message = error.message || "Internal Server Error";
-  res.status(statusCode).json({
-    success: false,
-    statusCode,
-    message,
-  });
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+    res.status(statusCode).json({
+        success: false,
+        statusCode,
+        message
+    });
 });
 
-// Database Connection and Server Start
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO); // No deprecated options
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+// ✅ Database Connection
+mongoose.connect(process.env.MONGO)
+    .then(() => {
+        console.log('Connected to MongoDB');
+        app.listen(process.env.PORT, () => {
+            console.log('Server is running on port 3020');
+        });
+    })
+    .catch((err) => {
+        console.error('MongoDB Connection Error:', err);
     });
-  } catch (err) {
-    console.error("MongoDB Connection Error:", err.message);
-    process.exit(1); // Exit with failure
-  }
-};
-
-connectDB();
