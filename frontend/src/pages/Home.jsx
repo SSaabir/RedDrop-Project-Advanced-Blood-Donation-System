@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
-import { Navbar, Button, TextInput, Textarea } from 'flowbite-react';
-import { HiArrowRight } from 'react-icons/hi';
-import { FaStar } from 'react-icons/fa';
-import Homebg from '../assets/Homebg.jpg'
-import Aboutbg from '../assets/Aboutbg.jpg'  
-import About2 from '../assets/About2.jpg' 
-import ab3 from '../assets/ab3.jpg' 
-import ab4 from '../assets/ab4.jpg' 
-import ab5 from '../assets/ab5.jpg' 
-
-
+import React from 'react';
+import { Button } from 'flowbite-react';
+import Homebg from '../assets/Homebg.jpg';
+import Aboutbg from '../assets/Aboutbg.jpg';
+import About2 from '../assets/About2.jpg';
+import ab3 from '../assets/ab3.jpg';
+import ab4 from '../assets/ab4.jpg';
+import ab5 from '../assets/ab5.jpg';
+import SupportIcon from '../components/SupportIcon';
 
 export default function Home () {
   const [feedbacks, setFeedbacks] = useState([
@@ -198,6 +195,7 @@ export default function Home () {
           </div>
         </div>
       </section>
+      <SupportIcon />
     </div>
 
   );
