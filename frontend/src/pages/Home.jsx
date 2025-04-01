@@ -8,8 +8,7 @@ import About2 from '../assets/About2.jpg'
 import ab3 from '../assets/ab3.jpg' 
 import ab4 from '../assets/ab4.jpg' 
 import ab5 from '../assets/ab5.jpg' 
-
-
+import SupportIcon from '../components/SupportIcon'; // Import the SupportIcon component
 
 export default function Home() {
   // Removed unused state and function
