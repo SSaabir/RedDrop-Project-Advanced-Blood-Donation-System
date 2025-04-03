@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Button, Card, Label, TextInput, Checkbox, Spinner } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSignin } from '../hooks/useSignin';
-import { toast } from 'react-toastify'; // Added for feedback
+import { toast } from 'react-toastify';
 
 export default function DonorLogin() {
   const navigate = useNavigate();
-  const { signinD, loading } = useSignin(); // Assuming no error per your hook pattern
+  const { signinD, loading } = useSignin();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,10 +16,16 @@ export default function DonorLogin() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-    // Optional: Add complexity, e.g., if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Enter a valid email address';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,23 +42,52 @@ export default function DonorLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Highlight specific field errors
+      if (errors.email) toast.error(errors.email);
+      if (errors.password) toast.error(errors.password);
       return;
     }
 
     try {
-      await signinD(formData);
-      toast.success('Logged in successfully!');
-      navigate('/dashboard'); // Adjust path as needed
+      const response = await signinD(formData);
+      
+      if (response?.success) {
+        toast.success('Login successful! Redirecting...');
+        navigate('/dashboard');
+      } else {
+        // Handle API response errors
+        const errorMsg = response?.message?.toLowerCase() || '';
+        
+        if (errorMsg.includes('password')) {
+          toast.error('Incorrect password. Please try again.');
+          setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
+        } else if (errorMsg.includes('email') || errorMsg.includes('user')) {
+          toast.error('Email not found. Please check your email or register.');
+          setErrors(prev => ({ ...prev, email: 'Email not found' }));
+        } else {
+          toast.error('Login failed. Please try again.');
+        }
+      }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Error logging in');
+      const errorMsg = err?.response?.data?.message?.toLowerCase() || err.message?.toLowerCase() || '';
+      
+      if (errorMsg.includes('password')) {
+        toast.error('Incorrect password. Enter valid password');
+        setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
+      } else if (errorMsg.includes('email') || errorMsg.includes('user')) {
+        toast.error('Email incorrect. Enter valid email');
+        setErrors(prev => ({ ...prev, email: 'Email not found' }));
+      } else if (err.message === 'Network Error') {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
       <Card className="relative w-full max-w-md p-10 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-md border border-red-100">
-        {/* Hospital Login Button */}
         <Button
           onClick={() => navigate("/Hospital_login")}
           color="light"
@@ -79,7 +114,6 @@ export default function DonorLogin() {
               disabled={loading}
               color={errors.email ? 'failure' : 'gray'}
               className="mt-1"
-              aria-label="Donor email"
             />
             {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
           </div>
@@ -93,10 +127,10 @@ export default function DonorLogin() {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength={6}
               disabled={loading}
               color={errors.password ? 'failure' : 'gray'}
               className="mt-1"
-              aria-label="Donor password"
             />
             {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
           </div>
@@ -138,7 +172,7 @@ export default function DonorLogin() {
           </Button>
 
           <p className="text-center text-sm text-gray-700">
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <button
               onClick={() => navigate("/register")}
               className="text-red-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-red-500"

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Table, Modal, TextInput, Label, Select, Spinner } from "flowbite-react";
+import { Button, Table, Modal, TextInput, Label, Spinner } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useDonor } from "../hooks/donor";
 
@@ -11,23 +11,14 @@ export default function DonorDashboard() {
   const [editLoading, setEditLoading] = useState(false);
 
   const initialDonorData = {
-    email: "",
     firstName: "",
     lastName: "",
-    gender: "",
     phoneNumber: "",
-    password: "",
-    dob: "",
-    bloodType: "",
-    city: "",
-    nic: "",
+    city: ""
   };
 
   const [donorData, setDonorData] = useState(initialDonorData);
   const [editErrors, setEditErrors] = useState({});
-
-  const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-  const genderOptions = ["Male", "Female", "Other"];
 
   const loadDonors = useCallback(() => {
     fetchDonors();
@@ -40,45 +31,39 @@ export default function DonorDashboard() {
   // Validation function
   const validateEditForm = () => {
     const errors = {};
-    if (!donorData.email) errors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(donorData.email)) errors.email = "Invalid email format";
-    if (!donorData.firstName) errors.firstName = "First name is required";
-    if (!donorData.lastName) errors.lastName = "Last name is required";
-    if (!donorData.gender) errors.gender = "Gender is required";
-    else if (!genderOptions.includes(donorData.gender)) errors.gender = "Invalid gender selection";
-    if (!donorData.phoneNumber) errors.phoneNumber = "Phone number is required";
-    else if (!/^\+?\d{9,15}$/.test(donorData.phoneNumber)) errors.phoneNumber = "Phone number must be 9-15 digits (optional + prefix)";
-    if (donorData.password && donorData.password.length < 6) errors.password = "Password must be at least 6 characters";
-    if (!donorData.dob) errors.dob = "Date of birth is required";
-    else if (new Date(donorData.dob) >= new Date().setHours(0, 0, 0, 0)) errors.dob = "Date of birth must be in the past";
-    if (!donorData.bloodType) errors.bloodType = "Blood type is required";
-    else if (!bloodTypes.includes(donorData.bloodType)) errors.bloodType = "Invalid blood type";
-    if (!donorData.city) errors.city = "City is required";
-    if (!donorData.nic) errors.nic = "NIC is required";
-    else if (!/^\d{9}[vV]?$|^\d{12}$/.test(donorData.nic)) errors.nic = "NIC must be 9 digits + optional 'v' or 12 digits";
+    if (!donorData.firstName.trim()) errors.firstName = "First name is required";
+    if (!donorData.lastName.trim()) errors.lastName = "Last name is required";
+    if (!donorData.phoneNumber) {
+      errors.phoneNumber = "Phone number is required";
+    } else if (!/^\d{10}$/.test(donorData.phoneNumber)) {
+      errors.phoneNumber = "Phone number must be exactly 10 digits";
+    }
+    if (!donorData.city.trim()) errors.city = "City is required";
     setEditErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setDonorData((prev) => ({ ...prev, [id]: value }));
+    // Special handling for phone number to only allow digits
+    if (id === "phoneNumber") {
+      if (/^\d*$/.test(value) && value.length <= 10) {
+        setDonorData((prev) => ({ ...prev, [id]: value }));
+      }
+    } else {
+      setDonorData((prev) => ({ ...prev, [id]: value }));
+    }
+    setEditErrors((prev) => ({ ...prev, [id]: "" }));
   };
 
   const handleEdit = (donor) => {
     if (!donor || !donor._id) return;
     setSelectedDonor(donor);
     setDonorData({
-      email: donor.email || "",
       firstName: donor.firstName || "",
       lastName: donor.lastName || "",
-      gender: donor.gender || "",
       phoneNumber: donor.phoneNumber || "",
-      password: "", // Keep empty for security
-      dob: donor.dob ? donor.dob.split("T")[0] : "",
-      bloodType: donor.bloodType || "",
-      city: donor.city || "",
-      nic: donor.nic || "",
+      city: donor.city || ""
     });
     setEditErrors({});
     setOpenEditModal(true);
@@ -168,22 +153,11 @@ export default function DonorDashboard() {
           </Table.Body>
         </Table>
 
-        {/* Edit Modal */}
+        {/* Edit Modal - Only shows editable fields */}
         <Modal show={openEditModal} onClose={() => setOpenEditModal(false)}>
-          <Modal.Header>Edit Donor</Modal.Header>
+          <Modal.Header>Edit Donor Information</Modal.Header>
           <Modal.Body>
             <div className="space-y-4">
-              <div>
-                <Label value="Email" />
-                <TextInput
-                  id="email"
-                  value={donorData.email}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.email ? "failure" : "gray"}
-                />
-                {editErrors.email && <p className="text-red-600 text-sm mt-1">{editErrors.email}</p>}
-              </div>
               <div>
                 <Label value="First Name" />
                 <TextInput
@@ -207,78 +181,17 @@ export default function DonorDashboard() {
                 {editErrors.lastName && <p className="text-red-600 text-sm mt-1">{editErrors.lastName}</p>}
               </div>
               <div>
-                <Label value="Gender" />
-                <Select
-                  id="gender"
-                  value={donorData.gender}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.gender ? "failure" : "gray"}
-                >
-                  <option value="" disabled>
-                    Select Gender
-                  </option>
-                  {genderOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </Select>
-                {editErrors.gender && <p className="text-red-600 text-sm mt-1">{editErrors.gender}</p>}
-              </div>
-              <div>
                 <Label value="Phone Number" />
                 <TextInput
                   id="phoneNumber"
                   value={donorData.phoneNumber}
                   onChange={handleChange}
                   required
+                  maxLength={10}
                   color={editErrors.phoneNumber ? "failure" : "gray"}
+                  placeholder="10 digits only"
                 />
                 {editErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{editErrors.phoneNumber}</p>}
-              </div>
-              <div>
-                <Label value="Password (Leave blank to keep unchanged)" />
-                <TextInput
-                  id="password"
-                  type="password"
-                  value={donorData.password}
-                  onChange={handleChange}
-                  color={editErrors.password ? "failure" : "gray"}
-                />
-                {editErrors.password && <p className="text-red-600 text-sm mt-1">{editErrors.password}</p>}
-              </div>
-              <div>
-                <Label value="Date of Birth" />
-                <TextInput
-                  id="dob"
-                  type="date"
-                  value={donorData.dob}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.dob ? "failure" : "gray"}
-                />
-                {editErrors.dob && <p className="text-red-600 text-sm mt-1">{editErrors.dob}</p>}
-              </div>
-              <div>
-                <Label value="Blood Type" />
-                <Select
-                  id="bloodType"
-                  value={donorData.bloodType}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.bloodType ? "failure" : "gray"}
-                >
-                  <option value="" disabled>
-                    Select Blood Type
-                  </option>
-                  {bloodTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </Select>
-                {editErrors.bloodType && <p className="text-red-600 text-sm mt-1">{editErrors.bloodType}</p>}
               </div>
               <div>
                 <Label value="City" />
@@ -290,17 +203,6 @@ export default function DonorDashboard() {
                   color={editErrors.city ? "failure" : "gray"}
                 />
                 {editErrors.city && <p className="text-red-600 text-sm mt-1">{editErrors.city}</p>}
-              </div>
-              <div>
-                <Label value="NIC" />
-                <TextInput
-                  id="nic"
-                  value={donorData.nic}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.nic ? "failure" : "gray"}
-                />
-                {editErrors.nic && <p className="text-red-600 text-sm mt-1">{editErrors.nic}</p>}
               </div>
             </div>
           </Modal.Body>
