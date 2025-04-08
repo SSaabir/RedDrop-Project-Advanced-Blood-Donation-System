@@ -17,20 +17,23 @@ import inquiryRoutes from "./routes/inquiry.route.js";
 import EmergencyBRRoutes from "./routes/EmergencyBR.route.js";
 import HospitalAdminRoutes from "./routes/HospitalAdmin.route.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import  cron  from "node-cron";
+import  HealthEvaluation  from "./models/HealthEvaluation.model.js";
+import  EmergencyBR  from "./models/EmergencyBR.model.js";
+import reportRoutes from "./routes/report.route.js";
 // Load environment variables
 dotenv.config();
 
 // Handle ES Modules path resolution
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const _dirname = path.dirname(__filename);
 
 // Initialize Express
 const app = express();
 const PORT = process.env.PORT || 3020;
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3020", credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -46,6 +49,7 @@ const upload = multer({ storage });
 
 // Serve Uploaded Files Statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/reports", express.static(path.join(__dirname, "reports")));
 
 // Routes
 app.get("/", (req, res) => {
@@ -123,10 +127,19 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/manager", SystemManagerRoutes);
 app.use("/api/emergency-requests", EmergencyBRRoutes);
 app.use("/api/healthAd", HospitalAdminRoutes);
+app.use('/api/reports', reportRoutes);
+
 
 // 404 Handler
 app.use((req, res, next) => {
   res.status(404).json({ success: false, message: "Route not found" });
+});
+
+cron.schedule("* * * * *", async () => {
+  console.log("Running a task every minute");
+  await HealthEvaluation.cancelExpiredEvaluations();
+  await EmergencyBR.cancelExpiredRequests();
+  // Add your scheduled task logic here
 });
 
 // Global Error Handling Middleware
