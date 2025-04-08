@@ -8,11 +8,13 @@ import { useAuthContext } from '../hooks/useAuthContext';
 import { useHospital } from '../hooks/hospital';
 import { useHealthEvaluation } from '../hooks/useHealthEvaluation';
 import { useBloodDonationAppointment } from '../hooks/useBloodDonationAppointment';
+import { useSecondAuth } from '../hooks/useSecondAuth';
 
 export default function Header() {
   const path = useLocation().pathname;
   const { logout } = useLogout();
   const { user } = useAuthContext();
+  const { secondUser } = useSecondAuth();
   const { hospitals, loading: hLoading, fetchHospitals } = useHospital();
   const { createEvaluation, loading: heLoading } = useHealthEvaluation();
   const { createAppointment, loading } = useBloodDonationAppointment();
@@ -22,7 +24,9 @@ export default function Header() {
   const [openAppointmentModal, setOpenAppointmentModal] = useState(false);
   const userId = user?.userObj?._id;
   const Donor = user?.role === 'Donor';
-  // Removed unused role checks: Hospital, Manager, HospitalAdmin
+  const Hospital = user?.role === 'Hospital';
+  const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
+  const Manager = user?.role === 'Manager';
 
   const [evalFormData, setEvalFormData] = useState({
     hospitalId: "",
@@ -151,15 +155,68 @@ export default function Header() {
             </Button>
           </>
         )}
-        {user && (
+        {Donor && (
           <Dropdown
             arrowIcon={false}
             inline
-            label={<Avatar alt="User" img={user?.image ? `http://localhost:3000/${user.image}` : 'https://i.pinimg.com/736x/c0/27/be/c027bec07c2dc08b9df60921dfd539bd.jpg'} rounded />}
+            label={<Avatar alt="User" img={user?.userObj?.image ? `http://localhost:3020/${user.userObj.image}` : 'https://i.pinimg.com/736x/c0/27/be/c027bec07c2dc08b9df60921dfd539bd.jpg'} rounded />}
           >
             <Dropdown.Header>
-              <span className="block text-sm font-semibold">{user.name || 'User'}</span>
-              <span className="block text-sm text-gray-500 truncate">{user.email}</span>
+              <span className="block text-sm font-semibold">{user.userObj.lastName + " " + user.userObj.firstName || 'User'}</span>
+              <span className="block text-sm text-gray-500 truncate">{user.userObj.email}</span>
+            </Dropdown.Header>
+            <Dropdown.Item>
+              <Link to="/profile">Profile</Link>
+            </Dropdown.Item>
+            <Dropdown.Item>
+              <Link to="/dashboard">Dashboard</Link>
+            </Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
+          </Dropdown>
+        )}
+        {Hospital && (
+          <Dropdown
+            arrowIcon={false}
+            inline
+            label={<Avatar alt="User" img={user?.userObj?.image ? `http://localhost:3020/${user.userObj.image}` : 'https://i.pinimg.com/736x/c0/27/be/c027bec07c2dc08b9df60921dfd539bd.jpg'} rounded />}
+          >
+            <Dropdown.Header>
+              <span className="block text-sm font-semibold">{user.userObj.name || 'User'}</span>
+              <span className="block text-sm text-gray-500 truncate">{user.userObj.email}</span>
+            </Dropdown.Header>
+            <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
+          </Dropdown>
+        )}
+        {HospitalAdmin && (
+          <Dropdown
+            arrowIcon={false}
+            inline
+            label={<Avatar alt="User" img={secondUser?.userObj?.image ? `http://localhost:3020/${secondUser.userObj.image}` : 'https://i.pinimg.com/736x/c0/27/be/c027bec07c2dc08b9df60921dfd539bd.jpg'} rounded />}
+          >
+            <Dropdown.Header>
+              <span className="block text-sm font-semibold">{secondUser.userObj.firstName + " " + secondUser.userObj.lastName || 'User'}</span>
+              <span className="block text-sm text-gray-500 truncate">{secondUser.userObj.email}</span>
+            </Dropdown.Header>
+            <Dropdown.Item>
+              <Link to="/profile">Profile</Link>
+            </Dropdown.Item>
+            <Dropdown.Item>
+              <Link to="/dashboard">Dashboard</Link>
+            </Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
+          </Dropdown>
+        )}
+        {Manager && (
+          <Dropdown
+            arrowIcon={false}
+            inline
+            label={<Avatar alt="User" img={user?.userObj?.image ? `http://localhost:3020/${user.userObj.image}` : 'https://i.pinimg.com/736x/c0/27/be/c027bec07c2dc08b9df60921dfd539bd.jpg'} rounded />}
+          >
+            <Dropdown.Header>
+              <span className="block text-sm font-semibold">{user.userObj.lastName + " " + user.userObj.firstName || 'User'}</span>
+              <span className="block text-sm text-gray-500 truncate">{user.userObj.email}</span>
             </Dropdown.Header>
             <Dropdown.Item>
               <Link to="/profile">Profile</Link>
