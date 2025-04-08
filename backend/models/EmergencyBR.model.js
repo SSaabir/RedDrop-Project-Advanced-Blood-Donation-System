@@ -51,6 +51,19 @@ const emergencyBRSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+emergencyBRSchema.statics.cancelExpiredRequests = async function () {
+    const currentDate = new Date();
+    const requests = await this.find({
+        withinDate: { $lt: currentDate }
+    });
+
+    for (const request of requests) {
+        request.acceptStatus = 'Declined';
+        request.activeStatus = 'Inactive';
+        await request.save();
+    }
+}
+
 const EmergencyBR = mongoose.model('EmergencyBR', emergencyBRSchema);
 
 export default EmergencyBR;

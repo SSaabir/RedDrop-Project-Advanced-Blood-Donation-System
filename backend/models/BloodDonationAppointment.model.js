@@ -45,6 +45,37 @@ const bloodDonationAppointmentSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+bloodDonationAppointmentSchema.statics.cancelExpiredAppointments = async function () {
+    const currentDateTime = new Date();
+    
+    const appointments = await this.find({
+        $and: [
+            // Date is less than or equal to current date
+            { appointmentDate: { $lte: currentDateTime } },
+            // Time has passed (only matters if date is today)
+            { appointmentTime: { $lt: currentDateTime } }
+        ]
+    });
+
+    for (const appointment of appointments) {
+        // Combine date and time for accurate comparison
+        const apptDateTime = new Date(appointment.appointmentDate);
+        apptDateTime.setHours(
+            appointment.appointmentTime.getHours(),
+            appointment.appointmentTime.getMinutes(),
+            appointment.appointmentTime.getSeconds()
+        );
+
+        if (apptDateTime < currentDateTime) {
+            appointment.progressStatus = 'Cancelled';
+            appointment.activeStatus = 'Cancelled';
+            await appointment.save();
+        }
+    }
+}
+
+
 const BloodDonationAppointment = mongoose.model('BloodDonationAppointment', bloodDonationAppointmentSchema);
+
 
 export default BloodDonationAppointment;
