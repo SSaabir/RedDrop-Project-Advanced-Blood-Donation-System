@@ -18,6 +18,8 @@ import EmergencyBRRoutes from "./routes/EmergencyBR.route.js";
 import HospitalAdminRoutes from "./routes/HospitalAdmin.route.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import  cron  from "node-cron";
+import  Appointment  from "./models/BloodDonationAppointment.model.js";
+import  BloodInventory  from "./models/BloodInventory.model.js";
 import  HealthEvaluation  from "./models/HealthEvaluation.model.js";
 import  EmergencyBR  from "./models/EmergencyBR.model.js";
 import reportRoutes from "./routes/report.route.js";
@@ -139,6 +141,8 @@ cron.schedule("* * * * *", async () => {
   console.log("Running a task every minute");
   await HealthEvaluation.cancelExpiredEvaluations();
   await EmergencyBR.cancelExpiredRequests();
+  await BloodInventory.updateExpiredStatus();
+  await Appointment.cancelExpiredAppointments();
   // Add your scheduled task logic here
 });
 
@@ -153,6 +157,19 @@ app.use((error, req, res, next) => {
     message,
   });
 });
+
+app.post('/api/test-notification', async (req, res) => {
+  const { userId, userType, message } = req.body;
+  const result = await sendNotification({
+      userId,
+      userType,
+      subject: 'Test Notification',
+      message,
+      channels: ['email', 'sms']
+  });
+  res.json(result);
+});
+
 
 // Database Connection and Server Start
 const connectDB = async () => {
