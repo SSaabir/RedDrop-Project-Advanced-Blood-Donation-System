@@ -55,6 +55,37 @@ const healthEvaluationSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
+
+healthEvaluationSchema.statics.cancelExpiredEvaluations = async function () {
+    const currentDateTime = new Date();
+    
+    const evaluations = await this.find({
+        $and: [
+            // Date is less than or equal to current date
+            { evaluationDate: { $lte: currentDateTime } },
+            // Time has passed (only matters if date is today)
+            { evaluationTime: { $lt: currentDateTime } }
+        ]
+    });
+
+    for (const evaluation of evaluations) {
+        // Only cancel if the evaluation date/time is actually in the past
+        const evalDateTime = new Date(evaluation.evaluationDate);
+        evalDateTime.setHours(
+            evaluation.evaluationTime.getHours(),
+            evaluation.evaluationTime.getMinutes(),
+            evaluation.evaluationTime.getSeconds()
+        );
+
+        if (evalDateTime < currentDateTime) {
+            evaluation.passStatus = 'Cancelled';
+            evaluation.progressStatus = 'Cancelled';
+            evaluation.activeStatus = 'Cancelled';
+            await evaluation.save();
+        }
+    }
+}
+
 const HealthEvaluation = mongoose.model('HealthEvaluation', healthEvaluationSchema);
 
 export default HealthEvaluation;
