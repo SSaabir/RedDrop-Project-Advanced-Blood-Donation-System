@@ -1,5 +1,5 @@
 import HealthEvaluation from "../models/HealthEvaluation.model.js";
-
+import Donor from "../models/donor.model.js";
 // Get all health evaluations
 export const getHealthEvaluations = async (req, res) => {
     try {
@@ -37,9 +37,10 @@ export const createEvaluation = async (req, res) => {
             evaluationDate,
             evaluationTime,
         });
-
+        await Donor.findByIdAndUpdate(donorId, {healthStatus: true})
         await newEvaluation.save();
-
+ 
+        
         res.status(201).json({ success: true, data: newEvaluation });
     } catch (error) {
         res.status(400).json({ message: "Error creating health evaluation" });
@@ -71,7 +72,7 @@ export const updateEvaluationDateTime = async (req, res) => {
 // Cancel an Evaluation
 export const cancelEvaluation = async (req, res) => {
     try {
-        const { hospitalAdminId } = req.body;
+        const { hospitalAdminId, userId } = req.body;
         const canceledEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
             {
@@ -82,7 +83,7 @@ export const cancelEvaluation = async (req, res) => {
             },
             { new: true }
         );
-
+        await Donor.findByIdAndUpdate(userId, {healthStatus: false})
         if (!canceledEvaluation) return res.status(404).json({ message: "Evaluation not found" });
         res.status(200).json(canceledEvaluation);
     } catch (error) {
@@ -199,6 +200,7 @@ export const getHealthEvaluationByHospitalId = async (req, res) => {
 
 // Cancel evaluation by donor
 export const cancelEvaluationDonor = async (req, res) => {
+    const { userId } = req.body;
     try {
         const canceledEvaluation = await HealthEvaluation.findByIdAndUpdate(
             req.params.id,
@@ -209,10 +211,20 @@ export const cancelEvaluationDonor = async (req, res) => {
             },
             { new: true }
         );
-
+        await Donor.findByIdAndUpdate(userId, {healthStatus: false})
         if (!canceledEvaluation) return res.status(404).json({ message: "Evaluation not found" });
         res.status(200).json(canceledEvaluation);
     } catch (error) {
         res.status(500).json({ message: "Error cancelling evaluation" });
     }
 };
+
+export const findLastUpdatedEvaluationByDonor = async (req, res) => {
+    try {
+        const evaluations = await HealthEvaluation.find({donorId: req.params.id}).sort({ updatedAt: -1 }).limit(1);
+        if (!evaluations || evaluations.length === 0) return res.status(404).json({ message: "No evaluations found" });
+        res.json(evaluations[0]);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching evaluations" });
+    }
+}   

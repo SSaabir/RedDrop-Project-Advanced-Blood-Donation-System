@@ -23,7 +23,8 @@ import  BloodInventory  from "./models/BloodInventory.model.js";
 import  HealthEvaluation  from "./models/HealthEvaluation.model.js";
 import  EmergencyBR  from "./models/EmergencyBR.model.js";
 import reportRoutes from "./routes/report.route.js";
-// Load environment variables
+
+
 dotenv.config();
 
 // Handle ES Modules path resolution
@@ -143,6 +144,7 @@ cron.schedule("* * * * *", async () => {
   await EmergencyBR.cancelExpiredRequests();
   await BloodInventory.updateExpiredStatus();
   await Appointment.cancelExpiredAppointments();
+  await HealthEvaluation.updateHealthStatusAfter56Days();
   // Add your scheduled task logic here
 });
 

@@ -1,5 +1,5 @@
 import BloodDonationAppointment from "../models/BloodDonationAppointment.model.js";
-
+import Donor from "../models/donor.model.js";
 // Get all blood donation appointments
 export const getAppointments = async (req, res) => {
     try {
@@ -37,7 +37,7 @@ export const createAppointment = async (req, res) => {
             appointmentDate,
             appointmentTime,
         });
-
+        await Donor.findByIdAndUpdate(donorId, {appointmentStatus: true})
         await newAppointment.save();
         res.status(201).json({ success: true, data: newAppointment });
     } catch (error) {
