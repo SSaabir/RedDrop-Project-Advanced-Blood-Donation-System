@@ -11,7 +11,6 @@ export const useHospital = () => {
         try {
             const response = await axios.get("/api/hospital");
             setHospitals(response.data);
-            toast.success("Hospitals fetched successfully!");
         } catch (err) {
             console.error("Error fetching hospitals:", err);
             toast.error(err?.response?.data?.message || "Failed to fetch hospitals");

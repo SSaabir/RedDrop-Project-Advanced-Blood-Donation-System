@@ -14,6 +14,7 @@ import {
   completeEvaluation,
   deleteHealthEvaluation,
   cancelEvaluationDonor,
+  findLastUpdatedEvaluationByDonor,
 } from "../controllers/HealthEvaluation.controller.js";
 
 const router = express.Router();
@@ -29,6 +30,7 @@ router.patch("/:id/cancelD", cancelEvaluationDonor);
 router.delete("/:id", deleteHealthEvaluation);
 router.patch("/:id/accept", acceptEvaluation);
 router.patch("/:id/arrived", arrivedForEvaluation);
+router.get("/donor/:id/last-updated", findLastUpdatedEvaluationByDonor);
 router.patch("/:id/complete", upload.single('evaluationFile'), completeEvaluation);
 
 export default router;

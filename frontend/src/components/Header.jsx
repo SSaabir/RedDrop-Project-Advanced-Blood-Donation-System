@@ -9,6 +9,7 @@ import { useHospital } from '../hooks/hospital';
 import { useHealthEvaluation } from '../hooks/useHealthEvaluation';
 import { useBloodDonationAppointment } from '../hooks/useBloodDonationAppointment';
 import { useSecondAuth } from '../hooks/useSecondAuth';
+import {useDonor} from '../hooks/donor';
 
 export default function Header() {
   const path = useLocation().pathname;
@@ -16,9 +17,10 @@ export default function Header() {
   const { user } = useAuthContext();
   const { secondUser } = useSecondAuth();
   const { hospitals, loading: hLoading, fetchHospitals } = useHospital();
-  const { createEvaluation, loading: heLoading } = useHealthEvaluation();
+  const { createEvaluation, loading: heLoading, findLastUpdatedEvaluationByDonor } = useHealthEvaluation();
   const { createAppointment, loading } = useBloodDonationAppointment();
-
+  const {donors, fetchDonorById} = useDonor();
+  
   // State for modals and form data
   const [openEvalModal, setOpenEvalModal] = useState(false);
   const [openAppointmentModal, setOpenAppointmentModal] = useState(false);
@@ -28,12 +30,18 @@ export default function Header() {
   const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
   const Manager = user?.role === 'Manager';
 
+  
+ 
   const [evalFormData, setEvalFormData] = useState({
     hospitalId: "",
     evaluationDate: "",
     evaluationTime: "",
     donorId: userId || "",
   });
+
+  const [lastEvaluation, setLastEvaluation] = useState(null);
+
+  const selectedHospital = hospitals?.find(h => h._id === evalFormData.hospitalId) || {};
 
   const [appointmentFormData, setAppointmentFormData] = useState({
     hospitalId: "",
@@ -46,9 +54,24 @@ export default function Header() {
   const [appointmentErrors, setAppointmentErrors] = useState({});
 
   useEffect(() => {
-    fetchHospitals();
-    if (hLoading) toast.info('Loading hospitals...'); // Optional: Feedback for hospital loading
-  }, [fetchHospitals, hLoading]);
+    fetchHospitals(); 
+    fetchDonorById(userId);
+    const fetchLastEvaluation = async () => {
+      if (userId) {
+        try {
+          const res = await findLastUpdatedEvaluationByDonor(userId);
+          setLastEvaluation(res);
+        } catch (error) {
+          console.error("Error fetching last evaluation", error);
+        }
+      }
+    };
+
+    fetchLastEvaluation();
+  }, [fetchHospitals, hLoading, fetchDonorById, userId]);
+
+  
+  const loggedInDonor = donors?.find(d => d._id === userId) || {};
 
   // Today's date for validation
   const today = new Date().toISOString().split('T')[0];
@@ -147,12 +170,28 @@ export default function Header() {
         )}
         {Donor && (
           <>
-            <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenEvalModal(true)}>
-              Evaluation
-            </Button>
-            <Button className='bg-red-600 hover:bg-red-800 text-white font-bold' onClick={() => setOpenAppointmentModal(true)}>
-              Appointment
-            </Button>
+{!loggedInDonor.healthStatus && !loggedInDonor.appointmentStatus && (
+  <Button
+    className="bg-red-600 hover:bg-red-800 text-white font-bold"
+    onClick={() => setOpenEvalModal(true)}
+  >
+    Evaluation
+  </Button>
+)}
+
+{
+  loggedInDonor?.healthStatus &&
+  !loggedInDonor?.appointmentStatus &&
+  lastEvaluation?.passStatus === 'Passed' && (
+    <Button
+      className='bg-red-600 hover:bg-red-800 text-white font-bold'
+      onClick={() => setOpenAppointmentModal(true)}
+    >
+      Appointment
+    </Button>
+  )
+}
+
           </>
         )}
         {Donor && (
@@ -270,18 +309,26 @@ export default function Header() {
                 id="evaluationDate"
                 type="date"
                 required
-                min={today}
                 value={evalFormData.evaluationDate}
                 onChange={handleEvalChange}
                 color={evalErrors.evaluationDate ? 'failure' : 'gray'}
               />
               {evalErrors.evaluationDate && <p className="text-red-600 text-sm mt-1">{evalErrors.evaluationDate}</p>}
             </div>
+
+            {selectedHospital?.startTime && selectedHospital?.endTime && (
+  <p className="text-sm text-gray-500 mt-1">
+    Available between {selectedHospital.startTime} - {selectedHospital.endTime}
+  </p>
+)}
+
             <div className="mb-4">
               <Label htmlFor="evaluationTime" value="Evaluation Time" className="text-gray-700 font-medium" />
               <TextInput
                 id="evaluationTime"
                 type="time"
+                min={selectedHospital.startTime}
+                max={selectedHospital.endTime}
                 required
                 value={evalFormData.evaluationTime}
                 onChange={handleEvalChange}

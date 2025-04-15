@@ -5,6 +5,7 @@ import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useFeedback } from "../hooks/useFeedback";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function AppointmentD() {
   const {
@@ -62,7 +63,7 @@ export default function AppointmentD() {
   // Loading and error state
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+  const { reportUrl, generateHealthEvaluationReport } = useGenerateReport();
   // Fetch evaluations based on role
   useEffect(() => {
     if (!userId) return;
@@ -223,13 +224,28 @@ export default function AppointmentD() {
     console.log("View feedback for evaluation:", evaluation._id); // Placeholder
   };
 
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateHealthEvaluationReport(user.userObj._id);
+};
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Health Evaluations</h1>
-          <Button gradientDuoTone="redToPink">Add New Evaluation</Button>
+          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+                      Generate Report
+                    </Button>
+                    {reportUrl && (
+                <div>
+                    <p>Report generated successfully!</p>
+                    <a href={`http://localhost:3020${reportUrl}`} download>
+                        Download Report
+                    </a>
+                </div>
+                    )}
         </div>
 
         <Table hoverable>
@@ -240,8 +256,6 @@ export default function AppointmentD() {
             <Table.HeadCell>Pass Status</Table.HeadCell>
             <Table.HeadCell>Progress Status</Table.HeadCell>
             <Table.HeadCell>Hospital</Table.HeadCell>
-            <Table.HeadCell>Donor</Table.HeadCell>
-            <Table.HeadCell>Admin</Table.HeadCell>
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
@@ -278,8 +292,6 @@ export default function AppointmentD() {
                     </span>
                   </Table.Cell>
                   <Table.Cell>{evaluation.hospitalId?.name || "N/A"}</Table.Cell>
-                  <Table.Cell>{evaluation.donorId?.fullName || "N/A"}</Table.Cell>
-                  <Table.Cell>{evaluation.hospitalAdminId?.fullName || "N/A"}</Table.Cell>
                   <Table.Cell className="space-x-2">
                     <div className="flex flex-row gap-2">
                       {Hospital && HospitalAdmin && (
@@ -300,7 +312,7 @@ export default function AppointmentD() {
                               <Button
                                 size="xs"
                                 color="gray"
-                                onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId)}
+                                onClick={() => cancelEvaluation(evaluation._id, hospitalAdminId, evaluation.donorId)}
                               >
                                 Cancel
                               </Button>
@@ -356,7 +368,7 @@ export default function AppointmentD() {
                               <Button
                                 size="xs"
                                 color="gray"
-                                onClick={() => cancelEvaluationDonor(evaluation._id)}
+                                onClick={() => cancelEvaluationDonor(evaluation._id, userId)}
                               >
                                 Cancel
                               </Button>
@@ -372,7 +384,7 @@ export default function AppointmentD() {
                                 Accept
                               </Button>
                             )}
-                          {evaluation.activeStatus !== "Cancelled" && (
+                          {evaluation.activeStatus !== "Cancelled" && evaluation.activeStatus === "Completed" && evaluation.progressStatus === "Completed" &&(
                             <Button
                               size="xs"
                               color="gray"
