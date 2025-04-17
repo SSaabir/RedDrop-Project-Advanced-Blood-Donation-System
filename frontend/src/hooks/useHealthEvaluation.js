@@ -84,9 +84,9 @@ export const useHealthEvaluation = () => {
         }
     };
 
-    const cancelEvaluation = async (id, hospitalAdminId) => {
+    const cancelEvaluation = async (id, hospitalAdminId, userId) => {
         try {
-            const response = await axios.patch(`/api/healthEvaluation/${id}/cancel`, { hospitalAdminId });
+            const response = await axios.patch(`/api/healthEvaluation/${id}/cancel`, { hospitalAdminId, userId });
             setEvaluations((prev) =>
                 prev.map((evaluation) => (evaluation._id === id ? response.data : evaluation))
             );
@@ -151,7 +151,7 @@ export const useHealthEvaluation = () => {
         }
     };
 
-    const cancelEvaluationDonor = async (id) => {
+    const cancelEvaluationDonor = async (id, userId) => {
         try {
             const response = await axios.patch(`/api/healthEvaluation/${id}/cancelD`);
             setEvaluations((prev) =>
@@ -161,6 +161,17 @@ export const useHealthEvaluation = () => {
         } catch (err) {
             console.error("Error canceling evaluation for donor:", err);
             toast.error(err?.response?.data?.message || "Error canceling evaluation for donor");
+        }
+    };
+
+    const findLastUpdatedEvaluationByDonor = async (id) => {
+        try {
+            const response = await axios.get(`/api/healthEvaluation/donor/${id}/last-updated`);
+            return response.data;
+        } catch (err) {
+            console.error("Error fetching last updated evaluation by donor:", err);
+            toast.error(err?.response?.data?.message || "Error fetching last updated evaluation by donor");
+            return null;
         }
     };
 
@@ -179,5 +190,6 @@ export const useHealthEvaluation = () => {
         cancelEvaluationDonor,
         completeEvaluation,
         deleteEvaluation,
+        findLastUpdatedEvaluationByDonor,
     };
 };
