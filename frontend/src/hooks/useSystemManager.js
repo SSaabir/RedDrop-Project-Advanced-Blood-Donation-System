@@ -11,10 +11,8 @@ export const useSystemManager = () => {
         try {
             const response = await axios.get("/api/manager");
             setManagers(response.data);
-            toast.success("Managers fetched successfully!");
         } catch (err) {
             console.error("Error fetching managers:", err);
-            toast.error(err?.response?.data?.message || "Error fetching managers");
         } finally {
             setLoading(false);
         }
@@ -25,10 +23,8 @@ export const useSystemManager = () => {
         try {
             const response = await axios.get(`/api/manager/${id}`);
             setManagers([response.data]);
-            toast.success("Manager fetched successfully!");
         } catch (err) {
             console.error("Error fetching manager by ID:", err);
-            toast.error(err?.response?.data?.message || "Error fetching manager by ID");
         } finally {
             setLoading(false);
         }
