@@ -11,10 +11,10 @@ export const useBloodInventory = () => {
         try {
             const response = await axios.get("/api/blood-inventory");
             setBloodInventory(response.data);
-            toast.success("Blood inventory records fetched successfully!");
+            
         } catch (err) {
             console.error("Error fetching blood inventory records:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch blood inventory records");
+            
         } finally {
             setLoading(false);
         }
@@ -38,11 +38,11 @@ export const useBloodInventory = () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/blood-inventory/${id}`);
-            toast.success("Blood inventory record fetched successfully!");
+            
             return response.data;
         } catch (err) {
             console.error("Error fetching blood inventory record:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch blood inventory record");
+            
             return null;
         } finally {
             setLoading(false);

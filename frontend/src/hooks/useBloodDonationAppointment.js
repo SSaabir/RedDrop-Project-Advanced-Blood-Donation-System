@@ -11,10 +11,10 @@ export const useBloodDonationAppointment = () => {
         try {
             const response = await axios.get("/api/blooddonationappointment");
             setAppointments(response.data);
-            toast.success("Appointments fetched successfully!");
+            
         } catch (err) {
             console.error("Error fetching appointments:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch appointments");
+            
         } finally {
             setLoading(false);
         }
@@ -24,11 +24,11 @@ export const useBloodDonationAppointment = () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/blooddonationappointment/${id}`);
-            toast.success("Appointment fetched successfully!");
+            
             return response.data;
         } catch (err) {
             console.error("Error fetching appointment:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch appointment");
+            
             return null;
         } finally {
             setLoading(false);
