@@ -15,10 +15,8 @@ export const useInquiry = () => {
         try {
             const response = await axios.get("/api/inquiry");
             setInquiries(response.data);
-            toast.success("Inquiries fetched successfully!");
         } catch (err) {
             console.error("Error fetching inquiries:", err);
-            toast.error(err?.response?.data?.message || "Error fetching inquiries");
         } finally {
             setLoading(false);
         }
@@ -27,11 +25,9 @@ export const useInquiry = () => {
     const fetchInquiryById = useCallback(async (id) => {
         try {
             const response = await axios.get(`/api/inquiry/${id}`);
-            toast.success("Inquiry fetched successfully!");
             return response.data;
         } catch (err) {
             console.error("Error fetching inquiry:", err);
-            toast.error(err?.response?.data?.message || "Error fetching inquiry");
             return null;
         }
     }, []);
