@@ -3,6 +3,7 @@ import { Button, Table, Modal, TextInput, Label, Spinner, FileInput, Select } fr
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useSystemManager } from "../hooks/useSystemManager";
 import { useAuthContext } from "../hooks/useAuthContext";
+import{useGenerateReport} from"../hooks/useGenerateReport";
 
 export default function SystemManagersD() {
   const {
@@ -24,7 +25,7 @@ export default function SystemManagersD() {
   const [createErrors, setCreateErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
   const { user } = useAuthContext();
-
+const {reportUrl, generateSystemAdminReport} = useGenerateReport();
   const [managerData, setManagerData] = useState({
     email: "",
     firstName: "",
@@ -198,12 +199,31 @@ export default function SystemManagersD() {
     setEditErrors({});
   };
 
+
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateSystemAdminReport(user.userObj._id);
+};
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">System Managers</h1>
+          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+            Generate Report
+          </Button>
+          {reportUrl && (
+                <div>
+                    <p>Report generated successfully!</p>
+                    <a href={`http://localhost:3020${reportUrl}`} download>
+                        Download Report
+                    </a>
+                </div>
+                    )}
+
+
+
           <Button gradientDuoTone="redToPink" onClick={() => setOpenCreateModal(true)} disabled={actionLoading}>
             Add New Manager
           </Button>

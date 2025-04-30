@@ -198,9 +198,7 @@ export default function BloodInventoryD() {
                     <Button size="xs" color="failure" onClick={() => deleteBloodInventory(inventory._id)}>
                       Delete
                     </Button>
-                    <Button size="xs" color="success" onClick={() => toggleExpired(inventory._id)}>
-                      Toggle Expired
-                    </Button>
+                    
                   </Table.Cell>
                 </Table.Row>
               ))
@@ -292,28 +290,7 @@ export default function BloodInventoryD() {
         <Modal.Header>Edit Inventory</Modal.Header>
         <Modal.Body>
           <div className="space-y-4">
-            <div>
-              <Label value="Blood Type" />
-              <Select
-                name="bloodType"
-                value={editFormData.bloodType}
-                onChange={handleEditChange}
-                required
-                color={editErrors.bloodType ? "failure" : "gray"}
-              >
-                <option value="" disabled>
-                  Select Blood Type
-                </option>
-                {bloodTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </Select>
-              {editErrors.bloodType && (
-                <p className="text-red-600 text-sm mt-1">{editErrors.bloodType}</p>
-              )}
-            </div>
+            
             <div>
               <Label value="Stock" />
               <TextInput
@@ -328,20 +305,7 @@ export default function BloodInventoryD() {
                 <p className="text-red-600 text-sm mt-1">{editErrors.availableStocks}</p>
               )}
             </div>
-            <div>
-              <Label value="Expiration Date" />
-              <TextInput
-                type="date"
-                name="expirationDate"
-                value={editFormData.expirationDate}
-                onChange={handleEditChange}
-                required
-                color={editErrors.expirationDate ? "failure" : "gray"}
-              />
-              {editErrors.expirationDate && (
-                <p className="text-red-600 text-sm mt-1">{editErrors.expirationDate}</p>
-              )}
-            </div>
+            
           </div>
         </Modal.Body>
         <Modal.Footer>

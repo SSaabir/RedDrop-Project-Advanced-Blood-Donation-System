@@ -52,5 +52,49 @@ export const useGenerateReport = () => {
         }
     };
 
-    return { reportUrl, loading, generateInventoryReport, generateHealthEvaluationReport };
+    const generateAppointmentReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/appointment-report', {
+                params: { userId }
+            });
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Appointment report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating Appointment report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate Appointment report');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const generateSystemAdminReport = async () => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/systemAdmin-report');
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('SystemAdmin report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating SystemAdmin report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate SystemAdmin report');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return { reportUrl, loading, generateInventoryReport, generateHealthEvaluationReport,generateAppointmentReport,generateSystemAdminReport };
 };
