@@ -11,10 +11,10 @@ export const useFeedback = () => {
         try {
             const response = await axios.get("/api/feedback");
             setFeedbacks(response.data);
-            toast.success("Feedbacks fetched successfully!");
+            
         } catch (err) {
             console.error("Error fetching feedbacks:", err);
-            toast.error(err?.response?.data?.message || "Error fetching feedbacks");
+           
         } finally {
             setLoading(false);
         }
@@ -23,11 +23,10 @@ export const useFeedback = () => {
     const fetchFeedbackById = useCallback(async (id) => {
         try {
             const response = await axios.get(`/api/feedback/${id}`);
-            toast.success("Feedback fetched successfully!");
             return response.data;
+            
         } catch (err) {
             console.error("Error fetching feedback:", err);
-            toast.error(err?.response?.data?.message || "Error fetching feedback");
             return null;
         }
     }, []);
