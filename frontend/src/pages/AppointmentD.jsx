@@ -5,6 +5,7 @@ import { useBloodDonationAppointment } from "../hooks/useBloodDonationAppointmen
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useFeedback } from "../hooks/useFeedback";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function HealthEvaluationD() {
   const {
@@ -56,6 +57,7 @@ export default function HealthEvaluationD() {
   // Loading and error state
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { reportUrl, generateAppointmentReport } = useGenerateReport();
 
   // Fetch appointments based on role
   useEffect(() => {
@@ -179,13 +181,31 @@ export default function HealthEvaluationD() {
     }
   };
 
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateAppointmentReport(user.userObj._id);
+};
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Appointments</h1>
-          <Button gradientDuoTone="redToPink">Add New Appointment</Button>
+          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+           Generate Report
+           </Button>
+
+           {reportUrl && (
+                <div>
+                    <p>Report generated successfully!</p>
+                    <a href={`http://localhost:3020${reportUrl}`} download>
+                        Download Report
+                    </a>
+                </div>
+                    )}
+
+
         </div>
 
         <Table hoverable>
@@ -219,9 +239,9 @@ export default function HealthEvaluationD() {
                       {appointment.progressStatus}
                     </span>
                   </Table.Cell>
-                  <Table.Cell>{appointment.hospitalId?.hospitalName || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment.donorId?.fullname || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment.hospitalAdminId?.fullname || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment.hospitalId?.name || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment?.donorId?.firstName + " " +  appointment?.donorId?.lastName || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment?.hospitalAdminId?.firstName + " " +  appointment?.hospitalAdminId?.lastName || "N/A"}</Table.Cell>
                   <Table.Cell className="space-x-2">
                     <div className="flex flex-row gap-2">
                       {Hospital && HospitalAdmin && (
