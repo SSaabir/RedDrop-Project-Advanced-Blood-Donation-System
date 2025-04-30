@@ -2,14 +2,15 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Button, Table, Modal, TextInput, Label, Spinner } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useDonor } from "../hooks/donor";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function DonorDashboard() {
-  const { donors, loading, error, fetchDonors, updateDonor, deleteDonor } = useDonor();
+  const { donors, loading, error, fetchDonors, updateDonor, deleteDonor, activateDeactivateDonor } = useDonor();
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
-
+  const {reportUrl, generateDonorReport} = useGenerateReport();
   const initialDonorData = {
     firstName: "",
     lastName: "",
@@ -101,13 +102,43 @@ export default function DonorDashboard() {
     }
   };
 
+  const handleToggleStatus = async (donor) => {
+    if (!donor || !donor._id) return;
+    try {
+      await activateDeactivateDonor(donor._id);
+      loadDonors();
+    } catch (err) {
+      console.error("Error toggling donor status:", err);
+    }
+  };
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateDonorReport();
+
+
+};
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
+        
         <h1 className="text-2xl font-bold text-red-700 mb-4">Donor Dashboard</h1>
+        <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+           Generate Report
+           </Button>
+
+           {reportUrl && (
+                <div>
+                    <p>Report generated successfully!</p>
+                    <a href={`http://localhost:3020${reportUrl}`} download>
+                        Download Report
+                    </a>
+                </div>
+                    )}
         {loading && <Spinner className="mb-4" />}
         {error && <p className="text-red-500 mb-4">{error}</p>}
+
 
         <Table hoverable>
           <Table.Head>
@@ -119,6 +150,7 @@ export default function DonorDashboard() {
             <Table.HeadCell>Blood Type</Table.HeadCell>
             <Table.HeadCell>City</Table.HeadCell>
             <Table.HeadCell>NIC</Table.HeadCell>
+            <Table.HeadCell>Status</Table.HeadCell>
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
@@ -133,6 +165,9 @@ export default function DonorDashboard() {
                   <Table.Cell>{donor.bloodType || "N/A"}</Table.Cell>
                   <Table.Cell>{donor.city || "N/A"}</Table.Cell>
                   <Table.Cell>{donor.nic || "N/A"}</Table.Cell>
+                  <Table.Cell className={donor.activeStatus ? "text-green-600" : "text-red-600"}>
+                    {donor.activeStatus ? "Active" : "Deactive"}
+                  </Table.Cell>
                   <Table.Cell className="space-x-2">
                     <Button size="xs" color="blue" onClick={() => handleEdit(donor)}>
                       Edit
@@ -140,12 +175,19 @@ export default function DonorDashboard() {
                     <Button size="xs" color="failure" onClick={() => handleDelete(donor)}>
                       Delete
                     </Button>
+                    <Button
+                      size="xs"
+                      color={donor.activeStatus ? "warning" : "success"}
+                      onClick={() => handleToggleStatus(donor)}
+                    >
+                      {donor.activeStatus ? "Deactivate" : "Activate"}
+                    </Button>
                   </Table.Cell>
                 </Table.Row>
               ))
             ) : (
               <Table.Row>
-                <Table.Cell colSpan="9" className="text-center py-4 text-gray-500">
+                <Table.Cell colSpan="10" className="text-center py-4 text-gray-500">
                   No donors found
                 </Table.Cell>
               </Table.Row>
