@@ -42,7 +42,6 @@ export default function DonorLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      // Highlight specific field errors
       if (errors.email) toast.error(errors.email);
       if (errors.password) toast.error(errors.password);
       return;
@@ -55,7 +54,6 @@ export default function DonorLogin() {
         toast.success('Login successful! Redirecting...');
         navigate('/dashboard');
       } else {
-        // Handle API response errors
         const errorMsg = response?.message?.toLowerCase() || '';
         
         if (errorMsg.includes('password')) {
@@ -86,24 +84,27 @@ export default function DonorLogin() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
-      <Card className="relative w-full max-w-md p-10 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-md border border-red-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-200 via-pink-200 to-purple-200 animate-gradient-x p-6">
+      <Card className="relative w-full max-w-md p-8 bg-white/85 backdrop-blur-3xl rounded-3xl shadow-xl border border-red-300/20 transition-all duration-300 hover:shadow-2xl hover:scale-102">
         <Button
           onClick={() => navigate("/Hospital_login")}
-          color="light"
           size="sm"
-          className="absolute top-4 right-4 text-red-600 border-red-600 hover:bg-red-50 focus:ring-red-300"
+          className="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-pink-500 text-white border-none hover:from-red-600 hover:to-pink-600 focus:ring-4 focus:ring-red-300 transition-all duration-300 rounded-full"
         >
           Hospital Login
         </Button>
 
-        <h2 className="text-4xl font-extrabold text-center text-red-700 mb-6 drop-shadow-md">
+        <h2 className="text-4xl font-extrabold text-center bg-gradient-to-r from-red-700 to-pink-700 bg-clip-text text-transparent mb-8 tracking-tight drop-shadow-md">
           Donor Login
         </h2>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="email" value="Email" className="text-gray-700 font-medium" />
+            <Label 
+              htmlFor="email" 
+              value="Email" 
+              className="text-gray-900 font-semibold tracking-wide" 
+            />
             <TextInput
               id="email"
               type="email"
@@ -113,13 +114,21 @@ export default function DonorLogin() {
               required
               disabled={loading}
               color={errors.email ? 'failure' : 'gray'}
-              className="mt-1"
+              className="mt-2 rounded-xl border-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-300 bg-white/50"
             />
-            {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-600 text-sm mt-1.5 font-medium animate-pulse">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
+            <Label 
+              htmlFor="password" 
+              value="Password" 
+              className="text-gray-900 font-semibold tracking-wide" 
+            />
             <TextInput
               id="password"
               type="password"
@@ -130,18 +139,18 @@ export default function DonorLogin() {
               minLength={6}
               disabled={loading}
               color={errors.password ? 'failure' : 'gray'}
-              className="mt-1"
+              className="mt-2 rounded-xl border-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all duration-300 bg-white/50"
             />
-            {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-600 text-sm mt-1.5 font-medium animate-pulse">
+                {errors.password}
+              </p>
+            )}
           </div>
-
-        
-
           <Button
             type="submit"
-            gradientDuoTone="redToPink"
             size="lg"
-            className="w-full font-bold shadow-md hover:shadow-lg transition-shadow"
+            className="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:from-red-700 hover:to-pink-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 disabled:opacity-50"
             disabled={loading}
           >
             {loading ? (
@@ -154,11 +163,11 @@ export default function DonorLogin() {
             )}
           </Button>
 
-          <p className="text-center text-sm text-gray-700">
+          <p className="text-center text-sm text-gray-700 font-medium">
             Don't have an account?{' '}
             <button
               onClick={() => navigate("/register")}
-              className="text-red-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="text-red-600 font-semibold hover:text-red-700 transition-colors duration-200"
               disabled={loading}
             >
               Sign Up
@@ -166,6 +175,23 @@ export default function DonorLogin() {
           </p>
         </form>
       </Card>
+      <style jsx>{`
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .animate-gradient-x {
+          background-size: 200% 200%;
+          animation: gradient 12s ease infinite;
+        }
+      `}</style>
     </div>
   );
 }

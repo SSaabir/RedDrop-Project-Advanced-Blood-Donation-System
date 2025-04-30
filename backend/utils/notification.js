@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import twilio from 'twilio';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,9 +12,9 @@ const emailTransporter = nodemailer.createTransport({
     }
 });
 
-// Twilio setup
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+// // Twilio setup
+// const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+// const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 
 // User models (adjust paths to your actual files)
 const models = {
@@ -60,7 +59,7 @@ const sendNotification = async ({ userId, userType, subject, message, channels =
                 throw new Error('Unhandled userType');
         }
 
-        if (!email && !phone) throw new Error('No contact details available for this user');
+        if (!email /* && !phone */) throw new Error('No contact details available for this user');
 
         const results = {};
 
@@ -77,25 +76,25 @@ const sendNotification = async ({ userId, userType, subject, message, channels =
             console.log(`Email sent to ${email}`);
         }
 
-        if (channels.includes('sms') && phone && twilioPhoneNumber) {
-            await twilioClient.messages.create({
-                body: message,
-                from: twilioPhoneNumber,
-                to: phone
-            });
-            results.sms = 'SMS sent successfully';
-            console.log(`SMS sent to ${phone}`);
-        }
+        // if (channels.includes('sms') && phone && twilioPhoneNumber) {
+        //     await twilioClient.messages.create({
+        //         body: message,
+        //         from: twilioPhoneNumber,
+        //         to: phone
+        //     });
+        //     results.sms = 'SMS sent successfully';
+        //     console.log(`SMS sent to ${phone}`);
+        // }
 
-        if (channels.includes('whatsapp') && phone && twilioPhoneNumber) {
-            await twilioClient.messages.create({
-                body: message,
-                from: `whatsapp:${twilioPhoneNumber}`,
-                to: `whatsapp:${phone}`
-            });
-            results.whatsapp = 'WhatsApp message sent successfully';
-            console.log(`WhatsApp message sent to ${phone}`);
-        }
+        // if (channels.includes('whatsapp') && phone && twilioPhoneNumber) {
+        //     await twilioClient.messages.create({
+        //         body: message,
+        //         from: `whatsapp:${twilioPhoneNumber}`,
+        //         to: `whatsapp:${phone}`
+        //     });
+        //     results.whatsapp = 'WhatsApp message sent successfully';
+        //     console.log(`WhatsApp message sent to ${phone}`);
+        // }
 
         return { success: true, results };
     } catch (error) {

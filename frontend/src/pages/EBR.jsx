@@ -34,7 +34,7 @@ export default function EmergencyBloodRequest() {
     if (!formData.hospitalName) newErrors.hospitalName = 'Hospital name is required';
     if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
-    else if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.phoneNumber = 'Must be a 10-digit number';
+    else if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.phoneNumber = 'Phone number must be exactly 10 digits';
     if (!formData.patientBlood) newErrors.patientBlood = 'Blood type is required';
     else if (!bloodTypes.includes(formData.patientBlood)) newErrors.patientBlood = 'Invalid blood type';
     if (!formData.units) newErrors.units = 'Units are required';
@@ -61,6 +61,7 @@ export default function EmergencyBloodRequest() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
+    if (name === 'phoneNumber' && value && !/^\d*$/.test(value)) return; // Only allow digits
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
@@ -226,6 +227,7 @@ export default function EmergencyBloodRequest() {
                     placeholder="Enter 10-digit phone number"
                     required
                     pattern="\d{10}"
+                    maxLength={10}
                     disabled={loading}
                     color={errors.phoneNumber ? 'failure' : 'gray'}
                     className="mt-1"

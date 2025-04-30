@@ -1,5 +1,6 @@
 import BloodDonationAppointment from "../models/BloodDonationAppointment.model.js";
 import Donor from "../models/donor.model.js";
+import sendNotification from "../utils/notification.js";
 // Get all blood donation appointments
 export const getAppointments = async (req, res) => {
     try {
@@ -21,15 +22,35 @@ export const getAppointmentById = async (req, res) => {
     }
 };
 
-// Create a new blood donation appointment
 export const createAppointment = async (req, res) => {
     try {
-        const { hospitalId, donorId, appointmentDate, appointmentTime } = req.body;
+        const { hospitalId,
 
+ donorId, appointmentDate, appointmentTime } = req.body;
+
+        // Validate required fields
         if (!hospitalId || !donorId || !appointmentDate || !appointmentTime) {
-            return res.status(400).json({ message: "All fields are required" });
+            return res.status(400).json({ message: 'All fields are required' });
         }
 
+        // Import models
+        const BloodDonationAppointment = (await import('../models/BloodDonationAppointment.model.js')).default; // Adjust path
+        const Donor = (await import('../models/donor.model.js')).default;
+        const Hospital = (await import('../models/hospital.model.js')).default;
+
+        // Validate donor exists
+        const donor = await Donor.findById(donorId);
+        if (!donor) {
+            return res.status(404).json({ message: 'Donor not found' });
+        }
+
+        // Validate hospital exists
+        const hospital = await Hospital.findById(hospitalId);
+        if (!hospital) {
+            return res.status(404).json({ message: 'Hospital not found' });
+        }
+
+        // Create new appointment
         const newAppointment = new BloodDonationAppointment({
             progressStatus: 'Not Started',
             donorId,
@@ -37,14 +58,54 @@ export const createAppointment = async (req, res) => {
             appointmentDate,
             appointmentTime,
         });
-        await Donor.findByIdAndUpdate(donorId, {appointmentStatus: true})
+
+        // Update donor's appointment status
+        await Donor.findByIdAndUpdate(donorId, { appointmentStatus: true });
+
+        // Save appointment
         await newAppointment.save();
-        res.status(201).json({ success: true, data: newAppointment });
+
+        // Debug: Log fetched data
+        console.log('Donor:', donor);
+        console.log('Hospital:', hospital);
+
+        // Construct notification message
+        const message = `Dear ${donor.firstName || 'Donor'} ${donor.lastName || ''}, your session has been booked at ${hospital.name || 'Hospital'} on ${appointmentDate} at ${appointmentTime}.`;
+
+        // Call sendNotification
+        const result = await sendNotification({
+            userId: donorId,
+            userType: 'Donor',
+            subject: 'Appointment Confirmation',
+            message,
+            channels: ['email'], // Email only, since Twilio is disabled
+            attachments: [],
+        });
+
+        // Handle notification result
+        if (result.success) {
+            return res.status(201).json({
+                success: true,
+                message: 'Appointment created and notification sent',
+                appointment: newAppointment,
+                notification: result.results,
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: 'Appointment created but notification failed',
+                notificationError: result.error,
+            });
+        }
     } catch (error) {
-        res.status(500).json({ message: "Error creating appointment" });
+        console.error('Error creating appointment:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error creating appointment',
+            error: error.message,
+        });
     }
 };
-
 // Update Date and Time of appointment
 export const updateAppointmentDateTime = async (req, res) => {
     try {
