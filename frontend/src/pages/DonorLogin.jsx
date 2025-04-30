@@ -135,24 +135,7 @@ export default function DonorLogin() {
             {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
           </div>
 
-          <div className="flex justify-between items-center">
-            <label className="flex items-center space-x-2">
-              <Checkbox
-                id="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleChange}
-                disabled={loading}
-                className="text-red-600 focus:ring-red-500"
-              />
-              <span className="text-gray-700 text-sm">Remember Me</span>
-            </label>
-            <Link
-              to="/forgot-password"
-              className="text-red-600 text-sm font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              Forgot Password?
-            </Link>
-          </div>
+        
 
           <Button
             type="submit"

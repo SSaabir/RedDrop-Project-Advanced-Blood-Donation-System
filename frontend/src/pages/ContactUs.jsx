@@ -52,6 +52,23 @@ export default function ContactUs() {
 
   return (
     <div className="py-16 bg-gray-50 relative">
+      <style>
+        {`
+          form .send-message-btn {
+              background: rgba(255, 0, 0, 0.7) !important; /* Radiant red with 70% opacity */
+              border: none !important; /* Remove default border */
+              color: white !important; /* Ensure text readability */
+              transition: background 0.3s ease !important; /* Smooth hover transition */
+          }
+          form .send-message-btn:hover:not(:disabled) {
+              background: rgba(255, 0, 0, 0.9) !important; /* Slightly less transparent on hover */
+          }
+          form .send-message-btn:disabled {
+              background: rgba(255, 0, 0, 0.4) !important; /* Fainter red when disabled */
+              cursor: not-allowed !important;
+          }
+        `}
+      </style>
       <div
         className="absolute inset-0 bg-cover bg-center opacity-50 z-0"
         style={{ backgroundImage: `url(${contactus})` }}
@@ -130,7 +147,7 @@ export default function ContactUs() {
                 type="submit"
                 gradientDuoTone="purpleToBlue"
                 pill
-                className="w-full"
+                className="w-full send-message-btn" // Added custom class
                 disabled={loading}
               >
                 {loading ? (

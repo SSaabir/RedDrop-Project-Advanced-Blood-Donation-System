@@ -88,14 +88,7 @@ export default function AdminLogin() {
             {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
           </div>
 
-          <div className="flex justify-between items-center">
-            <Link
-              to="/forgot-password"
-              className="text-[#FF2400] text-sm font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-[#FF2400]"
-            >
-              Forgot Password?
-            </Link>
-          </div>
+         
 
           <Button
             type="submit"
