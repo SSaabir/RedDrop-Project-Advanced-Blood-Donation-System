@@ -57,7 +57,7 @@ export default function Header() {
     fetchHospitals(); 
     fetchDonorById(userId);
     const fetchLastEvaluation = async () => {
-      if (userId) {
+      if (userId && Donor) {
         try {
           const res = await findLastUpdatedEvaluationByDonor(userId);
           setLastEvaluation(res);
