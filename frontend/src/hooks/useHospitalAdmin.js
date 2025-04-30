@@ -11,10 +11,8 @@ export const useHospitalAdmin = () => {
         try {
             const response = await axios.get('/api/healthAd');
             setHospitalAdmins(response.data);
-            toast.success('Hospital Admins fetched successfully!');
         } catch (err) {
             console.error("Error fetching hospital admins:", err);
-            toast.error(err?.response?.data?.message || 'Error fetching hospital admins');
         } finally {
             setLoading(false);
         }
@@ -25,10 +23,8 @@ export const useHospitalAdmin = () => {
         try {
             const response = await axios.get(`/api/healthAd/hospital/${id}`);
             setHospitalAdmins(response.data);
-            toast.success('Hospital Admins fetched successfully!');
         } catch (err) {
             console.error("Error fetching hospital admins by hospital ID:", err);
-            toast.error(err?.response?.data?.message || 'Failed to fetch hospital admins');
         } finally {
             setLoading(false);
         }
@@ -39,10 +35,8 @@ export const useHospitalAdmin = () => {
         try {
             const response = await axios.get(`/api/healthAd/${id}`);
             setHospitalAdmins([response.data]);
-            toast.success('Hospital Admin fetched successfully!');
         } catch (err) {
             console.error("Error fetching hospital admin by ID:", err);
-            toast.error(err?.response?.data?.message || 'Something went wrong');
         } finally {
             setLoading(false);
         }

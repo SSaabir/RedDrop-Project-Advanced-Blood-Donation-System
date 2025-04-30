@@ -11,10 +11,8 @@ export const useEmergencyBR = () => {
         try {
             const response = await axios.get("/api/emergency-requests");
             setEmergencyRequests(response.data);
-            toast.success("Emergency requests fetched successfully!");
         } catch (err) {
             console.error("Error fetching emergency requests:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch emergency requests");
         } finally {
             setLoading(false);
         }
@@ -24,11 +22,9 @@ export const useEmergencyBR = () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/emergency-requests/${id}`);
-            toast.success("Emergency request fetched successfully!");
             return response.data;
         } catch (err) {
             console.error("Error fetching emergency request:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch emergency request");
             return null;
         } finally {
             setLoading(false);

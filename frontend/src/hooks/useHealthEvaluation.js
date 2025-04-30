@@ -11,10 +11,8 @@ export const useHealthEvaluation = () => {
         try {
             const response = await axios.get("/api/healthEvaluation");
             setEvaluations(response.data);
-            toast.success("Evaluations fetched successfully!");
         } catch (err) {
             console.error("Error fetching evaluations:", err);
-            toast.error(err?.response?.data?.message || "Error fetching evaluations");
         } finally {
             setLoading(false);
         }
@@ -25,10 +23,8 @@ export const useHealthEvaluation = () => {
         try {
             const response = await axios.get(`/api/healthEvaluation/donor/${id}`);
             setEvaluations(response.data);
-            toast.success("Evaluations by donor fetched successfully!");
         } catch (err) {
             console.error("Error fetching evaluations by donor:", err);
-            toast.error(err?.response?.data?.message || "Error fetching evaluations by donor");
         } finally {
             setLoading(false);
         }
@@ -39,10 +35,8 @@ export const useHealthEvaluation = () => {
         try {
             const response = await axios.get(`/api/healthEvaluation/hospital/${id}`);
             setEvaluations(response.data);
-            toast.success("Evaluations by hospital fetched successfully!");
         } catch (err) {
             console.error("Error fetching evaluations by hospital:", err);
-            toast.error(err?.response?.data?.message || "Error fetching evaluations by hospital");
         } finally {
             setLoading(false);
         }
@@ -51,11 +45,9 @@ export const useHealthEvaluation = () => {
     const fetchEvaluationById = useCallback(async (id) => {
         try {
             const response = await axios.get(`/api/healthEvaluation/${id}`);
-            toast.success("Evaluation fetched successfully!");
             return response.data;
         } catch (err) {
             console.error("Error fetching evaluation:", err);
-            toast.error(err?.response?.data?.message || "Error fetching evaluation");
             return null;
         }
     }, []);
