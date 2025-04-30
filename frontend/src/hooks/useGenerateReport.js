@@ -52,5 +52,53 @@ export const useGenerateReport = () => {
         }
     };
 
-    return { reportUrl, loading, generateInventoryReport, generateHealthEvaluationReport };
+    const generateDonorReport = async () => {
+        setLoading(true);
+        setReportUrl('');
+    
+        try {
+            const response = await axios.get('/api/reports/donor-report', {
+                
+            });
+    
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Donor report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating Donor report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate Donor report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const generateHospitalReport = async () => {
+        setLoading(true);
+        setReportUrl('');
+    
+        try {
+            const response = await axios.get('/api/reports/hospital-report', {
+                
+            });
+    
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Hospital report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating Hospital report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate Hospital report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    
+    return { reportUrl, loading, generateInventoryReport, generateHealthEvaluationReport,generateDonorReport,generateHospitalReport };
 };

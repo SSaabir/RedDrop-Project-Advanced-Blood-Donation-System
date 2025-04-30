@@ -49,11 +49,13 @@ export default function DonorSign() {
       newErrors.email = 'Invalid email format';
     }
 
-    // Password validation (min 6 chars)
+    // Password validation (min 8 chars, at least one special character)
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = 'Password must contain at least one special character';
     }
 
     // Date of Birth validation (must be at least 18 years old)
@@ -85,7 +87,7 @@ export default function DonorSign() {
     }
 
     // Image validation
-    if (!formData.image) newErrors.image = 'Profile picture is required';
+    if (!formData.image) newErrors.image = 'Hospital image is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -228,7 +230,7 @@ export default function DonorSign() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                minLength={6}
+                minLength={8}
                 disabled={loading}
                 color={errors.password ? 'failure' : 'gray'}
                 className="mt-1"
@@ -326,24 +328,23 @@ export default function DonorSign() {
             </div>
 
             <div>
-              <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
+              <Label htmlFor="image" value="Donor Image (JPG/PNG)" className="text-gray-700 font-medium" />
               <FileInput
                 id="image"
-                accept="image/*"
+                accept="image/jpeg,image/png"
                 onChange={handleFileChange}
                 required
                 disabled={loading}
-                className="mt-1 text-gray-700 border-gray-300"
+                color={errors.image ? "failure" : "gray"}
+                className="mt-1"
               />
               {errors.image && <p className="text-red-600 text-sm mt-1">{errors.image}</p>}
               {imagePreview && (
-                <div className="mt-4 flex justify-center">
-                  <img
-                    src={imagePreview}
-                    alt="Profile Preview"
-                    className="w-32 h-32 object-cover rounded-full border-2 border-red-300 shadow-sm"
-                  />
-                </div>
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  className="mt-4 w-32 h-32 object-cover rounded" 
+                />
               )}
             </div>
           </div>
