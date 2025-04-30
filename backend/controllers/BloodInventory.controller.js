@@ -34,17 +34,30 @@ export const getBloodInventoryById = async (req, res) => {
 // Create a new blood inventory record
 export const createBloodInventory = async (req, res) => {
     try {
-        const { hospitalId, bloodType, availableStocks, expirationDate } = req.body;
-
-        if (!hospitalId || !bloodType || !availableStocks || !expirationDate) {
+        const { hospitalId, bloodType, availableStocks } = req.body;
+        console.log(req.body)
+        if (!hospitalId || !bloodType || !availableStocks) {
             return res.status(400).json({ message: "All fields are required" });
+        }
+
+        // Set expiration date to today + 42 days
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time for consistency
+        const expirationDate = new Date(today);
+        expirationDate.setDate(today.getDate() + 42);
+
+        // Optional: Validate expiration date calculation
+        const expectedDate = new Date(today);
+        
+        if (expirationDate.getTime() !== expectedDate.getTime()) {
+            return res.status(500).json({ message: "Error calculating expiration date" });
         }
 
         const newInventory = new BloodInventory({
             hospitalId,
             bloodType,
             availableStocks,
-            expirationDate,
+            expirationDate: expectedDate.setDate(today.getDate() + 42),
         });
 
         await newInventory.save();

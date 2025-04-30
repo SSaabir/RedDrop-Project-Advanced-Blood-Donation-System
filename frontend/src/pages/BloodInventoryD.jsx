@@ -57,9 +57,7 @@ export default function BloodInventoryD() {
     else if (!bloodTypes.includes(formData.bloodType)) errors.bloodType = "Invalid blood type";
     if (!formData.availableStocks) errors.availableStocks = "Stock is required";
     else if (isNaN(formData.availableStocks) || Number(formData.availableStocks) < 0) errors.availableStocks = "Stock must be a positive number";
-    if (!formData.expirationDate) errors.expirationDate = "Expiration date is required";
-    else if (new Date(formData.expirationDate) < new Date().setHours(0, 0, 0, 0)) errors.expirationDate = "Expiration date cannot be in the past";
-    setAddErrors(errors);
+       setAddErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -254,20 +252,7 @@ export default function BloodInventoryD() {
                 <p className="text-red-600 text-sm mt-1">{addErrors.availableStocks}</p>
               )}
             </div>
-            <div>
-              <Label value="Expiration Date" />
-              <TextInput
-                type="date"
-                name="expirationDate"
-                value={formData.expirationDate}
-                onChange={handleChange}
-                required
-                color={addErrors.expirationDate ? "failure" : "gray"}
-              />
-              {addErrors.expirationDate && (
-                <p className="text-red-600 text-sm mt-1">{addErrors.expirationDate}</p>
-              )}
-            </div>
+            
           </div>
         </Modal.Body>
         <Modal.Footer>

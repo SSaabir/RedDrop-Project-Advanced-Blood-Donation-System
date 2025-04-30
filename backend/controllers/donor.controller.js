@@ -58,20 +58,6 @@ export const createDonor = async (req, res) => {
         });
 
         await newDonor.save();
-
-        const notificationResult = await sendNotification({
-            userId: newDonor._id, // Use the new donor's ID
-            userType: 'Donor',
-            subject: 'Welcome to RedDrop',
-            message: `Hello ${firstName}, we warmly welcome you to RedDrop! Your account has been created successfully.`,
-            channels: ['email', 'sms', 'whatsapp']
-        });
-
-        if (!notificationResult.success) {
-            console.error('Notification failed:', notificationResult.error);
-            // Optionally notify admin or log this, but don’t fail the response
-        }
-
         res.status(201).json(newDonor);
 
     } catch (error) {
