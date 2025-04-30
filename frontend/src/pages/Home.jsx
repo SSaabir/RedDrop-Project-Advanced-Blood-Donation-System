@@ -28,9 +28,7 @@ export default function Home() {
             Your blood donation can give someone a second chance at life. Sign up today, find a nearby donation center, and become a hero in just a few minutes. Every drop counts!
           </p>
           <div className="flex justify-center">
-            <Button gradientDuoTone="cyanToBlue" pill size="lg" className="animate-bounce">
-              Sign
-            </Button>
+            
           </div>
         </div>
       </section>

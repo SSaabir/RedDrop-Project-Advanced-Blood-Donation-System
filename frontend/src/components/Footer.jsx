@@ -5,7 +5,7 @@ import Logo from '../assets/logo.svg';
 
 export default function FooterCom() {
   return (
-    <Footer container className='border-t-8 border-red-500 bg-gray-800 text-white'>
+    <Footer container className='border-t-8  bg-gray-800 text-white'>
       <div className='w-full max-w-7xl mx-auto'>
         <div className='grid w-full justify-between sm:flex md:grid-cols-1'>
           {/* Logo Section */}
@@ -24,10 +24,10 @@ export default function FooterCom() {
             <div>
               <Footer.Title title='About' />
               <Footer.LinkGroup col>
-                <Footer.Link href='/about' rel='noopener noreferrer'>
+                <Footer.Link href='/' rel='noopener noreferrer'>
                   Our Mission
                 </Footer.Link>
-                <Footer.Link href='/team' rel='noopener noreferrer'>
+                <Footer.Link href='/' rel='noopener noreferrer'>
                   Our Team
                 </Footer.Link>
               </Footer.LinkGroup>

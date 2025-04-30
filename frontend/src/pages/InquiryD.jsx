@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, TextInput, Select, Spinner, Button, Modal, Label } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useInquiry } from "../hooks/useInquiry";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function InquiryDashboard() {
   const {
@@ -21,6 +22,7 @@ export default function InquiryDashboard() {
   const [newStatus, setNewStatus] = useState("");
   const [statusErrors, setStatusErrors] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
+  const {reportUrl, generateInquiryReport} = useGenerateReport();
 
   const statusOptions = ["Pending", "In Progress", "Resolved", "Closed"];
 
@@ -103,11 +105,29 @@ export default function InquiryDashboard() {
     }
   };
 
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateInquiryReport();
+};
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <h2 className="text-2xl font-bold text-red-700 mb-4">Inquiry Dashboard</h2>
+
+        <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+                                              Generate Report
+                                            </Button>
+
+                                            {reportUrl && (
+                <div>
+                    <p>Report generated successfully!</p>
+                    <a href={`http://localhost:3020${reportUrl}`} download>
+                        Download Report
+                    </a>
+                </div>
+                    )}                          
 
         {/* Search & Filter Controls */}
         <div className="flex gap-4 mb-4">

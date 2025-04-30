@@ -4,7 +4,7 @@ import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHealthEvaluation } from "../hooks/useHealthEvaluation";
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
-import { useFeedback } from "../hooks/useFeedback";
+import { useFeedback } from "../hooks/usefeedback";
 import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function AppointmentD() {

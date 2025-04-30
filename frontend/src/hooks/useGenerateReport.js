@@ -52,6 +52,48 @@ export const useGenerateReport = () => {
         }
     };
 
+    const generateFeedbackReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/feedback-report');
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success(' feedback report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating feedback report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate feedback report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const generateInquiryReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/inquiry-report');
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success(' feedback report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating feedback report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate feedback report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const generateAppointmentReport = async (userId) => {
         setLoading(true);
         setReportUrl('');
@@ -143,6 +185,8 @@ export const useGenerateReport = () => {
         loading,
         generateInventoryReport,
         generateHealthEvaluationReport,
+        generateFeedbackReport,
+        generateInquiryReport,
         generateAppointmentReport,
         generateSystemAdminReport,
         generateDonorReport,
