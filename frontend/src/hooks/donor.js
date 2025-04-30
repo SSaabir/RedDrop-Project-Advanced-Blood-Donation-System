@@ -11,10 +11,10 @@ export const useDonor = () => {
         try {
             const response = await axios.get("/api/donor");
             setDonors(response.data);
-            toast.success("Donors fetched successfully!");
+           
         } catch (err) {
             console.error("Error fetching donors:", err);
-            toast.error(err?.response?.data?.message || "Error fetching donors");
+            
         } finally {
             setLoading(false);
         }
@@ -25,10 +25,10 @@ export const useDonor = () => {
         try {
             const response = await axios.get(`/api/donor/${id}`);
             setDonors([response.data]);
-            toast.success("Donor fetched successfully!");
+           
         } catch (err) {
             console.error("Error fetching donor:", err);
-            toast.error(err?.response?.data?.message || "Error fetching donor");
+            
         } finally {
             setLoading(false);
         }

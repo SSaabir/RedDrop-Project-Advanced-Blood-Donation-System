@@ -13,7 +13,7 @@ export const useHospital = () => {
             setHospitals(response.data);
         } catch (err) {
             console.error("Error fetching hospitals:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch hospitals");
+           
         } finally {
             setLoading(false);
         }
@@ -24,10 +24,10 @@ export const useHospital = () => {
         try {
             const response = await axios.get(`/api/hospital/${id}`);
             setHospitals([response.data]);
-            toast.success("Hospital fetched successfully!");
+            
         } catch (err) {
             console.error("Error fetching hospital:", err);
-            toast.error(err?.response?.data?.message || "Failed to fetch hospital");
+            
         } finally {
             setLoading(false);
         }
