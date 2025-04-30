@@ -48,18 +48,25 @@ export default function SystemManagersD() {
   const validateForm = (data, isCreate = false) => {
     const errors = {};
     if (!data.email) errors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.email = "Invalid email format";
+    else if (!/^[^\s@]+@bloodbank\.lk$/.test(data.email)) errors.email = "Email must end with @bloodbank.lk";
     if (!data.firstName) errors.firstName = "First name is required";
     if (!data.lastName) errors.lastName = "Last name is required";
     if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
-    else if (!/^\+?\d{9,15}$/.test(data.phoneNumber)) errors.phoneNumber = "Phone number must be 9-15 digits (optional + prefix)";
+    else if (!/^\d{10}$/.test(data.phoneNumber)) errors.phoneNumber = "Phone number must be exactly 10 digits";
     if (!data.dob) errors.dob = "Date of birth is required";
-    else if (new Date(data.dob) >= new Date().setHours(0, 0, 0, 0)) errors.dob = "Date of birth must be in the past";
+    else {
+      const dobDate = new Date(data.dob);
+      const twentyYearsAgo = new Date();
+      twentyYearsAgo.setFullYear(twentyYearsAgo.getFullYear() - 20);
+      if (dobDate > twentyYearsAgo) errors.dob = "Must be at least 20 years old";
+      else if (dobDate >= new Date().setHours(0, 0, 0, 0)) errors.dob = "Date of birth must be in the past";
+    }
     if (!data.address) errors.address = "Address is required";
     if (!data.nic) errors.nic = "NIC is required";
-    else if (!/^\d{9}[vV]?$|^\d{12}$/.test(data.nic)) errors.nic = "NIC must be 9 digits + optional 'v' or 12 digits";
+    else if (!/^\d{12}$/.test(data.nic)) errors.nic = "NIC must be exactly 12 digits";
     if (isCreate && !data.password) errors.password = "Password is required";
     else if (data.password && data.password.length < 6) errors.password = "Password must be at least 6 characters";
+    else if (data.password && !/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.password = "Password must contain at least one special character";
     if (data.image && !["image/jpeg", "image/png"].includes(data.image.type)) errors.image = "Image must be JPG or PNG";
     if (!data.role) errors.role = "Role is required";
     else if (!roleOptions.includes(data.role)) errors.role = "Invalid role selected";
@@ -69,6 +76,8 @@ export default function SystemManagersD() {
   // Handle text/select input changes
   const handleChange = (e) => {
     const { id, value } = e.target;
+    if (id === "phoneNumber" && !/^\d*$/.test(value)) return; // Only allow digits
+    if (id === "nic" && !/^\d*$/.test(value)) return; // Only allow digits
     setManagerData((prev) => ({ ...prev, [id]: value }));
   };
 
@@ -198,6 +207,13 @@ export default function SystemManagersD() {
     setEditErrors({});
   };
 
+  // Calculate max date for DOB (20 years ago)
+  const getMaxDob = () => {
+    const today = new Date();
+    today.setFullYear(today.getFullYear() - 20);
+    return today.toISOString().split("T")[0];
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
@@ -285,7 +301,7 @@ export default function SystemManagersD() {
         <Modal.Body>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email (must end with @bloodbank.lk)</Label>
               <TextInput
                 id="email"
                 value={managerData.email}
@@ -318,23 +334,25 @@ export default function SystemManagersD() {
               {createErrors.lastName && <p className="text-red-600 text-sm mt-1">{createErrors.lastName}</p>}
             </div>
             <div>
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">Phone Number (10 digits)</Label>
               <TextInput
                 id="phoneNumber"
                 value={managerData.phoneNumber}
                 onChange={handleChange}
                 required
+                maxLength={10}
                 color={createErrors.phoneNumber ? "failure" : "gray"}
               />
               {createErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{createErrors.phoneNumber}</p>}
             </div>
             <div>
-              <Label htmlFor="dob">Date of Birth</Label>
+              <Label htmlFor="dob">Date of Birth (at least 20 years old)</Label>
               <TextInput
                 id="dob"
                 type="date"
                 value={managerData.dob}
                 onChange={handleChange}
+                max={getMaxDob()}
                 required
                 color={createErrors.dob ? "failure" : "gray"}
               />
@@ -352,18 +370,19 @@ export default function SystemManagersD() {
               {createErrors.address && <p className="text-red-600 text-sm mt-1">{createErrors.address}</p>}
             </div>
             <div>
-              <Label htmlFor="nic">NIC</Label>
+              <Label htmlFor="nic">NIC (12 digits)</Label>
               <TextInput
                 id="nic"
                 value={managerData.nic}
                 onChange={handleChange}
                 required
+                maxLength={12}
                 color={createErrors.nic ? "failure" : "gray"}
               />
               {createErrors.nic && <p className="text-red-600 text-sm mt-1">{createErrors.nic}</p>}
             </div>
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password (min 6 characters, one special character)</Label>
               <TextInput
                 id="password"
                 type="password"

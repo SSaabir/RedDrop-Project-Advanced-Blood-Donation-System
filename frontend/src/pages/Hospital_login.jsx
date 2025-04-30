@@ -3,7 +3,6 @@ import { Button, Card, Label, TextInput, Spinner } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import { useSignin } from "../hooks/useSignin";
 import { toast } from 'react-toastify';
-import background from '../assets/bg2.jpg';
 
 export default function HospitalLogin() {
   const navigate = useNavigate();
@@ -39,7 +38,6 @@ export default function HospitalLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      // Highlight specific field errors
       if (errors.email) toast.error(errors.email);
       if (errors.password) toast.error(errors.password);
       return;
@@ -52,7 +50,6 @@ export default function HospitalLogin() {
         toast.success('Login successful! Redirecting...');
         navigate('/hospital-dashboard');
       } else {
-        // Handle API response errors
         const errorMsg = response?.message?.toLowerCase() || '';
         
         if (errorMsg.includes('password')) {
@@ -83,18 +80,20 @@ export default function HospitalLogin() {
   };
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg"
-      style={{ backgroundImage: `url(${background})` }}
-    >
-      <Card className="w-full max-w-md p-10 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-md border border-red-100">
-        <h2 className="text-4xl font-extrabold text-center text-red-700 mb-8 drop-shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-pink-100 to-purple-100 animate-gradient-x p-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-tr from-red-200/30 via-pink-200/30 to-purple-200/30 animate-gradient-y opacity-50"></div>
+      <Card className="w-full max-w-md p-10 bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-red-200/30 transition-all duration-300 hover:shadow-3xl hover:scale-105 z-10">
+        <h2 className="text-4xl font-bold text-center bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-8 tracking-tight">
           Hospital Login
         </h2>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <Label htmlFor="email" value="Hospital Email" className="text-gray-700 font-medium" />
+            <Label 
+              htmlFor="email" 
+              value="Hospital Email" 
+              className="text-gray-800 font-semibold tracking-wide" 
+            />
             <TextInput
               id="email"
               type="email"
@@ -104,14 +103,22 @@ export default function HospitalLogin() {
               required
               disabled={loading}
               color={errors.email ? 'failure' : 'gray'}
-              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
+              className="mt-2 rounded-lg border-gray-200 focus:ring-2 focus:ring-red-300 focus:border-red-300 transition-all duration-300 bg-white/70"
               aria-label="Hospital email"
             />
-            {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div>
-            <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
+            <Label 
+              htmlFor="password" 
+              value="Password" 
+              className="text-gray-800 font-semibold tracking-wide" 
+            />
             <TextInput
               id="password"
               type="password"
@@ -122,17 +129,20 @@ export default function HospitalLogin() {
               minLength={6}
               disabled={loading}
               color={errors.password ? 'failure' : 'gray'}
-              className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
+              className="mt-2 rounded-lg border-gray-200 focus:ring-2 focus:ring-red-300 focus:border-red-300 transition-all duration-300 bg-white/70"
               aria-label="Hospital password"
             />
-            {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1.5 font-medium animate-fade-in">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <Button
             type="submit"
-            gradientDuoTone="redToPink"
             size="lg"
-            className="w-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:from-red-600 hover:to-pink-600 focus:ring-4 focus:ring-red-200 transition-all duration-300 disabled:opacity-60"
             disabled={loading}
           >
             {loading ? (
@@ -146,6 +156,51 @@ export default function HospitalLogin() {
           </Button>
         </form>
       </Card>
+      <style jsx>{`
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .animate-gradient-x {
+          background-size: 200% 200%;
+          animation: gradient 15s ease infinite;
+        }
+        @keyframes gradientY {
+          0% {
+            background-position: 50% 0%;
+          }
+          50% {
+            background-position: 50% 100%;
+          }
+          100% {
+            background-position: 50% 0%;
+          }
+        }
+        .animate-gradient-y {
+          background-size: 200% 200%;
+          animation: gradientY 20s ease infinite;
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(5px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

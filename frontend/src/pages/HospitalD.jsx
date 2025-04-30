@@ -4,6 +4,7 @@ import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { toast } from "react-toastify";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function HospitalDashboard() {
   const { hospitals, loading, error, fetchHospitals, deleteHospital, updateHospital, createHospital } = useHospital();
@@ -29,6 +30,7 @@ export default function HospitalDashboard() {
   const [addErrors, setAddErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
+   const {reportUrl, generateHospitalReport} = useGenerateReport();
 
   useEffect(() => {
     fetchHospitals();
@@ -45,9 +47,10 @@ export default function HospitalDashboard() {
       errors.identificationNumber = "ID must start with 'HOSP' followed by letters/numbers/hyphens";
     }
     if (!data.email) errors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.email = "Invalid email format";
+    else if (!/^[^\s@]+@health\.gov\.lk$/.test(data.email)) errors.email = "Email must end with @health.gov.lk";
     if (!data.password) errors.password = "Password is required";
     else if (data.password.length < 6) errors.password = "Password must be at least 6 characters";
+    else if (!/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.password = "Password must contain at least one special character";
     if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
     else if (!/^\d{10}$/.test(data.phoneNumber)) errors.phoneNumber = "Must be exactly 10 digits";
     if (!data.address) errors.address = "Address is required";
@@ -219,12 +222,31 @@ export default function HospitalDashboard() {
     }
   };
 
+  const handleGenerateReport = (e) => {
+    e.preventDefault();
+    generateHospitalReport();
+
+
+};
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Hospital Dashboard</h1>
+           <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
+                     Generate Report
+                     </Button>
+          
+                     {reportUrl && (
+                          <div>
+                              <p>Report generated successfully!</p>
+                              <a href={`http://localhost:3020${reportUrl}`} download>
+                                  Download Report
+                              </a>
+                          </div>
+                              )}
           <Button 
             gradientDuoTone="redToPink" 
             onClick={() => setIsAdding(true)} 
@@ -339,7 +361,7 @@ export default function HospitalDashboard() {
                 )}
               </div>
               <div>
-                <Label htmlFor="email" value="Email" />
+                <Label htmlFor="email" value="Email (must end with @health.gov.lk)" />
                 <TextInput
                   id="email"
                   type="email"
@@ -351,7 +373,7 @@ export default function HospitalDashboard() {
                 {addErrors.email && <p className="text-red-600 text-sm mt-1">{addErrors.email}</p>}
               </div>
               <div>
-                <Label htmlFor="password" value="Password (min 6 characters)" />
+                <Label htmlFor="password" value="Password (min 6 characters, one special character)" />
                 <TextInput
                   id="password"
                   type="password"
