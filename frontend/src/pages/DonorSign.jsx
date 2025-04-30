@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Button, Card, Label, TextInput, Select, FileInput, Spinner } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import { useDonor } from "../hooks/donor";
-import { toast } from 'react-toastify'; // Added for feedback
+import { toast } from 'react-toastify';
 
 export default function DonorSign() {
   const navigate = useNavigate();
-  const { createDonor, loading } = useDonor(); // Assuming no error per your hook pattern
+  const { createDonor, loading } = useDonor();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -25,36 +25,84 @@ export default function DonorSign() {
 
   const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
   const genders = ["Male", "Female", "Other"];
-  const today = new Date();
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.phoneNumber) newErrors.phoneNumber = 'Phone number is required';
-    else if (!/^\d{10}$/.test(formData.phoneNumber)) newErrors.phoneNumber = 'Must be a 10-digit number';
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-    // Optional: if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
-    if (!formData.dob) newErrors.dob = 'Date of birth is required';
-    else if (new Date(formData.dob) >= today) newErrors.dob = 'Date of birth must be in the past';
+    const today = new Date();
+    const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+
+    // Name validations
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+
+    // Phone validation (exactly 10 digits)
+    if (!formData.phoneNumber) {
+      newErrors.phoneNumber = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = 'Phone number must be exactly 10 digits';
+    }
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+
+    // Password validation (min 6 chars)
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Date of Birth validation (must be at least 18 years old)
+    if (!formData.dob) {
+      newErrors.dob = 'Date of birth is required';
+    } else {
+      const dobDate = new Date(formData.dob);
+      if (dobDate >= today) {
+        newErrors.dob = 'Date of birth must be in the past';
+      } else if (dobDate > minAgeDate) {
+        newErrors.dob = 'You must be at least 18 years old';
+      }
+    }
+
+    // Blood type validation
     if (!formData.bloodType) newErrors.bloodType = 'Blood type is required';
-    else if (!bloodTypes.includes(formData.bloodType)) newErrors.bloodType = 'Invalid blood type';
+
+    // Gender validation
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    else if (!genders.includes(formData.gender)) newErrors.gender = 'Invalid gender';
-    if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.nic) newErrors.nic = 'NIC is required';
-    else if (!/^\d+$/.test(formData.nic)) newErrors.nic = 'NIC must be numeric';
-    if (!formData.image) newErrors.image = 'Profile picture is required'; // Remove if optional
+
+    // City validation
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+
+    // NIC validation (exactly 12 digits)
+    if (!formData.nic) {
+      newErrors.nic = 'NIC is required';
+    } else if (!/^\d{12}$/.test(formData.nic)) {
+      newErrors.nic = 'NIC must be exactly 12 digits';
+    }
+
+    // Image validation
+    if (!formData.image) newErrors.image = 'Profile picture is required';
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value.trim() }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
     setErrors((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const handleNumericChange = (e) => {
+    const { id, value } = e.target;
+    if (/^\d*$/.test(value)) {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+      setErrors((prev) => ({ ...prev, [id]: '' }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -92,6 +140,11 @@ export default function DonorSign() {
     }
   };
 
+  // Calculate max date for DOB (18 years ago)
+  const today = new Date();
+  const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  const maxDob = minAgeDate.toISOString().split('T')[0];
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
       <Card className="w-full max-w-4xl p-10 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-md border border-red-100">
@@ -113,10 +166,10 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.firstName ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="First name"
               />
               {errors.firstName && <p className="text-red-600 text-sm mt-1">{errors.firstName}</p>}
             </div>
+
             <div>
               <Label htmlFor="lastName" value="Last Name" className="text-gray-700 font-medium" />
               <TextInput
@@ -129,10 +182,10 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.lastName ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Last name"
               />
               {errors.lastName && <p className="text-red-600 text-sm mt-1">{errors.lastName}</p>}
             </div>
+
             <div>
               <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700 font-medium" />
               <TextInput
@@ -140,16 +193,16 @@ export default function DonorSign() {
                 type="tel"
                 placeholder="Enter 10-digit phone number"
                 value={formData.phoneNumber}
-                onChange={handleChange}
+                onChange={handleNumericChange}
                 required
-                pattern="\d{10}"
+                maxLength={10}
                 disabled={loading}
                 color={errors.phoneNumber ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Phone number"
               />
               {errors.phoneNumber && <p className="text-red-600 text-sm mt-1">{errors.phoneNumber}</p>}
             </div>
+
             <div>
               <Label htmlFor="email" value="Email" className="text-gray-700 font-medium" />
               <TextInput
@@ -162,10 +215,10 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.email ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Email"
               />
               {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
             </div>
+
             <div>
               <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
               <TextInput
@@ -175,10 +228,10 @@ export default function DonorSign() {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                minLength={6}
                 disabled={loading}
                 color={errors.password ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Password"
               />
               {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
             </div>
@@ -193,14 +246,14 @@ export default function DonorSign() {
                 value={formData.dob}
                 onChange={handleChange}
                 required
-                max={today.toISOString().split('T')[0]}
+                max={maxDob}
                 disabled={loading}
                 color={errors.dob ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Date of birth"
               />
               {errors.dob && <p className="text-red-600 text-sm mt-1">{errors.dob}</p>}
             </div>
+
             <div>
               <Label htmlFor="city" value="City" className="text-gray-700 font-medium" />
               <TextInput
@@ -213,27 +266,27 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.city ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="City"
               />
               {errors.city && <p className="text-red-600 text-sm mt-1">{errors.city}</p>}
             </div>
+
             <div>
               <Label htmlFor="nic" value="NIC" className="text-gray-700 font-medium" />
               <TextInput
                 id="nic"
                 type="text"
-                placeholder="Enter NIC number"
+                placeholder="Enter 12-digit NIC number"
                 value={formData.nic}
-                onChange={handleChange}
+                onChange={handleNumericChange}
                 required
-                pattern="\d+"
+                maxLength={12}
                 disabled={loading}
                 color={errors.nic ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="NIC"
               />
               {errors.nic && <p className="text-red-600 text-sm mt-1">{errors.nic}</p>}
             </div>
+
             <div>
               <Label htmlFor="bloodType" value="Blood Type" className="text-gray-700 font-medium" />
               <Select
@@ -244,7 +297,6 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.bloodType ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Blood type"
               >
                 <option value="">Select Blood Type</option>
                 {bloodTypes.map((type) => (
@@ -253,6 +305,7 @@ export default function DonorSign() {
               </Select>
               {errors.bloodType && <p className="text-red-600 text-sm mt-1">{errors.bloodType}</p>}
             </div>
+
             <div>
               <Label htmlFor="gender" value="Gender" className="text-gray-700 font-medium" />
               <Select
@@ -263,7 +316,6 @@ export default function DonorSign() {
                 disabled={loading}
                 color={errors.gender ? 'failure' : 'gray'}
                 className="mt-1"
-                aria-label="Gender"
               >
                 <option value="">Select Gender</option>
                 {genders.map((gender) => (
@@ -272,6 +324,7 @@ export default function DonorSign() {
               </Select>
               {errors.gender && <p className="text-red-600 text-sm mt-1">{errors.gender}</p>}
             </div>
+
             <div>
               <Label htmlFor="image" value="Profile Picture" className="text-gray-700 font-medium" />
               <FileInput
@@ -280,8 +333,7 @@ export default function DonorSign() {
                 onChange={handleFileChange}
                 required
                 disabled={loading}
-                className="mt-1 text-gray-700 border-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-600 hover:file:bg-red-100"
-                aria-label="Profile picture upload"
+                className="mt-1 text-gray-700 border-gray-300"
               />
               {errors.image && <p className="text-red-600 text-sm mt-1">{errors.image}</p>}
               {imagePreview && (
@@ -315,7 +367,7 @@ export default function DonorSign() {
             </Button>
             <button
               onClick={() => navigate("/donor-login")}
-              className="text-red-600 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="text-red-600 font-medium hover:underline focus:outline-none"
               disabled={loading}
             >
               Already have an account? Login

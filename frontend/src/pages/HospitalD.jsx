@@ -3,6 +3,7 @@ import { Button, Spinner, Table, Modal, TextInput, Label, FileInput } from "flow
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { toast } from "react-toastify";
 
 export default function HospitalDashboard() {
   const { hospitals, loading, error, fetchHospitals, deleteHospital, updateHospital, createHospital } = useHospital();
@@ -33,38 +34,74 @@ export default function HospitalDashboard() {
     fetchHospitals();
   }, [fetchHospitals]);
 
-  // Validation function
-  const validateForm = (data, isCreate = false) => {
+  // Validation for Add Hospital form
+  const validateAddForm = (data) => {
     const errors = {};
     if (!data.name) errors.name = "Name is required";
     if (!data.city) errors.city = "City is required";
-    if (!data.identificationNumber) errors.identificationNumber = "Identification number is required";
-    else if (!/^[A-Za-z0-9-]+$/.test(data.identificationNumber)) errors.identificationNumber = "Identification number can only contain letters, numbers, and hyphens";
+    if (!data.identificationNumber) {
+      errors.identificationNumber = "Identification number is required";
+    } else if (!/^HOSP[A-Za-z0-9-]+$/.test(data.identificationNumber)) {
+      errors.identificationNumber = "ID must start with 'HOSP' followed by letters/numbers/hyphens";
+    }
     if (!data.email) errors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.email = "Invalid email format";
-    if (isCreate && !data.password) errors.password = "Password is required";
-    else if (data.password && data.password.length < 6) errors.password = "Password must be at least 6 characters";
+    if (!data.password) errors.password = "Password is required";
+    else if (data.password.length < 6) errors.password = "Password must be at least 6 characters";
     if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
-    else if (!/^\+?\d{9,15}$/.test(data.phoneNumber)) errors.phoneNumber = "Phone number must be 9-15 digits (optional + prefix)";
+    else if (!/^\d{10}$/.test(data.phoneNumber)) errors.phoneNumber = "Must be exactly 10 digits";
     if (!data.address) errors.address = "Address is required";
-    if (isCreate && !data.image) errors.image = "Image is required";
-    else if (data.image && !["image/jpeg", "image/png"].includes(data.image.type)) errors.image = "Image must be JPG or PNG";
+    if (!data.image) errors.image = "Image is required";
+    else if (!["image/jpeg", "image/png"].includes(data.image.type)) errors.image = "Only JPG/PNG allowed";
     if (!data.startTime) errors.startTime = "Start time is required";
     if (!data.endTime) errors.endTime = "End time is required";
-    else if (data.startTime && data.endTime && data.startTime >= data.endTime) errors.endTime = "End time must be after start time";
+    else if (data.startTime >= data.endTime) errors.endTime = "Must be after start time";
     return errors;
   };
 
-  const handleDelete = async (id) => {
-    if (!id) return;
-    if (!window.confirm("Are you sure you want to delete this hospital?")) return;
+  // Validation for Edit Hospital form (only editable fields)
+  const validateEditForm = (data) => {
+    const errors = {};
+    if (!data.name) errors.name = "Name is required";
+    if (!data.city) errors.city = "City is required";
+    if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
+    else if (!/^\d{10}$/.test(data.phoneNumber)) errors.phoneNumber = "Must be exactly 10 digits";
+    if (!data.address) errors.address = "Address is required";
+    if (!data.startTime) errors.startTime = "Start time is required";
+    if (!data.endTime) errors.endTime = "End time is required";
+    else if (data.startTime >= data.endTime) errors.endTime = "Must be after start time";
+    return errors;
+  };
 
+  const handlePhoneNumberChange = (e, isEdit = false) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value) && value.length <= 10) {
+      if (isEdit) {
+        setEditHospital(prev => ({ ...prev, phoneNumber: value }));
+      } else {
+        setNewHospital(prev => ({ ...prev, phoneNumber: value }));
+      }
+    }
+  };
+
+  const handleIdentificationNumberChange = (e, isEdit = false) => {
+    const value = e.target.value;
+    if (isEdit) {
+      setEditHospital(prev => ({ ...prev, identificationNumber: value }));
+    } else {
+      setNewHospital(prev => ({ ...prev, identificationNumber: value }));
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this hospital?")) return;
     setActionLoading(true);
     try {
       await deleteHospital(id);
+      toast.success("Hospital deleted successfully");
       fetchHospitals();
     } catch (err) {
-      console.error("Error deleting hospital:", err);
+      toast.error(err?.response?.data?.message || "Failed to delete hospital");
     } finally {
       setActionLoading(false);
     }
@@ -72,8 +109,14 @@ export default function HospitalDashboard() {
 
   const handleEdit = (hospital) => {
     setEditHospital({
-      ...hospital,
-      password: "", // Reset password field for security
+      _id: hospital._id,
+      name: hospital.name,
+      city: hospital.city,
+      phoneNumber: hospital.phoneNumber,
+      address: hospital.address,
+      startTime: hospital.startTime,
+      endTime: hospital.endTime,
+      activeStatus: hospital.activeStatus
     });
     setEditErrors({});
     setIsEditing(true);
@@ -81,22 +124,28 @@ export default function HospitalDashboard() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-
-    if (!editHospital?._id) return;
-
-    const updatedData = { ...editHospital };
-    delete updatedData.image; // Remove _id from the data to be sent
-        
-    const errors = validateForm(updatedData);
+    const errors = validateEditForm(editHospital);
     setEditErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+
     setActionLoading(true);
     try {
-      await updateHospital(editHospital._id, editHospital);
+      await updateHospital(editHospital._id, {
+        name: editHospital.name,
+        city: editHospital.city,
+        phoneNumber: editHospital.phoneNumber,
+        address: editHospital.address,
+        startTime: editHospital.startTime,
+        endTime: editHospital.endTime
+      });
+      toast.success("Hospital updated successfully");
       setIsEditing(false);
       fetchHospitals();
     } catch (err) {
-      console.error("Error updating hospital:", err);
+      toast.error(err?.response?.data?.message || "Failed to update hospital");
     } finally {
       setActionLoading(false);
     }
@@ -104,10 +153,12 @@ export default function HospitalDashboard() {
 
   const handleAddHospital = async (e) => {
     e.preventDefault();
-
-    const errors = validateForm(newHospital, true);
+    const errors = validateAddForm(newHospital);
     setAddErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
 
     setActionLoading(true);
     try {
@@ -119,6 +170,7 @@ export default function HospitalDashboard() {
         }
       });
       await createHospital(hospitalData);
+      toast.success("Hospital added successfully");
       setIsAdding(false);
       setNewHospital({
         name: "",
@@ -137,7 +189,7 @@ export default function HospitalDashboard() {
       setAddErrors({});
       fetchHospitals();
     } catch (err) {
-      console.error("Error adding hospital:", err);
+      toast.error(err?.response?.data?.message || "Failed to add hospital");
     } finally {
       setActionLoading(false);
     }
@@ -145,23 +197,12 @@ export default function HospitalDashboard() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setNewHospital((prev) => ({ ...prev, image: file }));
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
     if (file) {
+      setNewHospital(prev => ({ ...prev, image: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
-  };
-
-  const handleEditFieldChange = (e) => {
-    const { name, value } = e.target;
-    setEditHospital((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
   };
 
   const handleActivateDeactivate = async (id, currentStatus) => {
@@ -169,9 +210,10 @@ export default function HospitalDashboard() {
     try {
       const updatedStatus = !currentStatus;
       await updateHospital(id, { activeStatus: updatedStatus });
+      toast.success(`Hospital ${updatedStatus ? "activated" : "deactivated"}`);
       fetchHospitals();
     } catch (err) {
-      console.error("Error updating hospital status:", err);
+      toast.error(err?.response?.data?.message || "Failed to update status");
     } finally {
       setActionLoading(false);
     }
@@ -183,7 +225,11 @@ export default function HospitalDashboard() {
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Hospital Dashboard</h1>
-          <Button gradientDuoTone="redToPink" onClick={() => setIsAdding(true)} disabled={actionLoading}>
+          <Button 
+            gradientDuoTone="redToPink" 
+            onClick={() => setIsAdding(true)} 
+            disabled={actionLoading}
+          >
             Add Hospital
           </Button>
         </div>
@@ -195,13 +241,13 @@ export default function HospitalDashboard() {
           <Table.Head>
             <Table.HeadCell>Name</Table.HeadCell>
             <Table.HeadCell>City</Table.HeadCell>
-            <Table.HeadCell>Identification Number</Table.HeadCell>
+            <Table.HeadCell>ID Number</Table.HeadCell>
             <Table.HeadCell>Address</Table.HeadCell>
-            <Table.HeadCell>Phone Number</Table.HeadCell>
+            <Table.HeadCell>Phone</Table.HeadCell>
             <Table.HeadCell>Email</Table.HeadCell>
             <Table.HeadCell>Start Time</Table.HeadCell>
             <Table.HeadCell>End Time</Table.HeadCell>
-            <Table.HeadCell>Active Status</Table.HeadCell>
+            <Table.HeadCell>Status</Table.HeadCell>
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
@@ -217,11 +263,9 @@ export default function HospitalDashboard() {
                   <Table.Cell>{hospital.startTime || "N/A"}</Table.Cell>
                   <Table.Cell>{hospital.endTime || "N/A"}</Table.Cell>
                   <Table.Cell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        hospital.activeStatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      }`}
-                    >
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      hospital.activeStatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}>
                       {hospital.activeStatus ? "Active" : "Inactive"}
                     </span>
                   </Table.Cell>
@@ -255,11 +299,11 @@ export default function HospitalDashboard() {
 
         {/* Add Hospital Modal */}
         <Modal show={isAdding} onClose={() => setIsAdding(false)}>
-          <Modal.Header>Add Hospital</Modal.Header>
+          <Modal.Header>Add New Hospital</Modal.Header>
           <Modal.Body>
             <form onSubmit={handleAddHospital} className="space-y-4">
               <div>
-                <Label htmlFor="name" value="Name" />
+                <Label htmlFor="name" value="Hospital Name" />
                 <TextInput
                   id="name"
                   value={newHospital.name}
@@ -281,15 +325,18 @@ export default function HospitalDashboard() {
                 {addErrors.city && <p className="text-red-600 text-sm mt-1">{addErrors.city}</p>}
               </div>
               <div>
-                <Label htmlFor="identificationNumber" value="Identification Number" />
+                <Label htmlFor="identificationNumber" value="Hospital ID (must start with HOSP)" />
                 <TextInput
                   id="identificationNumber"
                   value={newHospital.identificationNumber}
-                  onChange={(e) => setNewHospital({ ...newHospital, identificationNumber: e.target.value })}
+                  onChange={handleIdentificationNumberChange}
                   required
                   color={addErrors.identificationNumber ? "failure" : "gray"}
+                  placeholder="HOSP12345"
                 />
-                {addErrors.identificationNumber && <p className="text-red-600 text-sm mt-1">{addErrors.identificationNumber}</p>}
+                {addErrors.identificationNumber && (
+                  <p className="text-red-600 text-sm mt-1">{addErrors.identificationNumber}</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="email" value="Email" />
@@ -304,24 +351,26 @@ export default function HospitalDashboard() {
                 {addErrors.email && <p className="text-red-600 text-sm mt-1">{addErrors.email}</p>}
               </div>
               <div>
-                <Label htmlFor="password" value="Password" />
+                <Label htmlFor="password" value="Password (min 6 characters)" />
                 <TextInput
                   id="password"
                   type="password"
                   value={newHospital.password}
                   onChange={(e) => setNewHospital({ ...newHospital, password: e.target.value })}
                   required
+                  minLength={6}
                   color={addErrors.password ? "failure" : "gray"}
                 />
                 {addErrors.password && <p className="text-red-600 text-sm mt-1">{addErrors.password}</p>}
               </div>
               <div>
-                <Label htmlFor="phoneNumber" value="Phone Number" />
+                <Label htmlFor="phoneNumber" value="Phone Number (10 digits)" />
                 <TextInput
                   id="phoneNumber"
                   value={newHospital.phoneNumber}
-                  onChange={(e) => setNewHospital({ ...newHospital, phoneNumber: e.target.value })}
+                  onChange={handlePhoneNumberChange}
                   required
+                  maxLength={10}
                   color={addErrors.phoneNumber ? "failure" : "gray"}
                 />
                 {addErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{addErrors.phoneNumber}</p>}
@@ -338,7 +387,7 @@ export default function HospitalDashboard() {
                 {addErrors.address && <p className="text-red-600 text-sm mt-1">{addErrors.address}</p>}
               </div>
               <div>
-                <Label htmlFor="image" value="Upload Image" />
+                <Label htmlFor="image" value="Hospital Image (JPG/PNG)" />
                 <FileInput
                   id="image"
                   accept="image/jpeg,image/png"
@@ -347,10 +396,16 @@ export default function HospitalDashboard() {
                   color={addErrors.image ? "failure" : "gray"}
                 />
                 {addErrors.image && <p className="text-red-600 text-sm mt-1">{addErrors.image}</p>}
-                {imagePreview && <img src={imagePreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-full" />}
+                {imagePreview && (
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    className="mt-4 w-32 h-32 object-cover rounded" 
+                  />
+                )}
               </div>
               <div>
-                <Label htmlFor="startTime" value="Start Time" />
+                <Label htmlFor="startTime" value="Opening Time" />
                 <TextInput
                   id="startTime"
                   type="time"
@@ -362,7 +417,7 @@ export default function HospitalDashboard() {
                 {addErrors.startTime && <p className="text-red-600 text-sm mt-1">{addErrors.startTime}</p>}
               </div>
               <div>
-                <Label htmlFor="endTime" value="End Time" />
+                <Label htmlFor="endTime" value="Closing Time" />
                 <TextInput
                   id="endTime"
                   type="time"
@@ -373,13 +428,25 @@ export default function HospitalDashboard() {
                 />
                 {addErrors.endTime && <p className="text-red-600 text-sm mt-1">{addErrors.endTime}</p>}
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button color="gray" onClick={() => setIsAdding(false)} disabled={actionLoading}>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  color="gray" 
+                  onClick={() => setIsAdding(false)} 
+                  disabled={actionLoading}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" gradientDuoTone="redToPink" disabled={actionLoading}>
-                  {actionLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                  {actionLoading ? "Adding..." : "Add Hospital"}
+                <Button 
+                  type="submit" 
+                  gradientDuoTone="redToPink" 
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <>
+                      <Spinner size="sm" className="mr-2" />
+                      Adding...
+                    </>
+                  ) : "Add Hospital"}
                 </Button>
               </div>
             </form>
@@ -392,123 +459,93 @@ export default function HospitalDashboard() {
           <Modal.Body>
             <form onSubmit={handleUpdate} className="space-y-4">
               <div>
-                <Label htmlFor="name" value="Name" />
+                <Label htmlFor="editName" value="Hospital Name" />
                 <TextInput
-                  id="name"
-                  name="name"
+                  id="editName"
                   value={editHospital?.name || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => setEditHospital(prev => ({ ...prev, name: e.target.value }))}
                   required
                   color={editErrors.name ? "failure" : "gray"}
                 />
                 {editErrors.name && <p className="text-red-600 text-sm mt-1">{editErrors.name}</p>}
               </div>
               <div>
-                <Label htmlFor="city" value="City" />
+                <Label htmlFor="editCity" value="City" />
                 <TextInput
-                  id="city"
-                  name="city"
+                  id="editCity"
                   value={editHospital?.city || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => setEditHospital(prev => ({ ...prev, city: e.target.value }))}
                   required
                   color={editErrors.city ? "failure" : "gray"}
                 />
                 {editErrors.city && <p className="text-red-600 text-sm mt-1">{editErrors.city}</p>}
               </div>
               <div>
-                <Label htmlFor="identificationNumber" value="Identification Number" />
+                <Label htmlFor="editPhoneNumber" value="Phone Number (10 digits)" />
                 <TextInput
-                  id="identificationNumber"
-                  name="identificationNumber"
-                  value={editHospital?.identificationNumber || ""}
-                  onChange={handleEditFieldChange}
-                  required
-                  color={editErrors.identificationNumber ? "failure" : "gray"}
-                />
-                {editErrors.identificationNumber && <p className="text-red-600 text-sm mt-1">{editErrors.identificationNumber}</p>}
-              </div>
-              <div>
-                <Label htmlFor="email" value="Email" />
-                <TextInput
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={editHospital?.email || ""}
-                  onChange={handleEditFieldChange}
-                  required
-                  color={editErrors.email ? "failure" : "gray"}
-                />
-                {editErrors.email && <p className="text-red-600 text-sm mt-1">{editErrors.email}</p>}
-              </div>
-              <div>
-                <Label htmlFor="password" value="Password (Leave blank to keep unchanged)" />
-                <TextInput
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={editHospital?.password || ""}
-                  onChange={handleEditFieldChange}
-                  color={editErrors.password ? "failure" : "gray"}
-                />
-                {editErrors.password && <p className="text-red-600 text-sm mt-1">{editErrors.password}</p>}
-              </div>
-              <div>
-                <Label htmlFor="phoneNumber" value="Phone Number" />
-                <TextInput
-                  id="phoneNumber"
-                  name="phoneNumber"
+                  id="editPhoneNumber"
                   value={editHospital?.phoneNumber || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => handlePhoneNumberChange(e, true)}
                   required
+                  maxLength={10}
                   color={editErrors.phoneNumber ? "failure" : "gray"}
                 />
                 {editErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{editErrors.phoneNumber}</p>}
               </div>
               <div>
-                <Label htmlFor="address" value="Address" />
+                <Label htmlFor="editAddress" value="Address" />
                 <TextInput
-                  id="address"
-                  name="address"
+                  id="editAddress"
                   value={editHospital?.address || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => setEditHospital(prev => ({ ...prev, address: e.target.value }))}
                   required
                   color={editErrors.address ? "failure" : "gray"}
                 />
                 {editErrors.address && <p className="text-red-600 text-sm mt-1">{editErrors.address}</p>}
               </div>
               <div>
-                <Label htmlFor="startTime" value="Start Time" />
+                <Label htmlFor="editStartTime" value="Opening Time" />
                 <TextInput
-                  id="startTime"
-                  name="startTime"
+                  id="editStartTime"
                   type="time"
                   value={editHospital?.startTime || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => setEditHospital(prev => ({ ...prev, startTime: e.target.value }))}
                   required
                   color={editErrors.startTime ? "failure" : "gray"}
                 />
                 {editErrors.startTime && <p className="text-red-600 text-sm mt-1">{editErrors.startTime}</p>}
               </div>
               <div>
-                <Label htmlFor="endTime" value="End Time" />
+                <Label htmlFor="editEndTime" value="Closing Time" />
                 <TextInput
-                  id="endTime"
-                  name="endTime"
+                  id="editEndTime"
                   type="time"
                   value={editHospital?.endTime || ""}
-                  onChange={handleEditFieldChange}
+                  onChange={(e) => setEditHospital(prev => ({ ...prev, endTime: e.target.value }))}
                   required
                   color={editErrors.endTime ? "failure" : "gray"}
                 />
                 {editErrors.endTime && <p className="text-red-600 text-sm mt-1">{editErrors.endTime}</p>}
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button color="gray" onClick={() => setIsEditing(false)} disabled={actionLoading}>
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  color="gray" 
+                  onClick={() => setIsEditing(false)} 
+                  disabled={actionLoading}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" gradientDuoTone="redToPink" disabled={actionLoading}>
-                  {actionLoading ? <Spinner size="sm" className="mr-2" /> : null}
-                  {actionLoading ? "Updating..." : "Update Hospital"}
+                <Button 
+                  type="submit" 
+                  gradientDuoTone="redToPink" 
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <>
+                      <Spinner size="sm" className="mr-2" />
+                      Updating...
+                    </>
+                  ) : "Update Hospital"}
                 </Button>
               </div>
             </form>

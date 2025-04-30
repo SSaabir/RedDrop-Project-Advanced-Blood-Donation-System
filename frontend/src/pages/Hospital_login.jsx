@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { Button, Card, Label, TextInput, Spinner } from "flowbite-react";
 import { useNavigate } from "react-router-dom";
 import { useSignin } from "../hooks/useSignin";
-import { toast } from 'react-toastify'; // Added for feedback
-import background from '../assets/bg2.jpg'; // Ensure this path is correct
+import { toast } from 'react-toastify';
+import background from '../assets/bg2.jpg';
 
 export default function HospitalLogin() {
   const navigate = useNavigate();
-  const { signinH, loading } = useSignin(); // Assuming no error per your hook pattern
+  const { signinH, loading } = useSignin();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,10 +16,16 @@ export default function HospitalLogin() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
-    if (!formData.password) newErrors.password = 'Password is required';
-    // Optional: Add complexity, e.g., if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -33,16 +39,46 @@ export default function HospitalLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Highlight specific field errors
+      if (errors.email) toast.error(errors.email);
+      if (errors.password) toast.error(errors.password);
       return;
     }
 
     try {
-      await signinH(formData);
-      toast.success('Logged in successfully!');
-      navigate('/hospital-dashboard'); // Adjust path as needed
+      const response = await signinH(formData);
+      
+      if (response?.success) {
+        toast.success('Login successful! Redirecting...');
+        navigate('/hospital-dashboard');
+      } else {
+        // Handle API response errors
+        const errorMsg = response?.message?.toLowerCase() || '';
+        
+        if (errorMsg.includes('password')) {
+          toast.error('Incorrect password. Please enter valid password');
+          setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
+        } else if (errorMsg.includes('email') || errorMsg.includes('hospital')) {
+          toast.error('Email not found. Please enter valid email');
+          setErrors(prev => ({ ...prev, email: 'Email not found' }));
+        } else {
+          toast.error('Login failed. Please try again.');
+        }
+      }
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Error logging in');
+      const errorMsg = err?.response?.data?.message?.toLowerCase() || err.message?.toLowerCase() || '';
+      
+      if (errorMsg.includes('password')) {
+        toast.error('Incorrect password. Please enter valid password');
+        setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
+      } else if (errorMsg.includes('email') || errorMsg.includes('hospital')) {
+        toast.error('Email not found. Please enter valid email');
+        setErrors(prev => ({ ...prev, email: 'Email not found' }));
+      } else if (err.message === 'Network Error') {
+        toast.error('Network error. Please check your connection.');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     }
   };
 
@@ -83,6 +119,7 @@ export default function HospitalLogin() {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength={6}
               disabled={loading}
               color={errors.password ? 'failure' : 'gray'}
               className="mt-2 p-3 w-full border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-red-500 transition-all"
