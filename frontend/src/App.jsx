@@ -10,7 +10,6 @@ import Footer from './components/Footer'
 import DonorD from './pages/DonorD'
 import AppointmentD from './pages/AppointmentD'
 import HospitalD from './pages/HospitalD'
-import PrivacyPolicy from './pages/PrivacyPolicy';
 
 import DonorLogin from './pages/DonorLogin';
 import DonorSign from "./pages/DonorSign";
@@ -55,7 +54,6 @@ export default function App() {
     <Route path="/EBR" element={<EmergencyBloodRequest />} />
       
     <Route path="/ContactUs" element={<ContactUs />} />
-    <Route path='/privacy' element={<PrivacyPolicy />} />
     <Route path="/Terms" element={<Terms />} />
     <Route path="/" element={<Home />} />
     <Route path="/FAQ" element={<FAQ />} />

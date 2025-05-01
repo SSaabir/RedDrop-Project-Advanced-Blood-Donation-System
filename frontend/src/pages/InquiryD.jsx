@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, TextInput, Select, Spinner, Button, Modal, Label } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
-import { useInquiry } from "../hooks/useInquiry";
+import { useInquiry } from "../hooks/useinquiry";
 import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function InquiryDashboard() {
