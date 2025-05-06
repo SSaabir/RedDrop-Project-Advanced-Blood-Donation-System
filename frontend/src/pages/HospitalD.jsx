@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Spinner, Table, Modal, TextInput, Label, FileInput } from "flowbite-react";
+import { Button, Spinner, Table, Modal, TextInput, Label, FileInput, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
 import { useAuthContext } from "../hooks/useAuthContext";
@@ -30,13 +30,35 @@ export default function HospitalDashboard() {
   const [addErrors, setAddErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
-   const {reportUrl, generateHospitalReport} = useGenerateReport();
+  const { reportUrl, generateHospitalReport } = useGenerateReport();
+  const [filter, setFilter] = useState({
+    name: "",
+    city: "",
+    status: ""
+  });
+  const [filteredHospitals, setFilteredHospitals] = useState([]);
 
   useEffect(() => {
     fetchHospitals();
   }, [fetchHospitals]);
 
-  // Validation for Add Hospital form
+  useEffect(() => {
+    const filtered = hospitals.filter(hospital => {
+      const nameMatch = filter.name ? hospital.name.toLowerCase().includes(filter.name.toLowerCase()) : true;
+      const cityMatch = filter.city ? hospital.city?.toLowerCase().includes(filter.city.toLowerCase()) : true;
+      const statusMatch = filter.status ? 
+        (filter.status === "active" ? hospital.activeStatus : !hospital.activeStatus) : true;
+
+      return nameMatch && cityMatch && statusMatch;
+    });
+    setFilteredHospitals(filtered);
+  }, [hospitals, filter]);
+
+  const handleFilterChange = (e) => {
+    const { id, value } = e.target;
+    setFilter(prev => ({ ...prev, [id]: value }));
+  };
+
   const validateAddForm = (data) => {
     const errors = {};
     if (!data.name) errors.name = "Name is required";
@@ -62,7 +84,6 @@ export default function HospitalDashboard() {
     return errors;
   };
 
-  // Validation for Edit Hospital form (only editable fields)
   const validateEditForm = (data) => {
     const errors = {};
     if (!data.name) errors.name = "Name is required";
@@ -225,9 +246,7 @@ export default function HospitalDashboard() {
   const handleGenerateReport = (e) => {
     e.preventDefault();
     generateHospitalReport();
-
-
-};
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -235,226 +254,318 @@ export default function HospitalDashboard() {
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Hospital Dashboard</h1>
-           <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
-                     Generate Report
-                     </Button>
-          
-                     {reportUrl && (
-                          <div>
-                              <p>Report generated successfully!</p>
-                              <a href={`http://localhost:3020${reportUrl}`} download>
-                                  Download Report
-                              </a>
-                          </div>
-                              )}
+
+          <div className="flex flex-col items-center">
+            {reportUrl && (
+              <p className="text-green-600 mb-2">Report generated successfully!</p>
+            )}
+            <div className="flex items-center space-x-4">
+              <Button
+                gradientDuoTone="redToPink"
+                onClick={handleGenerateReport}
+                disabled={loading}
+                className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Generate Report
+              </Button>
+              {reportUrl && (
+                <a
+                  href={`http://localhost:3020${reportUrl}`}
+                  download
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Download Report
+                </a>
+              )}
+            </div>
+          </div>
+
           <Button 
             gradientDuoTone="redToPink" 
             onClick={() => setIsAdding(true)} 
             disabled={actionLoading}
+            className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
           >
             Add Hospital
           </Button>
         </div>
 
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Filter Hospitals</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label value="Name" />
+              <TextInput
+                id="name"
+                value={filter.name}
+                onChange={handleFilterChange}
+                placeholder="Search by name"
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <Label value="City" />
+              <TextInput
+                id="city"
+                value={filter.city}
+                onChange={handleFilterChange}
+                placeholder="Search by city"
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <Label value="Status" />
+              <Select id="status" value={filter.status} onChange={handleFilterChange} className="rounded-lg">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </Select>
+            </div>
+          </div>
+        </div>
+
         {loading && <Spinner className="mb-4" />}
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
-        <Table hoverable>
-          <Table.Head>
-            <Table.HeadCell>Name</Table.HeadCell>
-            <Table.HeadCell>City</Table.HeadCell>
-            <Table.HeadCell>ID Number</Table.HeadCell>
-            <Table.HeadCell>Address</Table.HeadCell>
-            <Table.HeadCell>Phone</Table.HeadCell>
-            <Table.HeadCell>Email</Table.HeadCell>
-            <Table.HeadCell>Start Time</Table.HeadCell>
-            <Table.HeadCell>End Time</Table.HeadCell>
-            <Table.HeadCell>Status</Table.HeadCell>
-            <Table.HeadCell>Actions</Table.HeadCell>
-          </Table.Head>
-          <Table.Body>
-            {hospitals.length > 0 ? (
-              hospitals.map((hospital) => (
-                <Table.Row key={hospital._id} className="bg-white">
-                  <Table.Cell>{hospital.name}</Table.Cell>
-                  <Table.Cell>{hospital.city || "N/A"}</Table.Cell>
-                  <Table.Cell>{hospital.identificationNumber}</Table.Cell>
-                  <Table.Cell>{hospital.address}</Table.Cell>
-                  <Table.Cell>{hospital.phoneNumber || "N/A"}</Table.Cell>
-                  <Table.Cell>{hospital.email}</Table.Cell>
-                  <Table.Cell>{hospital.startTime || "N/A"}</Table.Cell>
-                  <Table.Cell>{hospital.endTime || "N/A"}</Table.Cell>
-                  <Table.Cell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      hospital.activeStatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    }`}>
-                      {hospital.activeStatus ? "Active" : "Inactive"}
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell className="space-x-2">
-                    <Button size="xs" color="blue" onClick={() => handleEdit(hospital)} disabled={actionLoading}>
-                      Edit
-                    </Button>
-                    <Button size="xs" color="failure" onClick={() => handleDelete(hospital._id)} disabled={actionLoading}>
-                      Delete
-                    </Button>
-                    <Button
-                      size="xs"
-                      color={hospital.activeStatus ? "failure" : "success"}
-                      onClick={() => handleActivateDeactivate(hospital._id, hospital.activeStatus)}
-                      disabled={actionLoading}
-                    >
-                      {hospital.activeStatus ? "Deactivate" : "Activate"}
-                    </Button>
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <Table hoverable className="w-full">
+            <Table.Head className="bg-red-50 text-red-800">
+              <Table.HeadCell className="px-6 py-4 font-semibold">Name</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">City</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">ID Number</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Address</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Phone</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Email</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Start Time</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">End Time</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Status</Table.HeadCell>
+              <Table.HeadCell className="px-6 py-4 font-semibold">Actions</Table.HeadCell>
+            </Table.Head>
+            <Table.Body className="divide-y divide-gray-200">
+              {filteredHospitals.length > 0 ? (
+                filteredHospitals.map((hospital) => (
+                  <Table.Row 
+                    key={hospital._id} 
+                    className="bg-white hover:bg-red-50 transition-colors duration-150"
+                  >
+                    <Table.Cell className="px-6 py-4 text-gray-900 font-medium">{hospital.name}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.city || "N/A"}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.identificationNumber}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.address}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.phoneNumber || "N/A"}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.email}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.startTime || "N/A"}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">{hospital.endTime || "N/A"}</Table.Cell>
+                    <Table.Cell className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        hospital.activeStatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      }`}>
+                        {hospital.activeStatus ? "Active" : "Inactive"}
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell className="px-6 py-4">
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="xs" 
+                          gradientDuoTone="cyanToBlue"
+                          onClick={() => handleEdit(hospital)} 
+                          disabled={actionLoading}
+                          className="rounded-lg"
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          size="xs" 
+                          color="failure"
+                          onClick={() => handleDelete(hospital._id)} 
+                          disabled={actionLoading}
+                          className="rounded-lg bg-red-600 hover:bg-red-700"
+                        >
+                          Delete
+                        </Button>
+                        <Button
+                          size="xs"
+                          color={hospital.activeStatus ? "failure" : "success"}
+                          onClick={() => handleActivateDeactivate(hospital._id, hospital.activeStatus)}
+                          disabled={actionLoading}
+                          className={`rounded-lg ${hospital.activeStatus ? "bg-red-300 hover:bg-red-400" : "bg-green-600 hover:bg-green-700"}`}
+                        >
+                          {hospital.activeStatus ? "Deactivate" : "Activate"}
+                        </Button>
+                      </div>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              ) : (
+                <Table.Row>
+                  <Table.Cell 
+                    colSpan="10 " 
+                    className="text-center py-6 text-gray-500 font-medium"
+                  >
+                    No hospitals found
                   </Table.Cell>
                 </Table.Row>
-              ))
-            ) : (
-              <Table.Row>
-                <Table.Cell colSpan="10" className="text-center py-4 text-gray-500">
-                  No hospitals found
-                </Table.Cell>
-              </Table.Row>
-            )}
-          </Table.Body>
-        </Table>
+              )}
+            </Table.Body>
+          </Table>
+        </div>
 
-        {/* Add Hospital Modal */}
-        <Modal show={isAdding} onClose={() => setIsAdding(false)}>
-          <Modal.Header>Add New Hospital</Modal.Header>
-          <Modal.Body>
-            <form onSubmit={handleAddHospital} className="space-y-4">
-              <div>
-                <Label htmlFor="name" value="Hospital Name" />
-                <TextInput
-                  id="name"
-                  value={newHospital.name}
-                  onChange={(e) => setNewHospital({ ...newHospital, name: e.target.value })}
-                  required
-                  color={addErrors.name ? "failure" : "gray"}
-                />
-                {addErrors.name && <p className="text-red-600 text-sm mt-1">{addErrors.name}</p>}
-              </div>
-              <div>
-                <Label htmlFor="city" value="City" />
-                <TextInput
-                  id="city"
-                  value={newHospital.city}
-                  onChange={(e) => setNewHospital({ ...newHospital, city: e.target.value })}
-                  required
-                  color={addErrors.city ? "failure" : "gray"}
-                />
-                {addErrors.city && <p className="text-red-600 text-sm mt-1">{addErrors.city}</p>}
-              </div>
-              <div>
-                <Label htmlFor="identificationNumber" value="Hospital ID (must start with HOSP)" />
-                <TextInput
-                  id="identificationNumber"
-                  value={newHospital.identificationNumber}
-                  onChange={handleIdentificationNumberChange}
-                  required
-                  color={addErrors.identificationNumber ? "failure" : "gray"}
-                  placeholder="HOSP12345"
-                />
-                {addErrors.identificationNumber && (
-                  <p className="text-red-600 text-sm mt-1">{addErrors.identificationNumber}</p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="email" value="Email (must end with @health.gov.lk)" />
-                <TextInput
-                  id="email"
-                  type="email"
-                  value={newHospital.email}
-                  onChange={(e) => setNewHospital({ ...newHospital, email: e.target.value })}
-                  required
-                  color={addErrors.email ? "failure" : "gray"}
-                />
-                {addErrors.email && <p className="text-red-600 text-sm mt-1">{addErrors.email}</p>}
-              </div>
-              <div>
-                <Label htmlFor="password" value="Password (min 6 characters, one special character)" />
-                <TextInput
-                  id="password"
-                  type="password"
-                  value={newHospital.password}
-                  onChange={(e) => setNewHospital({ ...newHospital, password: e.target.value })}
-                  required
-                  minLength={6}
-                  color={addErrors.password ? "failure" : "gray"}
-                />
-                {addErrors.password && <p className="text-red-600 text-sm mt-1">{addErrors.password}</p>}
-              </div>
-              <div>
-                <Label htmlFor="phoneNumber" value="Phone Number (10 digits)" />
-                <TextInput
-                  id="phoneNumber"
-                  value={newHospital.phoneNumber}
-                  onChange={handlePhoneNumberChange}
-                  required
-                  maxLength={10}
-                  color={addErrors.phoneNumber ? "failure" : "gray"}
-                />
-                {addErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{addErrors.phoneNumber}</p>}
-              </div>
-              <div>
-                <Label htmlFor="address" value="Address" />
-                <TextInput
-                  id="address"
-                  value={newHospital.address}
-                  onChange={(e) => setNewHospital({ ...newHospital, address: e.target.value })}
-                  required
-                  color={addErrors.address ? "failure" : "gray"}
-                />
-                {addErrors.address && <p className="text-red-600 text-sm mt-1">{addErrors.address}</p>}
-              </div>
-              <div>
-                <Label htmlFor="image" value="Hospital Image (JPG/PNG)" />
-                <FileInput
-                  id="image"
-                  accept="image/jpeg,image/png"
-                  onChange={handleFileChange}
-                  required
-                  color={addErrors.image ? "failure" : "gray"}
-                />
-                {addErrors.image && <p className="text-red-600 text-sm mt-1">{addErrors.image}</p>}
-                {imagePreview && (
-                  <img 
-                    src={imagePreview} 
-                    alt="Preview" 
-                    className="mt-4 w-32 h-32 object-cover rounded" 
+        <Modal show={isAdding} onClose={() => setIsAdding(false)} className="rounded-xl">
+          <Modal.Header className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-t-xl">
+            Add New Hospital
+          </Modal.Header>
+          <Modal.Body className="bg-gray-50 p-6 rounded-b-xl">
+            <form onSubmit={handleAddHospital} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="name" value="Hospital Name" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="name"
+                    value={newHospital.name}
+                    onChange={(e) => setNewHospital({ ...newHospital, name: e.target.value })}
+                    required
+                    color={addErrors.name ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter hospital name"
                   />
-                )}
+                  {addErrors.name && <p className="text-red-600 text-sm mt-1">{addErrors.name}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="city" value="City" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="city"
+                    value={newHospital.city}
+                    onChange={(e) => setNewHospital({ ...newHospital, city: e.target.value })}
+                    required
+                    color={addErrors.city ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter city"
+                  />
+                  {addErrors.city && <p className="text-red-600 text-sm mt-1">{addErrors.city}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="identificationNumber" value="Hospital ID (must start with HOSP)" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="identificationNumber"
+                    value={newHospital.identificationNumber}
+                    onChange={handleIdentificationNumberChange}
+                    required
+                    color={addErrors.identificationNumber ? "failure" : "gray"}
+                    placeholder="HOSP12345"
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                  />
+                  {addErrors.identificationNumber && (
+                    <p className="text-red-600 text-sm mt-1">{addErrors.identificationNumber}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="email" value="Email (must end with @health.gov.lk)" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="email"
+                    type="email"
+                    value={newHospital.email}
+                    onChange={(e) => setNewHospital({ ...newHospital, email: e.target.value })}
+                    required
+                    color={addErrors.email ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="example@health.gov.lk"
+                  />
+                  {addErrors.email && <p className="text-red-600 text-sm mt-1">{addErrors.email}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="password" value="Password (min 6 characters, one special character)" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="password"
+                    type="password"
+                    value={newHospital.password}
+                    onChange={(e) => setNewHospital({ ...newHospital, password: e.target.value })}
+                    required
+                    minLength={6}
+                    color={addErrors.password ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter password"
+                  />
+                  {addErrors.password && <p className="text-red-600 text-sm mt-1">{addErrors.password}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber" value="Phone Number (10 digits)" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="phoneNumber"
+                    value={newHospital.phoneNumber}
+                    onChange={handlePhoneNumberChange}
+                    required
+                    maxLength={10}
+                    color={addErrors.phoneNumber ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="1234567890"
+                  />
+                  {addErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{addErrors.phoneNumber}</p>}
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="address" value="Address" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="address"
+                    value={newHospital.address}
+                    onChange={(e) => setNewHospital({ ...newHospital, address: e.target.value })}
+                    required
+                    color={addErrors.address ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter address"
+                  />
+                  {addErrors.address && <p className="text-red-600 text-sm mt-1">{addErrors.address}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="image" value="Hospital Image (JPG/PNG)" className="text-gray-700 font-semibold" />
+                  <FileInput
+                    id="image"
+                    accept="image/jpeg,image/png"
+                    onChange={handleFileChange}
+                    required
+                    color={addErrors.image ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm"
+                  />
+                  {addErrors.image && <p className="text-red-600 text-sm mt-1">{addErrors.image}</p>}
+                  {imagePreview && (
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="mt-4 w-32 h-32 object-cover rounded-lg shadow-md" 
+                    />
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="startTime" value="Opening Time" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="startTime"
+                    type="time"
+                    value={newHospital.startTime}
+                    onChange={(e) => setNewHospital({ ...newHospital, startTime: e.target.value })}
+                    required
+                    color={addErrors.startTime ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                  />
+                  {addErrors.startTime && <p className="text-red-600 text-sm mt-1">{addErrors.startTime}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="endTime" value="Closing Time" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="endTime"
+                    type="time"
+                    value={newHospital.endTime}
+                    onChange={(e) => setNewHospital({ ...newHospital, endTime: e.target.value })}
+                    required
+                    color={addErrors.endTime ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                  />
+                  {addErrors.endTime && <p className="text-red-600 text-sm mt-1">{addErrors.endTime}</p>}
+                </div>
               </div>
-              <div>
-                <Label htmlFor="startTime" value="Opening Time" />
-                <TextInput
-                  id="startTime"
-                  type="time"
-                  value={newHospital.startTime}
-                  onChange={(e) => setNewHospital({ ...newHospital, startTime: e.target.value })}
-                  required
-                  color={addErrors.startTime ? "failure" : "gray"}
-                />
-                {addErrors.startTime && <p className="text-red-600 text-sm mt-1">{addErrors.startTime}</p>}
-              </div>
-              <div>
-                <Label htmlFor="endTime" value="Closing Time" />
-                <TextInput
-                  id="endTime"
-                  type="time"
-                  value={newHospital.endTime}
-                  onChange={(e) => setNewHospital({ ...newHospital, endTime: e.target.value })}
-                  required
-                  color={addErrors.endTime ? "failure" : "gray"}
-                />
-                {addErrors.endTime && <p className="text-red-600 text-sm mt-1">{addErrors.endTime}</p>}
-              </div>
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex justify-end space-x-4 pt-6">
                 <Button 
                   color="gray" 
                   onClick={() => setIsAdding(false)} 
                   disabled={actionLoading}
+                  className="rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition shadow-md"
                 >
                   Cancel
                 </Button>
@@ -462,6 +573,7 @@ export default function HospitalDashboard() {
                   type="submit" 
                   gradientDuoTone="redToPink" 
                   disabled={actionLoading}
+                  className="rounded-lg shadow-md hover:shadow-lg transition"
                 >
                   {actionLoading ? (
                     <>
@@ -475,7 +587,6 @@ export default function HospitalDashboard() {
           </Modal.Body>
         </Modal>
 
-        {/* Edit Hospital Modal */}
         <Modal show={isEditing} onClose={() => setIsEditing(false)}>
           <Modal.Header>Edit Hospital</Modal.Header>
           <Modal.Body>
@@ -488,6 +599,7 @@ export default function HospitalDashboard() {
                   onChange={(e) => setEditHospital(prev => ({ ...prev, name: e.target.value }))}
                   required
                   color={editErrors.name ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
                 {editErrors.name && <p className="text-red-600 text-sm mt-1">{editErrors.name}</p>}
               </div>
@@ -499,6 +611,7 @@ export default function HospitalDashboard() {
                   onChange={(e) => setEditHospital(prev => ({ ...prev, city: e.target.value }))}
                   required
                   color={editErrors.city ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
                 {editErrors.city && <p className="text-red-600 text-sm mt-1">{editErrors.city}</p>}
               </div>
@@ -511,6 +624,7 @@ export default function HospitalDashboard() {
                   required
                   maxLength={10}
                   color={editErrors.phoneNumber ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
                 {editErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{editErrors.phoneNumber}</p>}
               </div>
@@ -522,8 +636,9 @@ export default function HospitalDashboard() {
                   onChange={(e) => setEditHospital(prev => ({ ...prev, address: e.target.value }))}
                   required
                   color={editErrors.address ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
-                {editErrors.address && <p className="text-red-600 text-sm mt-1">{editErrors.address}</p>}
+                {addErrors.address && <p className="text-red-600 text-sm mt-1">{addErrors.address}</p>}
               </div>
               <div>
                 <Label htmlFor="editStartTime" value="Opening Time" />
@@ -534,6 +649,7 @@ export default function HospitalDashboard() {
                   onChange={(e) => setEditHospital(prev => ({ ...prev, startTime: e.target.value }))}
                   required
                   color={editErrors.startTime ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
                 {editErrors.startTime && <p className="text-red-600 text-sm mt-1">{editErrors.startTime}</p>}
               </div>
@@ -546,6 +662,7 @@ export default function HospitalDashboard() {
                   onChange={(e) => setEditHospital(prev => ({ ...prev, endTime: e.target.value }))}
                   required
                   color={editErrors.endTime ? "failure" : "gray"}
+                  className="rounded-lg"
                 />
                 {editErrors.endTime && <p className="text-red-600 text-sm mt-1">{editErrors.endTime}</p>}
               </div>
@@ -554,6 +671,7 @@ export default function HospitalDashboard() {
                   color="gray" 
                   onClick={() => setIsEditing(false)} 
                   disabled={actionLoading}
+                  className="rounded-lg"
                 >
                   Cancel
                 </Button>
@@ -561,6 +679,7 @@ export default function HospitalDashboard() {
                   type="submit" 
                   gradientDuoTone="redToPink" 
                   disabled={actionLoading}
+                  className="rounded-lg"
                 >
                   {actionLoading ? (
                     <>
