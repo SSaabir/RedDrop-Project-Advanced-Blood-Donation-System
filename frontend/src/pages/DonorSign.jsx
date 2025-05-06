@@ -148,16 +148,16 @@ export default function DonorSign() {
   const maxDob = minAgeDate.toISOString().split('T')[0];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cover bg-center p-6 bg-gray-900 bg-opacity-50 backdrop-blur-lg">
-      <Card className="w-full max-w-4xl p-10 shadow-2xl rounded-2xl bg-white bg-opacity-95 backdrop-blur-md border border-red-100">
-        <h2 className="text-4xl font-extrabold text-center text-red-600 mb-8 drop-shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-red-50 via-pink-50 to-purple-50 p-6">
+      <Card className="w-full max-w-5xl p-12 shadow-xl rounded-3xl bg-white bg-opacity-90 backdrop-blur-xl border border-red-100 transition-all duration-300 hover:shadow-2xl">
+        <h2 className="text-5xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-pink-600 mb-10 drop-shadow-lg">
           Donor Registration
         </h2>
 
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleSubmit}>
-          <div className="space-y-6">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-8" onSubmit={handleSubmit}>
+          <div className="space-y-8">
             <div>
-              <Label htmlFor="firstName" value="First Name" className="text-gray-700 font-medium" />
+              <Label htmlFor="firstName" value="First Name" className="text-gray-800 font-semibold" />
               <TextInput
                 id="firstName"
                 type="text"
@@ -167,13 +167,13 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.firstName ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.firstName && <span className="text-red-600 text-sm">{errors.firstName}</span>}
               />
-              {errors.firstName && <p className="text-red-600 text-sm mt-1">{errors.firstName}</p>}
             </div>
 
             <div>
-              <Label htmlFor="lastName" value="Last Name" className="text-gray-700 font-medium" />
+              <Label htmlFor="lastName" value="Last Name" className="text-gray-800 font-semibold" />
               <TextInput
                 id="lastName"
                 type="text"
@@ -183,13 +183,13 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.lastName ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.lastName && <span className="text-red-600 text-sm">{errors.lastName}</span>}
               />
-              {errors.lastName && <p className="text-red-600 text-sm mt-1">{errors.lastName}</p>}
             </div>
 
             <div>
-              <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700 font-medium" />
+              <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-800 font-semibold" />
               <TextInput
                 id="phoneNumber"
                 type="tel"
@@ -200,13 +200,13 @@ export default function DonorSign() {
                 maxLength={10}
                 disabled={loading}
                 color={errors.phoneNumber ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.phoneNumber && <span className="text-red-600 text-sm">{errors.phoneNumber}</span>}
               />
-              {errors.phoneNumber && <p className="text-red-600 text-sm mt-1">{errors.phoneNumber}</p>}
             </div>
 
             <div>
-              <Label htmlFor="email" value="Email" className="text-gray-700 font-medium" />
+              <Label htmlFor="email" value="Email" className="text-gray-800 font-semibold" />
               <TextInput
                 id="email"
                 type="email"
@@ -216,13 +216,13 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.email ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.email && <span className="text-red-600 text-sm">{errors.email}</span>}
               />
-              {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
             </div>
 
             <div>
-              <Label htmlFor="password" value="Password" className="text-gray-700 font-medium" />
+              <Label htmlFor="password" value="Password" className="text-gray-800 font-semibold" />
               <TextInput
                 id="password"
                 type="password"
@@ -233,15 +233,15 @@ export default function DonorSign() {
                 minLength={8}
                 disabled={loading}
                 color={errors.password ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.password && <span className="text-red-600 text-sm">{errors.password}</span>}
               />
-              {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-medium" />
+              <Label htmlFor="dob" value="Date of Birth" className="text-gray-800 font-semibold" />
               <TextInput
                 id="dob"
                 type="date"
@@ -251,13 +251,13 @@ export default function DonorSign() {
                 max={maxDob}
                 disabled={loading}
                 color={errors.dob ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.dob && <span className="text-red-600 text-sm">{errors.dob}</span>}
               />
-              {errors.dob && <p className="text-red-600 text-sm mt-1">{errors.dob}</p>}
             </div>
 
             <div>
-              <Label htmlFor="city" value="City" className="text-gray-700 font-medium" />
+              <Label htmlFor="city" value="City" className="text-gray-800 font-semibold" />
               <TextInput
                 id="city"
                 type="text"
@@ -267,13 +267,13 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.city ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.city && <span className="text-red-600 text-sm">{errors.city}</span>}
               />
-              {errors.city && <p className="text-red-600 text-sm mt-1">{errors.city}</p>}
             </div>
 
             <div>
-              <Label htmlFor="nic" value="NIC" className="text-gray-700 font-medium" />
+              <Label htmlFor="nic" value="NIC" className="text-gray-800 font-semibold" />
               <TextInput
                 id="nic"
                 type="text"
@@ -284,13 +284,13 @@ export default function DonorSign() {
                 maxLength={12}
                 disabled={loading}
                 color={errors.nic ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.nic && <span className="text-red-600 text-sm">{errors.nic}</span>}
               />
-              {errors.nic && <p className="text-red-600 text-sm mt-1">{errors.nic}</p>}
             </div>
 
             <div>
-              <Label htmlFor="bloodType" value="Blood Type" className="text-gray-700 font-medium" />
+              <Label htmlFor="bloodType" value="Blood Type" className="text-gray-800 font-semibold" />
               <Select
                 id="bloodType"
                 value={formData.bloodType}
@@ -298,18 +298,18 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.bloodType ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
               >
                 <option value="">Select Blood Type</option>
                 {bloodTypes.map((type) => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </Select>
-              {errors.bloodType && <p className="text-red-600 text-sm mt-1">{errors.bloodType}</p>}
+              {errors.bloodType && <p className="text-red-600 text-sm mt-2">{errors.bloodType}</p>}
             </div>
 
             <div>
-              <Label htmlFor="gender" value="Gender" className="text-gray-700 font-medium" />
+              <Label htmlFor="gender" value="Gender" className="text-gray-800 font-semibold" />
               <Select
                 id="gender"
                 value={formData.gender}
@@ -317,18 +317,18 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.gender ? 'failure' : 'gray'}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
               >
                 <option value="">Select Gender</option>
                 {genders.map((gender) => (
                   <option key={gender} value={gender}>{gender}</option>
                 ))}
               </Select>
-              {errors.gender && <p className="text-red-600 text-sm mt-1">{errors.gender}</p>}
+              {errors.gender && <p className="text-red-600 text-sm mt-2">{errors.gender}</p>}
             </div>
 
             <div>
-              <Label htmlFor="image" value="Donor Image (JPG/PNG)" className="text-gray-700 font-medium" />
+              <Label htmlFor="image" value="Donor Image (JPG/PNG)" className="text-gray-800 font-semibold" />
               <FileInput
                 id="image"
                 accept="image/jpeg,image/png"
@@ -336,30 +336,30 @@ export default function DonorSign() {
                 required
                 disabled={loading}
                 color={errors.image ? "failure" : "gray"}
-                className="mt-1"
+                className="mt-2 rounded-xl border-red-100 focus:ring-red-300 focus:border-red-300 transition-all duration-200"
+                helperText={errors.image && <span className="text-red-600 text-sm">{errors.image}</span>}
               />
-              {errors.image && <p className="text-red-600 text-sm mt-1">{errors.image}</p>}
               {imagePreview && (
                 <img 
                   src={imagePreview} 
                   alt="Preview" 
-                  className="mt-4 w-32 h-32 object-cover rounded" 
+                  className="mt-4 w-40 h-40 object-cover rounded-xl shadow-md border border-red-100" 
                 />
               )}
             </div>
           </div>
 
-          <div className="md:col-span-2 flex flex-col items-center space-y-4">
+          <div className="md:col-span-2 flex flex-col items-center space-y-6">
             <Button
               type="submit"
               gradientDuoTone="redToPink"
-              size="lg"
-              className="w-full font-bold shadow-md hover:shadow-lg transition-shadow"
+              size="xl"
+              className="w-full max-w-md font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-r from-red-500 to-pink-500"
               disabled={loading}
             >
               {loading ? (
                 <>
-                  <Spinner size="sm" className="mr-2" />
+                  <Spinner size="sm" className="mr-3" />
                   Registering...
                 </>
               ) : (
@@ -368,7 +368,7 @@ export default function DonorSign() {
             </Button>
             <button
               onClick={() => navigate("/donor-login")}
-              className="text-red-600 font-medium hover:underline focus:outline-none"
+              className="text-red-600 font-semibold hover:text-pink-600 hover:underline focus:outline-none transition-colors duration-200"
               disabled={loading}
             >
               Already have an account? Login
