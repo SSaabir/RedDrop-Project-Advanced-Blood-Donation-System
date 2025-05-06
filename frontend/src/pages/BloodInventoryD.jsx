@@ -16,9 +16,10 @@ export default function BloodInventoryD() {
     fetchBloodInventory,
     toggleExpired,
   } = useBloodInventory();
-  const { fetchHospitals } = useHospital(); // Unused but kept per your code
+  const { fetchHospitals } = useHospital();
   const { user } = useAuthContext();
   const { reportUrl, generateInventoryReport } = useGenerateReport();
+
   // User and role setup
   const userId = user?.userObj?._id;
   const Hospital = user?.role === "Hospital";
@@ -34,6 +35,13 @@ export default function BloodInventoryD() {
   const [editFormData, setEditFormData] = useState({ hospitalId: "", bloodType: "", availableStocks: "", expirationDate: "" });
   const [editErrors, setEditErrors] = useState({});
 
+  // State for blood type filter
+  const [selectedBloodType, setSelectedBloodType] = useState("all");
+
+  // State for alert modal
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [missingBloodTypes, setMissingBloodTypes] = useState([]);
+
   // Loading and error state
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -41,14 +49,45 @@ export default function BloodInventoryD() {
   // Blood Type Options
   const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
-  // Fetch inventory based on role
+  // Fetch inventory based on role and check for missing blood types
   useEffect(() => {
-    if (Hospital) {
-      fetchBloodInventoryByHospital(userId);
-    } else if (Manager) {
-      fetchBloodInventory();
-    }
+    let isInitialFetch = true;
+
+    const fetchInventory = async () => {
+      setLoading(true);
+      try {
+        if (Hospital) {
+          await fetchBloodInventoryByHospital(userId);
+        } else if (Manager) {
+          await fetchBloodInventory();
+        }
+      } catch (error) {
+        setErrorMessage("Failed to fetch inventory. Please try again.");
+        console.error("Error fetching inventory:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventory();
+
+    return () => {
+      isInitialFetch = false; // Cleanup to prevent memory leaks
+    };
   }, [userId, Hospital, Manager, fetchBloodInventoryByHospital, fetchBloodInventory]);
+
+  // Check for missing blood types only after initial fetch
+  useEffect(() => {
+    if (!loading && bloodInventory.length > 0) {
+      const presentBloodTypes = new Set(bloodInventory.map((item) => item.bloodType));
+      const missingTypes = bloodTypes.filter((type) => !presentBloodTypes.has(type));
+      setMissingBloodTypes(missingTypes);
+      setIsAlertModalOpen(missingTypes.length > 0); // Open modal if there are missing types
+    } else {
+      setMissingBloodTypes([]);
+      setIsAlertModalOpen(false); // No modal when inventory is empty or loading
+    }
+  }, [bloodInventory, loading]);
 
   // Validation functions
   const validateAddForm = () => {
@@ -82,14 +121,16 @@ export default function BloodInventoryD() {
 
   // Open Modal for Edit
   const openEditModal = (inventory) => {
-    setEditFormData({ ...inventory, expirationDate: inventory.expirationDate.split("T")[0] }); // Format date for input
+    setEditFormData({ ...inventory, expirationDate: inventory.expirationDate.split("T")[0] });
     setEditErrors({});
+    setIsAlertModalOpen(false); // Close alert modal when opening edit modal
     setIsEditModalOpen(true);
   };
 
   // Close Modals
   const closeAddModal = () => setIsAddModalOpen(false);
   const closeEditModal = () => setIsEditModalOpen(false);
+  const closeAlertModal = () => setIsAlertModalOpen(false);
 
   // Handle Input Change for Add
   const handleChange = (e) => {
@@ -134,12 +175,34 @@ export default function BloodInventoryD() {
     }
   };
 
+  // Handle Delete
+  const handleDelete = async (id) => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      await deleteBloodInventory(id);
+    } catch (error) {
+      setErrorMessage("Failed to delete inventory. Please try again.");
+      console.error("Error deleting inventory:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Blood Type Filter Change
+  const handleBloodTypeFilterChange = (e) => {
+    setSelectedBloodType(e.target.value);
+  };
+
   const handleGenerateReport = (e) => {
     e.preventDefault();
     generateInventoryReport(user.userObj._id);
+  };
 
-
-};
+  // Filter blood inventory based on selected blood type
+  const filteredBloodInventory = selectedBloodType === "all"
+    ? bloodInventory
+    : bloodInventory.filter((inventory) => inventory.bloodType === selectedBloodType);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -147,20 +210,39 @@ export default function BloodInventoryD() {
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Blood Inventory</h1>
-          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
-            Generate Report
-          </Button>
-          {reportUrl && (
-      <div>
-          <p>Report generated successfully!</p>
-          <a href={`http://localhost:3020${reportUrl}`} download>
-              Download Report
-          </a>
-      </div>
-  )}
-          <Button gradientDuoTone="redToPink" onClick={openAddModal}>
-            Add New Inventory
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}>
+              Generate Report
+            </Button>
+            {reportUrl && (
+              <div>
+                <p>Report generated successfully!</p>
+                <a href={`http://localhost:3020${reportUrl}`} download>
+                  Download Report
+                </a>
+              </div>
+            )}
+            <Button gradientDuoTone="redToPink" onClick={openAddModal}>
+              Add New Inventory
+            </Button>
+          </div>
+        </div>
+
+        {/* Blood Type Filter */}
+        <div className="mb-4">
+          <Label value="Filter by Blood Type" />
+          <Select
+            value={selectedBloodType}
+            onChange={handleBloodTypeFilterChange}
+            className="w-48"
+          >
+            <option value="all">All Blood Types</option>
+            {bloodTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <Table hoverable>
@@ -173,8 +255,8 @@ export default function BloodInventoryD() {
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
-            {bloodInventory.length > 0 ? (
-              bloodInventory.map((inventory) => (
+            {filteredBloodInventory.length > 0 ? (
+              filteredBloodInventory.map((inventory) => (
                 <Table.Row key={inventory._id} className="bg-white">
                   <Table.Cell>{inventory.hospitalId || "N/A"}</Table.Cell>
                   <Table.Cell>{inventory.bloodType}</Table.Cell>
@@ -189,21 +271,32 @@ export default function BloodInventoryD() {
                       {inventory.expiredStatus ? "Expired" : "Not Expired"}
                     </span>
                   </Table.Cell>
-                  <Table.Cell className="space-x-2">
-                    <Button size="xs" color="blue" onClick={() => openEditModal(inventory)}>
-                      Edit
-                    </Button>
-                    <Button size="xs" color="failure" onClick={() => deleteBloodInventory(inventory._id)}>
-                      Delete
-                    </Button>
-                    
+                  <Table.Cell>
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="xs" 
+                        color="blue" 
+                        onClick={() => openEditModal(inventory)}
+                        className="w-16"
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        size="xs" 
+                        color="failure" 
+                        onClick={() => handleDelete(inventory._id)}
+                        className="w-16"
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </Table.Cell>
                 </Table.Row>
               ))
             ) : (
               <Table.Row>
                 <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
-                  No blood inventory records found.
+                  No blood inventory records found for the selected blood type.
                 </Table.Cell>
               </Table.Row>
             )}
@@ -275,7 +368,6 @@ export default function BloodInventoryD() {
         <Modal.Header>Edit Inventory</Modal.Header>
         <Modal.Body>
           <div className="space-y-4">
-            
             <div>
               <Label value="Stock" />
               <TextInput
@@ -290,7 +382,6 @@ export default function BloodInventoryD() {
                 <p className="text-red-600 text-sm mt-1">{editErrors.availableStocks}</p>
               )}
             </div>
-            
           </div>
         </Modal.Body>
         <Modal.Footer>
@@ -304,6 +395,32 @@ export default function BloodInventoryD() {
           </Button>
           <Button color="gray" onClick={closeEditModal} disabled={loading}>
             Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal for Missing Blood Types Alert */}
+      <Modal show={isAlertModalOpen} onClose={closeAlertModal} size="md">
+        <Modal.Header>Missing Blood Types</Modal.Header>
+        <Modal.Body>
+          <p className="text-gray-700">
+            The following blood types are not present in the inventory:
+          </p>
+          <ul className="list-disc pl-5 mt-2 text-gray-700">
+            {missingBloodTypes.map((type) => (
+              <li key={type}>{type}</li>
+            ))}
+          </ul>
+          <p className="mt-4 text-gray-700">
+            Please consider adding these blood types to ensure complete inventory coverage.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button gradientDuoTone="redToPink" onClick={openAddModal}>
+            Add Inventory
+          </Button>
+          <Button color="gray" onClick={closeAlertModal}>
+            Close
           </Button>
         </Modal.Footer>
       </Modal>
