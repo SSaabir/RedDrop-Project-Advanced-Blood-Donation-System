@@ -36,11 +36,7 @@ export const useDonor = () => {
 
     const createDonor = async (donorData) => {
         try {
-            const response = await axios.post("/api/donor", donorData, {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const response = await axios.post("/api/donor", donorData);
             setDonors((prev) => [...prev, response.data]);
             toast.success("Donor created successfully!");
         } catch (err) {

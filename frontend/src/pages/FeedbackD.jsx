@@ -143,9 +143,9 @@ export default function FeedbackDashboard() {
             className="w-1/4"
           >
             <option value="">All Types</option>
-            <option value="General Feedback">General Feedback</option>
-            <option value="Technical Feedback">Technical Feedback</option>
-            <option value="Complaint Feedback">Complaint Feedback</option>
+            <option value="General">General Feedbacks</option>
+            <option value="Technical">Technical Feedbacks</option>
+            <option value="Complaint">Complaint Feedbacks</option>
           </Select>
         </div>
 

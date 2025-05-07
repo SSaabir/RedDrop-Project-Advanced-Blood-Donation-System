@@ -107,16 +107,6 @@ export default function AdminLogin() {
             )}
           </Button>
 
-          <p className="text-center text-sm text-[#45315D]">
-            Don’t have an admin account?{' '}
-            <button
-              onClick={() => navigate("/admin-register")}
-              className="text-[#FF9280] font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-[#FF9280]"
-              disabled={loading}
-            >
-              Sign up
-            </button>
-          </p>
         </form>
       </Card>
     </div>

@@ -4,7 +4,7 @@ import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useBloodDonationAppointment } from "../hooks/useBloodDonationAppointment";
 import { useSecondAuth } from "../hooks/useSecondAuth";
 import { useAuthContext } from "../hooks/useAuthContext";
-import { useFeedback } from "../hooks/useFeedback";
+import { useFeedback } from "../hooks/usefeedback";
 import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function HealthEvaluationD() {
@@ -479,9 +479,9 @@ export default function HealthEvaluationD() {
                 color={feedbackErrors.feedbackType ? "failure" : "gray"}
               >
                 <option value="">Select Feedback Type</option>
-                <option value="General Feedback">General Feedback</option>
-                <option value="Technical Feedback">Technical Feedback</option>
-                <option value="Complaint Feedback">Complaint Feedback</option>
+                <option value="General">General Feedback</option>
+                <option value="Technical">Technical Feedback</option>
+                <option value="Complaint">Complaint Feedback</option>
               </Select>
               {feedbackErrors.feedbackType && (
                 <p className="text-red-600 text-sm mt-1">{feedbackErrors.feedbackType}</p>
