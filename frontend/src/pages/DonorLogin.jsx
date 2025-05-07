@@ -41,6 +41,8 @@ export default function DonorLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate form and handle client-side errors
     if (!validateForm()) {
       if (errors.email) toast.error(errors.email);
       if (errors.password) toast.error(errors.password);
@@ -48,38 +50,30 @@ export default function DonorLogin() {
     }
 
     try {
-      const response = await signinD(formData);
-      
-      if (response?.success) {
-        toast.success('Login successful! Redirecting...');
-        navigate('/dashboard');
-      } else {
-        const errorMsg = response?.message?.toLowerCase() || '';
-        
-        if (errorMsg.includes('password')) {
-          toast.error('Incorrect password. Please try again.');
-          setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
-        } else if (errorMsg.includes('email') || errorMsg.includes('user')) {
-          toast.error('Email not found. Please check your email or register.');
-          setErrors(prev => ({ ...prev, email: 'Email not found' }));
-        } else {
-          toast.error('Login failed. Please try again.');
-        }
-      }
+      await signinD(formData); // Let useSignin handle success (toast, navigation)
     } catch (err) {
-      const errorMsg = err?.response?.data?.message?.toLowerCase() || err.message?.toLowerCase() || '';
-      
-      if (errorMsg.includes('password')) {
-        toast.error('Incorrect password. Enter valid password');
-        setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
-      } else if (errorMsg.includes('email') || errorMsg.includes('user')) {
-        toast.error('Email incorrect. Enter valid email');
-        setErrors(prev => ({ ...prev, email: 'Email not found' }));
-      } else if (err.message === 'Network Error') {
-        toast.error('Network error. Please check your connection.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      // Handle network or unexpected errors
+      const errorMsg =
+        err?.response?.data?.error ||
+        (err.message === 'Network Error'
+          ? 'Network error. Please check your connection.'
+          : 'Login failed. Please try again.');
+      handleErrorResponse(errorMsg);
+    }
+  };
+
+  // Helper function to handle errors consistently
+  const handleErrorResponse = (errorMsg) => {
+    const lowerMsg = errorMsg.toLowerCase();
+
+    if (lowerMsg.includes('password')) {
+      toast.error('Incorrect password. Please try again.');
+      setErrors((prev) => ({ ...prev, password: 'Incorrect password' }));
+    } else if (lowerMsg.includes('email') || lowerMsg.includes('user')) {
+      toast.error('Email not found. Please check your email or register.');
+      setErrors((prev) => ({ ...prev, email: 'Email not found' }));
+    } else {
+      toast.error(errorMsg);
     }
   };
 
@@ -95,7 +89,7 @@ export default function DonorLogin() {
         </Button>
 
         <h2 className="text-4xl font-extrabold text-center bg-gradient-to-r from-red-700 to-pink-700 bg-clip-text text-transparent mb-8 tracking-tight drop-shadow-md">
-          Donor Login
+          DonorLogin
         </h2>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -147,6 +141,23 @@ export default function DonorLogin() {
               </p>
             )}
           </div>
+
+          <div className="flex items-center">
+            <Checkbox
+              id="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleChange}
+              disabled={loading}
+              className="h-4 w-4 text-red-600 focus:ring-red-400 border-gray-300 rounded"
+            />
+            <Label
+              htmlFor="rememberMe"
+              className="ml-2 text-sm font-medium text-gray-900"
+            >
+              Remember me
+            </Label>
+          </div>
+
           <Button
             type="submit"
             size="lg"

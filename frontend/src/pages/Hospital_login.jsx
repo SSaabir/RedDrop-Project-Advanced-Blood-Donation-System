@@ -37,6 +37,8 @@ export default function HospitalLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate form and handle client-side errors
     if (!validateForm()) {
       if (errors.email) toast.error(errors.email);
       if (errors.password) toast.error(errors.password);
@@ -44,38 +46,30 @@ export default function HospitalLogin() {
     }
 
     try {
-      const response = await signinH(formData);
-      
-      if (response?.success) {
-        toast.success('Login successful! Redirecting...');
-        navigate('/hospital-dashboard');
-      } else {
-        const errorMsg = response?.message?.toLowerCase() || '';
-        
-        if (errorMsg.includes('password')) {
-          toast.error('Incorrect password. Please enter valid password');
-          setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
-        } else if (errorMsg.includes('email') || errorMsg.includes('hospital')) {
-          toast.error('Email not found. Please enter valid email');
-          setErrors(prev => ({ ...prev, email: 'Email not found' }));
-        } else {
-          toast.error('Login failed. Please try again.');
-        }
-      }
+      await signinH(formData); // Let useSignin handle success (toast, navigation)
     } catch (err) {
-      const errorMsg = err?.response?.data?.message?.toLowerCase() || err.message?.toLowerCase() || '';
-      
-      if (errorMsg.includes('password')) {
-        toast.error('Incorrect password. Please enter valid password');
-        setErrors(prev => ({ ...prev, password: 'Incorrect password' }));
-      } else if (errorMsg.includes('email') || errorMsg.includes('hospital')) {
-        toast.error('Email not found. Please enter valid email');
-        setErrors(prev => ({ ...prev, email: 'Email not found' }));
-      } else if (err.message === 'Network Error') {
-        toast.error('Network error. Please check your connection.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
+      // Handle network or unexpected errors
+      const errorMsg =
+        err?.response?.data?.error ||
+        (err.message === 'Network Error'
+          ? 'Network error. Please check your connection.'
+          : 'Login failed. Please try again.');
+      handleErrorResponse(errorMsg);
+    }
+  };
+
+  // Helper function to handle errors consistently
+  const handleErrorResponse = (errorMsg) => {
+    const lowerMsg = errorMsg.toLowerCase();
+
+    if (lowerMsg.includes('password')) {
+      toast.error('Incorrect password. Please enter valid password');
+      setErrors((prev) => ({ ...prev, password: 'Incorrect password' }));
+    } else if (lowerMsg.includes('email') || lowerMsg.includes('hospital')) {
+      toast.error('Email not found. Please enter valid email');
+      setErrors((prev) => ({ ...prev, email: 'Email not found' }));
+    } else {
+      toast.error(errorMsg);
     }
   };
 

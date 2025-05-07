@@ -2,15 +2,18 @@ import React, { useEffect, useState } from "react";
 import { Button, Spinner, Table, Modal, TextInput, Label, FileInput, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospital } from "../hooks/hospital";
+import { useHospitalAdmin } from "../hooks/useHospitalAdmin";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { toast } from "react-toastify";
 import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function HospitalDashboard() {
   const { hospitals, loading, error, fetchHospitals, deleteHospital, updateHospital, createHospital } = useHospital();
+  const { createHospitalAdmin } = useHospitalAdmin();
   const [editHospital, setEditHospital] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
   const { user } = useAuthContext();
   const userId = user?.userObj?._id;
   const [newHospital, setNewHospital] = useState({
@@ -29,6 +32,7 @@ export default function HospitalDashboard() {
   const [imagePreview, setImagePreview] = useState(null);
   const [addErrors, setAddErrors] = useState({});
   const [editErrors, setEditErrors] = useState({});
+  const [addAdminErrors, setAddAdminErrors] = useState({});
   const [actionLoading, setActionLoading] = useState(false);
   const { reportUrl, generateHospitalReport } = useGenerateReport();
   const [filter, setFilter] = useState({
@@ -37,6 +41,18 @@ export default function HospitalDashboard() {
     status: ""
   });
   const [filteredHospitals, setFilteredHospitals] = useState([]);
+  const [adminData, setAdminData] = useState({
+    hospitalId: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    dob: "",
+    address: "",
+    nic: "",
+    image: null,
+    password: "",
+  });
 
   useEffect(() => {
     fetchHospitals();
@@ -84,6 +100,44 @@ export default function HospitalDashboard() {
     return errors;
   };
 
+  const validateAdminForm = (data) => {
+    const errors = {};
+    if (!data.hospitalId) errors.hospitalId = "Hospital is required";
+    if (!data.email) errors.email = "Email is required";
+    else if (!/^[^\s@]+@health\.gov\.lk$/.test(data.email))
+      errors.email = "Email must end with @health.gov.lk";
+    if (!data.firstName) errors.firstName = "First name is required";
+    if (!data.lastName) errors.lastName = "Last name is required";
+    if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
+    else if (!/^\d{10}$/.test(data.phoneNumber))
+      errors.phoneNumber = "Phone number must be exactly 10 digits";
+    if (!data.dob) errors.dob = "Date of birth is required";
+    else {
+      const dobDate = new Date(data.dob);
+      const today = new Date();
+      const minAgeDate = new Date(
+        today.getFullYear() - 20,
+        today.getMonth(),
+        today.getDate()
+      );
+      if (dobDate >= minAgeDate) errors.dob = "Must be at least 20 years old";
+    }
+    if (!data.address) errors.address = "Address is required";
+    if (!data.nic) errors.nic = "NIC is required";
+    else if (!/^\d{12}$/.test(data.nic))
+      errors.nic = "NIC must be exactly 12 digits";
+    if (!data.password) errors.password = "Password is required";
+    else if (
+      data.password.length < 6 || !/[!@#$%^&*(),.?":{}|<>]/.test(data.password)
+    ) {
+      errors.password =
+        "Password must be at least 6 characters and contain at least one special character";
+    }
+    if (data.image && !["image/jpeg", "image/png"].includes(data.image.type))
+      errors.image = "Image must be JPG or PNG";
+    return errors;
+  };
+
   const validateEditForm = (data) => {
     const errors = {};
     if (!data.name) errors.name = "Name is required";
@@ -114,6 +168,31 @@ export default function HospitalDashboard() {
       setEditHospital(prev => ({ ...prev, identificationNumber: value }));
     } else {
       setNewHospital(prev => ({ ...prev, identificationNumber: value }));
+    }
+  };
+
+  const handleAdminChange = (e) => {
+    const { id, value } = e.target;
+    let sanitizedValue = value;
+    if (id === "phoneNumber" || id === "nic") {
+      sanitizedValue = value.replace(/[^0-9]/g, "");
+    }
+    setAdminData((prev) => ({ ...prev, [id]: sanitizedValue }));
+    setAddAdminErrors((prev) => ({ ...prev, [id]: "" }));
+  };
+
+  const handleAdminImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        setAddAdminErrors((prev) => ({
+          ...prev,
+          image: "Image must be JPG or PNG",
+        }));
+      } else {
+        setAddAdminErrors((prev) => ({ ...prev, image: null }));
+        setAdminData((prev) => ({ ...prev, image: file }));
+      }
     }
   };
 
@@ -219,6 +298,46 @@ export default function HospitalDashboard() {
     }
   };
 
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    const errors = validateAdminForm(adminData);
+    setAddAdminErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const formData = new FormData();
+      Object.keys(adminData).forEach((key) => {
+        if (adminData[key] !== null && adminData[key] !== "") {
+          formData.append(key, adminData[key]);
+        }
+      });
+      await createHospitalAdmin(formData);
+      toast.success("Hospital admin added successfully");
+      setIsAddingAdmin(false);
+      setAdminData({
+        hospitalId: "",
+        email: "",
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        dob: "",
+        address: "",
+        nic: "",
+        image: null,
+        password: "",
+      });
+      setAddAdminErrors({});
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to add hospital admin");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -247,6 +366,15 @@ export default function HospitalDashboard() {
     e.preventDefault();
     generateHospitalReport();
   };
+
+  const today = new Date();
+  const maxDob = new Date(
+    today.getFullYear() - 20,
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -280,14 +408,24 @@ export default function HospitalDashboard() {
             </div>
           </div>
 
-          <Button 
-            gradientDuoTone="redToPink" 
-            onClick={() => setIsAdding(true)} 
-            disabled={actionLoading}
-            className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
-          >
-            Add Hospital
-          </Button>
+          <div className="flex space-x-4">
+            <Button 
+              gradientDuoTone="redToPink" 
+              onClick={() => setIsAdding(true)} 
+              disabled={actionLoading}
+              className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
+            >
+              Add Hospital
+            </Button>
+            <Button 
+              gradientDuoTone="redToPink" 
+              onClick={() => setIsAddingAdmin(true)} 
+              disabled={actionLoading}
+              className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
+            >
+              Add Hospital Admin
+            </Button>
+          </div>
         </div>
 
         <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
@@ -399,7 +537,7 @@ export default function HospitalDashboard() {
               ) : (
                 <Table.Row>
                   <Table.Cell 
-                    colSpan="10 " 
+                    colSpan="10" 
                     className="text-center py-6 text-gray-500 font-medium"
                   >
                     No hospitals found
@@ -638,7 +776,7 @@ export default function HospitalDashboard() {
                   color={editErrors.address ? "failure" : "gray"}
                   className="rounded-lg"
                 />
-                {addErrors.address && <p className="text-red-600 text-sm mt-1">{addErrors.address}</p>}
+                {editErrors.address && <p className="text-red-600 text-sm mt-1">{editErrors.address}</p>}
               </div>
               <div>
                 <Label htmlFor="editStartTime" value="Opening Time" />
@@ -687,6 +825,200 @@ export default function HospitalDashboard() {
                       Updating...
                     </>
                   ) : "Update Hospital"}
+                </Button>
+              </div>
+            </form>
+          </Modal.Body>
+        </Modal>
+
+        <Modal show={isAddingAdmin} onClose={() => setIsAddingAdmin(false)} className="rounded-xl">
+          <Modal.Header className="bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-t-xl">
+            Add New Hospital Admin
+          </Modal.Header>
+          <Modal.Body className="bg-gray-50 p-6 rounded-b-xl">
+            <form onSubmit={handleAddAdmin} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="hospitalId" value="Select Hospital" className="text-gray-700 font-semibold" />
+                  <Select
+                    id="hospitalId"
+                    required
+                    value={adminData.hospitalId}
+                    onChange={handleAdminChange}
+                    color={addAdminErrors.hospitalId ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm"
+                  >
+                    <option value="" disabled>Select a hospital</option>
+                    {hospitals && hospitals.map((hospital) => (
+                      <option key={hospital._id} value={hospital._id}>{hospital.name}</option>
+                    ))}
+                  </Select>
+                  {addAdminErrors.hospitalId && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.hospitalId}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="email" value="Email" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="email"
+                    value={adminData.email}
+                    onChange={handleAdminChange}
+                    required
+                    color={addAdminErrors.email ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="example@health.gov.lk"
+                  />
+                  {addAdminErrors.email && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.email}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="firstName" value="First Name" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="firstName"
+                    value={adminData.firstName}
+                    onChange={handleAdminChange}
+                    required
+                    color={addAdminErrors.firstName ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter first name"
+                  />
+                  {addAdminErrors.firstName && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.firstName}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="lastName" value="Last Name" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="lastName"
+                    value={adminData.lastName}
+                    onChange={handleAdminChange}
+                    required
+                    color={addAdminErrors.lastName ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter last name"
+                  />
+                  {addAdminErrors.lastName && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.lastName}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber" value="Phone Number" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="phoneNumber"
+                    value={adminData.phoneNumber}
+                    onChange={handleAdminChange}
+                    required
+                    type="tel"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    color={addAdminErrors.phoneNumber ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="1234567890"
+                  />
+                  {addAdminErrors.phoneNumber && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.phoneNumber}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="dob" value="Date of Birth" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="dob"
+                    type="date"
+                    value={adminData.dob}
+                    onChange={handleAdminChange}
+                    required
+                    max={maxDob}
+                    color={addAdminErrors.dob ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                  />
+                  {addAdminErrors.dob && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.dob}</p>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="address" value="Address" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="address"
+                    value={adminData.address}
+                    onChange={handleAdminChange}
+                    required
+                    color={addAdminErrors.address ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter address"
+                  />
+                  {addAdminErrors.address && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.address}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="nic" value="NIC" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="nic"
+                    value={adminData.nic}
+                    onChange={handleAdminChange}
+                    required
+                    pattern="[0-9]{12}"
+                    maxLength={12}
+                    color={addAdminErrors.nic ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="123456789012"
+                  />
+                  {addAdminErrors.nic && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.nic}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="password" value="Password" className="text-gray-700 font-semibold" />
+                  <TextInput
+                    id="password"
+                    type="password"
+                    value={adminData.password}
+                    onChange={handleAdminChange}
+                    required
+                    color={addAdminErrors.password ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm focus:ring-2 focus:ring-red-300 transition"
+                    placeholder="Enter password"
+                  />
+                  {addAdminErrors.password && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.password}</p>
+                  )}
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="image" value="Profile Image (Optional)" className="text-gray-700 font-semibold" />
+                  <FileInput
+                    id="image"
+                    accept="image/jpeg,image/png"
+                    onChange={handleAdminImageUpload}
+                    color={addAdminErrors.image ? "failure" : "gray"}
+                    className="mt-1 rounded-lg shadow-sm"
+                  />
+                  {addAdminErrors.image && (
+                    <p className="text-red-600 text-sm mt-1">{addAdminErrors.image}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-4 pt-6">
+                <Button
+                  color="gray"
+                  onClick={() => setIsAddingAdmin(false)}
+                  disabled={actionLoading}
+                  className="rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition shadow-md"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  gradientDuoTone="redToPink"
+                  disabled={actionLoading}
+                  className="rounded-lg shadow-md hover:shadow-lg transition"
+                >
+                  {actionLoading ? (
+                    <>
+                      <Spinner size="sm" className="mr-2" />
+                      Adding...
+                    </>
+                  ) : "Add Hospital Admin"}
                 </Button>
               </div>
             </form>

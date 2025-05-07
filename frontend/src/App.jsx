@@ -5,7 +5,7 @@ import 'react-toastify/dist/ReactToastify.css'; // Import the default styles
 
 
 import Header from './components/Header'
-import Dashboard from './pages/Dashboard'
+import Dashboard from './pages/dashboard'
 import Footer from './components/Footer'
 import DonorD from './pages/DonorD'
 import AppointmentD from './pages/AppointmentD'

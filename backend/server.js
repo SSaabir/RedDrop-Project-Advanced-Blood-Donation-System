@@ -23,7 +23,7 @@ import  BloodInventory  from "./models/BloodInventory.model.js";
 import  HealthEvaluation  from "./models/HealthEvaluation.model.js";
 import  EmergencyBR  from "./models/EmergencyBR.model.js";
 import reportRoutes from "./routes/report.route.js";
-
+import dashboardRoutes from "./routes/dashboard.route.js";
 
 dotenv.config();
 
@@ -131,7 +131,7 @@ app.use("/api/manager", SystemManagerRoutes);
 app.use("/api/emergency-requests", EmergencyBRRoutes);
 app.use("/api/healthAd", HospitalAdminRoutes);
 app.use('/api/reports', reportRoutes);
-
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404 Handler
 app.use((req, res, next) => {

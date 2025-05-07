@@ -9,7 +9,7 @@ import { useHospital } from '../hooks/hospital';
 import { useHealthEvaluation } from '../hooks/useHealthEvaluation';
 import { useBloodDonationAppointment } from '../hooks/useBloodDonationAppointment';
 import { useSecondAuth } from '../hooks/useSecondAuth';
-import {useDonor} from '../hooks/donor';
+import { useDonor } from '../hooks/donor';
 
 export default function Header() {
   const path = useLocation().pathname;
@@ -19,7 +19,7 @@ export default function Header() {
   const { hospitals, loading: hLoading, fetchHospitals } = useHospital();
   const { createEvaluation, loading: heLoading, findLastUpdatedEvaluationByDonor } = useHealthEvaluation();
   const { createAppointment, loading } = useBloodDonationAppointment();
-  const {donors, fetchDonorById} = useDonor();
+  const { donors, fetchDonorById } = useDonor();
   
   // State for modals and form data
   const [openEvalModal, setOpenEvalModal] = useState(false);
@@ -30,8 +30,6 @@ export default function Header() {
   const HospitalAdmin = secondUser?.role === 'HospitalAdmin';
   const Manager = user?.role === 'Manager';
 
-  
- 
   const [evalFormData, setEvalFormData] = useState({
     hospitalId: "",
     evaluationDate: "",
@@ -55,9 +53,16 @@ export default function Header() {
 
   useEffect(() => {
     fetchHospitals(); 
-    fetchDonorById(userId);
+    if (Donor && userId) {
+      try {
+        fetchDonorById(userId);
+      } catch (error) {
+        console.error("Error fetching donor:", error);
+        toast.error("Failed to fetch donor details");
+      }
+    }
     const fetchLastEvaluation = async () => {
-      if (userId && Donor) {
+      if (userId && Donor && user.userObj?.healthStatus) {
         try {
           const res = await findLastUpdatedEvaluationByDonor(userId);
           setLastEvaluation(res);
@@ -70,7 +75,6 @@ export default function Header() {
     fetchLastEvaluation();
   }, [fetchHospitals, hLoading, fetchDonorById, userId]);
 
-  
   const loggedInDonor = donors?.find(d => d._id === userId) || {};
 
   // Today's date for validation
@@ -83,6 +87,11 @@ export default function Header() {
     if (!evalFormData.evaluationDate) errors.evaluationDate = 'Date is required';
     else if (evalFormData.evaluationDate < today) errors.evaluationDate = 'Date must be today or in the future';
     if (!evalFormData.evaluationTime) errors.evaluationTime = 'Time is required';
+    else if (selectedHospital.startTime && selectedHospital.endTime) {
+      if (evalFormData.evaluationTime < selectedHospital.startTime || evalFormData.evaluationTime > selectedHospital.endTime) {
+        errors.evaluationTime = `Time must be between ${selectedHospital.startTime} and ${selectedHospital.endTime}`;
+      }
+    }
     setEvalErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -90,10 +99,16 @@ export default function Header() {
   // Validate Appointment Form
   const validateAppointmentForm = () => {
     const errors = {};
+    const selectedApptHospital = hospitals?.find(h => h._id === appointmentFormData.hospitalId) || {};
     if (!appointmentFormData.hospitalId) errors.hospitalId = 'Hospital is required';
     if (!appointmentFormData.appointmentDate) errors.appointmentDate = 'Date is required';
     else if (appointmentFormData.appointmentDate < today) errors.appointmentDate = 'Date must be today or in the future';
     if (!appointmentFormData.appointmentTime) errors.appointmentTime = 'Time is required';
+    else if (selectedApptHospital.startTime && selectedApptHospital.endTime) {
+      if (appointmentFormData.appointmentTime < selectedApptHospital.startTime || appointmentFormData.appointmentTime > selectedApptHospital.endTime) {
+        errors.appointmentTime = `Time must be between ${selectedApptHospital.startTime} and ${selectedApptHospital.endTime}`;
+      }
+    }
     setAppointmentErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -129,8 +144,9 @@ export default function Header() {
     try {
       await createEvaluation(evaluationData);
       setOpenEvalModal(false);
+      toast.success('Evaluation scheduled successfully');
     } catch (err) {
-      toast.error('Error scheduling evaluation'); // No heError, so generic message
+      toast.error('Error scheduling evaluation');
     }
   };
 
@@ -146,8 +162,9 @@ export default function Header() {
     try {
       await createAppointment(appointmentData);
       setOpenAppointmentModal(false);
+      toast.success('Appointment scheduled successfully');
     } catch (err) {
-      toast.error('Error scheduling appointment'); // No error, so generic message
+      toast.error('Error scheduling appointment');
     }
   };
 
@@ -170,28 +187,24 @@ export default function Header() {
         )}
         {Donor && (
           <>
-{!loggedInDonor.healthStatus && !loggedInDonor.appointmentStatus && (
-  <Button
-    className="bg-red-600 hover:bg-red-800 text-white font-bold"
-    onClick={() => setOpenEvalModal(true)}
-  >
-    Evaluation
-  </Button>
-)}
-
-{
-  loggedInDonor?.healthStatus &&
-  !loggedInDonor?.appointmentStatus &&
-  lastEvaluation?.passStatus === 'Passed' && (
-    <Button
-      className='bg-red-600 hover:bg-red-800 text-white font-bold'
-      onClick={() => setOpenAppointmentModal(true)}
-    >
-      Appointment
-    </Button>
-  )
-}
-
+            {!loggedInDonor.healthStatus && !loggedInDonor.appointmentStatus && (
+              <Button
+                className="bg-red-600 hover:bg-red-800 text-white font-bold"
+                onClick={() => setOpenEvalModal(true)}
+              >
+                Evaluation
+              </Button>
+            )}
+            {loggedInDonor?.healthStatus &&
+              !loggedInDonor?.appointmentStatus &&
+              lastEvaluation?.passStatus === 'Passed' && (
+                <Button
+                  className='bg-red-600 hover:bg-red-800 text-white font-bold'
+                  onClick={() => setOpenAppointmentModal(true)}
+                >
+                  Appointment
+                </Button>
+              )}
           </>
         )}
         {Donor && (
@@ -309,26 +322,23 @@ export default function Header() {
                 id="evaluationDate"
                 type="date"
                 required
+                min={today}
                 value={evalFormData.evaluationDate}
                 onChange={handleEvalChange}
                 color={evalErrors.evaluationDate ? 'failure' : 'gray'}
               />
               {evalErrors.evaluationDate && <p className="text-red-600 text-sm mt-1">{evalErrors.evaluationDate}</p>}
             </div>
-
             {selectedHospital?.startTime && selectedHospital?.endTime && (
-  <p className="text-sm text-gray-500 mt-1">
-    Available between {selectedHospital.startTime} - {selectedHospital.endTime}
-  </p>
-)}
-
+              <p className="text-sm text-gray-500 mt-1">
+                Available between {selectedHospital.startTime} - {selectedHospital.endTime}
+              </p>
+            )}
             <div className="mb-4">
               <Label htmlFor="evaluationTime" value="Evaluation Time" className="text-gray-700 font-medium" />
               <TextInput
                 id="evaluationTime"
                 type="time"
-                min={selectedHospital.startTime}
-                max={selectedHospital.endTime}
                 required
                 value={evalFormData.evaluationTime}
                 onChange={handleEvalChange}
@@ -383,6 +393,11 @@ export default function Header() {
                 color={appointmentErrors.appointmentDate ? 'failure' : 'gray'}
               />
               {appointmentErrors.appointmentDate && <p className="text-red-600 text-sm mt-1">{appointmentErrors.appointmentDate}</p>}
+              {appointmentFormData.hospitalId && hospitals.find(h => h._id === appointmentFormData.hospitalId)?.startTime && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Available between {hospitals.find(h => h._id === appointmentFormData.hospitalId).startTime} - {hospitals.find(h => h._id === appointmentFormData.hospitalId).endTime}
+                </p>
+              )}
             </div>
             <div className="mb-4">
               <Label htmlFor="appointmentTime" value="Appointment Time" className="text-gray-700 font-medium" />

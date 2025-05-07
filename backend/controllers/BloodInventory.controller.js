@@ -33,39 +33,37 @@ export const getBloodInventoryById = async (req, res) => {
 
 // Create a new blood inventory record
 export const createBloodInventory = async (req, res) => {
-    try {
-        const { hospitalId, bloodType, availableStocks } = req.body;
-        console.log(req.body)
-        if (!hospitalId || !bloodType || !availableStocks) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        // Set expiration date to today + 42 days
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time for consistency
-        const expirationDate = new Date(today);
-        expirationDate.setDate(today.getDate() + 42);
-
-        // Optional: Validate expiration date calculation
-        const expectedDate = new Date(today);
-        
-        if (expirationDate.getTime() !== expectedDate.getTime()) {
-            return res.status(500).json({ message: "Error calculating expiration date" });
-        }
-
-        const newInventory = new BloodInventory({
-            hospitalId,
-            bloodType,
-            availableStocks,
-            expirationDate: expectedDate.setDate(today.getDate() + 42),
-        });
-
-        await newInventory.save();
-        res.status(201).json({ success: true, data: newInventory });
-    } catch (error) {
-        res.status(400).json({ message: "Error creating blood inventory record" });
+  try {
+    const { hospitalId, bloodType, availableStocks } = req.body;
+    console.log("Request body:", req.body);
+    // Basic validation
+    if (!hospitalId || !bloodType || availableStocks === undefined) {
+      return res.status(400).json({ message: "All fields are required" });
     }
+
+    // Calculate expiration date (today + 42 days)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expirationDate = new Date(today);
+    expirationDate.setDate(expirationDate.getDate() + 42); // Mutates expirationDate
+
+    // Create and save inventory
+    const newInventory = new BloodInventory({
+      hospitalId,
+      bloodType,
+      availableStocks,
+      expirationDate,
+    });
+
+    await newInventory.save();
+
+    res.status(201).json({ success: true, data: newInventory });
+  } catch (error) {
+    console.error("Error creating inventory:", error);
+    res.status(500).json({ message: "Error creating blood inventory record" });
+  }
 };
+
 
 // Update blood inventory details
 export const updateBloodInventory = async (req, res) => {
