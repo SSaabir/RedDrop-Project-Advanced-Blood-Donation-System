@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateHealthEvaluationReport, generateInventoryReport, generateAppointmentReport,generateSystemAdminReport,generateFeedbackReport,generateInquiryReport , generateDonorReport ,generateHospitalReport } from '../controllers/report.controller.js';
+import { generateHealthEvaluationReport, generateInventoryReport, generateAppointmentReport,generateSystemAdminReport,generateFeedbackReport,generateInquiryReport , generateDonorReport ,generateHospitalReport, generateEmergencyBRReport } from '../controllers/report.controller.js';
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.get('/appointment-report', generateAppointmentReport);
 router.get('/systemAdmin-report', generateSystemAdminReport);
 router.get('/donor-report',generateDonorReport);
 router.get('/hospital-report',generateHospitalReport);
+router.get('/emergency-br-report',generateEmergencyBRReport)
 
 router.use('/reports', express.static('reports'));
 
