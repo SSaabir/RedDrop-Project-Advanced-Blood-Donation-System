@@ -31,7 +31,7 @@ const feedbackSchema = new mongoose.Schema({
     },
     feedbackType: {
         type: String,
-        enum: ['General Feedback', 'Technical Feedback', 'Complaint Feedback'],
+        enum: ['General', 'Technical', 'Complaint'],
         required: true,
     },
     starRating: {

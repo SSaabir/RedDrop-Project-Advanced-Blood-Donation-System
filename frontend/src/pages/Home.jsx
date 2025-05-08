@@ -8,6 +8,7 @@ import About2 from '../assets/About2.jpg'
 import ab3 from '../assets/ab3.jpg' 
 import ab4 from '../assets/ab4.jpg' 
 import ab5 from '../assets/ab5.jpg' 
+import Fund from '../assets/Fund.jpg'
 import SupportIcon from '../components/SupportIcon'; // Import the SupportIcon component
 
 export default function Home() {
@@ -132,6 +133,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Our Story Section */}
+     <section className="py-16 bg-white">
+      <div className="container mx-auto px-6">
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* Text section on the left in larger screens */}
+      <div className="order-2 md:order-1 animate-fade-in-left text-justify">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">Our Story</h2>
+        <p className="text-gray-600 mb-4">
+          At RedDrop, we are dedicated to saving lives by connecting donors with those in urgent need. Our mission is to create a seamless and efficient platform where individuals can donate blood, find nearby donation centers, and request urgent blood support. We believe that every drop counts, and through technology, we aim to make the donation process simple, accessible, and impactful.
+        </p>
+        <p className="text-gray-600">
+          With a commitment to transparency and reliability, our platform ensures real-time updates, secure data handling, and a user-friendly experience. Whether you are a donor looking to give the gift of life or a recipient in need, we are here to bridge the gap and strengthen the life-saving network of blood donation. Together, we can make a difference—one donation at a time.
+        </p>
+      </div>
+
+      {/* Image section on the right in larger screens */}
+      <div className="order-1 md:order-2 animate-fade-in-right">
+        <img src={Fund} alt="Our Story" className="w-full h-auto rounded-lg shadow-lg" />
+        </div>
+      </div>
+     </div>
+   </section>
+
       <SupportIcon />
     </div>
   );
