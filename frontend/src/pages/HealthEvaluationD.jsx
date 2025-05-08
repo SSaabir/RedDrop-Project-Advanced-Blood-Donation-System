@@ -25,7 +25,8 @@ export default function AppointmentD() {
   const { createFeedback } = useFeedback();
   const { user } = useAuthContext();
   const { secondUser } = useSecondAuth();
-  const { reportUrl, generateHealthEvaluationReport } = useGenerateReport();
+  const { reportUrl, generateHealthEvaluationReport,generateHealthEvaluationReport1 } = useGenerateReport();
+  
 
   const userId = user?.userObj?._id;
   const Donor = user?.role === "Donor";
@@ -233,6 +234,7 @@ export default function AppointmentD() {
   const handleGenerateReport = (e) => {
     e.preventDefault();
     generateHealthEvaluationReport(user.userObj._id);
+    generateHealthEvaluationReport1(user.userObj._id);
   };
 
   const today = new Date().toISOString().split("T")[0];
@@ -244,7 +246,8 @@ export default function AppointmentD() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Health Evaluations</h1>
           <div className="flex items-center space-x-4">
-            <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}>
+            <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}
+            className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition">
               Generate Report
             </Button>
             {reportUrl && (
@@ -253,7 +256,7 @@ export default function AppointmentD() {
                 <a
                   href={`http://localhost:3020${reportUrl}`}
                   download
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   Download
                 </a>
