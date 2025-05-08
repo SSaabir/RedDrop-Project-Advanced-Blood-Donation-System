@@ -134,28 +134,39 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Our Story Section */}
-     <section className="py-16 bg-white">
-      <div className="container mx-auto px-6">
-     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+     {/* Our Story Section */}
+<section className="py-16 bg-white">
+  <div className="container mx-auto px-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
       {/* Text section on the left in larger screens */}
       <div className="order-2 md:order-1 animate-fade-in-left text-justify">
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Our Story</h2>
         <p className="text-gray-600 mb-4">
           At RedDrop, we are dedicated to saving lives by connecting donors with those in urgent need. Our mission is to create a seamless and efficient platform where individuals can donate blood, find nearby donation centers, and request urgent blood support. We believe that every drop counts, and through technology, we aim to make the donation process simple, accessible, and impactful.
         </p>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-6">
           With a commitment to transparency and reliability, our platform ensures real-time updates, secure data handling, and a user-friendly experience. Whether you are a donor looking to give the gift of life or a recipient in need, we are here to bridge the gap and strengthen the life-saving network of blood donation. Together, we can make a difference—one donation at a time.
         </p>
+        <div className="flex justify-start">
+          <Button
+            color="blue"
+            className="hover:bg-blue-700 transition-colors duration-300"
+            href="" // Replace with the actual donation page route
+          >
+            Donate Now
+            <HiArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
       </div>
-
       {/* Image section on the right in larger screens */}
       <div className="order-1 md:order-2 animate-fade-in-right">
         <img src={Fund} alt="Our Story" className="w-full h-auto rounded-lg shadow-lg" />
-        </div>
       </div>
-     </div>
-   </section>
+    </div>
+  </div>
+</section>
+
+
 
       <SupportIcon />
     </div>
