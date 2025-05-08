@@ -20,14 +20,14 @@ export default function BloodInventoryD() {
   } = useBloodInventory();
   const { fetchHospitals } = useHospital();
   const { user } = useAuthContext();
-  const {secondUser} = useSecondAuth();
+  const { secondUser } = useSecondAuth();
   const { reportUrl, generateInventoryReport } = useGenerateReport();
 
   // User and role setup
   const userId = user?.userObj?._id;
   const Hospital = user?.role === "Hospital";
   const Manager = user?.role === "Manager";
-  const HospitalAdmin=secondUser?.role==="HospitalAdmin";
+  const HospitalAdmin = secondUser?.role === "HospitalAdmin";
 
   // State for add modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -251,15 +251,15 @@ export default function BloodInventoryD() {
           </div>
             
           {Hospital && HospitalAdmin && (
-          <div>
-            <Button
-              gradientDuoTone="cyanToBlue"
-              onClick={openAddModal}
-              className="text-white rounded-lg shadow-md hover:shadow-lg transition"
-            >
-              Add New Inventory
-            </Button>
-          </div>
+            <div>
+              <Button
+                gradientDuoTone="cyanToBlue"
+                onClick={openAddModal}
+                className="text-white rounded-lg shadow-md hover:shadow-lg transition"
+              >
+                Add New Inventory
+              </Button>
+            </div>
           )}
         </div>
 
@@ -303,162 +303,169 @@ export default function BloodInventoryD() {
           </div>
         </div>
 
-
         {Hospital && HospitalAdmin && (
-        <div>
-          {/* Missing Blood Types Warning */}
-          {missingBloodTypes.length > 0 && (
-            <div className="mt-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-              <p className="font-semibold">
-                Admin Alert: Missing Blood Types Detected!
-              </p>
-              <p>
-                Blood types{" "}
-                <span className="font-medium">
-                  {missingBloodTypes.map((type, index) => (
-                    <span
-                      key={type}
-                      className={`px-1 rounded ${bloodTypeColors[type] || "bg-gray-200 text-gray-800"}`}
-                    >
-                      {type}
-                      {index < missingBloodTypes.length - 1 && ", "}
-                    </span>
-                  ))}
-                </span>{" "}
-                are not in the inventory. Please{" "}
-                <button
-                  onClick={openAddModal}
-                  className="text-red-800 underline hover:text-red-900"
-                >
-                  add these blood types
-                </button>{" "}
-                immediately to ensure full inventory coverage.
-              </p>
-            </div>
-          )}
-        </div>
+          <div>
+            {/* Missing Blood Types Warning */}
+            {missingBloodTypes.length > 0 && (
+              <div className="mt-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+                <p className="font-semibold">
+                  Admin Alert: Missing Blood Types Detected!
+                </p>
+                <p>
+                  Blood types{" "}
+                  <span className="font-medium">
+                    {missingBloodTypes.map((type, index) => (
+                      <span
+                        key={type}
+                        className={`px-1 rounded ${bloodTypeColors[type] || "bg-gray-200 text-gray-800"}`}
+                      >
+                        {type}
+                        {index < missingBloodTypes.length - 1 && ", "}
+                      </span>
+                    ))}
+                  </span>{" "}
+                  are not in the inventory. Please{" "}
+                  <button
+                    onClick={openAddModal}
+                    className="text-red-800 underline hover:text-red-900"
+                  >
+                    add these blood types
+                  </button>{" "}
+                  immediately to ensure full inventory coverage.
+                </p>
+              </div>
+            )}
+          </div>
         )}
         <Table hoverable>
-        {Hospital && HospitalAdmin && (
-          <>
-          <Table.Head>
-            <Table.HeadCell>Blood Type</Table.HeadCell>
-            <Table.HeadCell>Stock</Table.HeadCell>
-            <Table.HeadCell>Expiration Date</Table.HeadCell>
-            <Table.HeadCell>Expiry Status</Table.HeadCell>
-            <Table.HeadCell>Actions</Table.HeadCell>
-          </Table.Head>
-          <Table.Body>
-            {filteredBloodInventory.length > 0 ? (
-              filteredBloodInventory.map((inventory) => (
-                <Table.Row key={inventory._id} className="bg-white">
-                  <Table.Cell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
-                    >
-                      {inventory.bloodType}
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
-                    {inventory.availableStocks}
-                    <img
-                      src={bloodIcon}
-                      alt="Blood Stock"
-                      style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
-                    />
-                  </Table.Cell>
-                  <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
-                  <Table.Cell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        inventory.expiredStatus ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {inventory.expiredStatus ? "Expired" : "Not Expired"}
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="xs"
-                        color="blue"
-                        onClick={() => openEditModal(inventory)}
-                        className="w-16"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="xs"
-                        color="failure"
-                        onClick={() => handleDelete(inventory._id)}
-                        className="w-16"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </Table.Cell>
-                </Table.Row>
-              ))
-            ) : (
-              <Table.Row>
-                <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
-                  No blood inventory records found for the selected blood type.
-                </Table.Cell>
-              </Table.Row>
-            )}
-          </Table.Body>
-          </>
+          {Hospital && HospitalAdmin && (
+            <>
+              <Table.Head>
+                <Table.HeadCell>Blood Type</Table.HeadCell>
+                <Table.HeadCell>Stock</Table.HeadCell>
+                <Table.HeadCell>Expiration Date</Table.HeadCell>
+                <Table.HeadCell>Expiry Status</Table.HeadCell>
+                <Table.HeadCell>Actions</Table.HeadCell>
+              </Table.Head>
+              <Table.Body>
+                {filteredBloodInventory.length > 0 ? (
+                  filteredBloodInventory.map((inventory) => (
+                    <Table.Row key={inventory._id} className="bg-white">
+                      <Table.Cell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
+                        >
+                          {inventory.bloodType}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
+                        {inventory.availableStocks}
+                        <img
+                          src={bloodIcon}
+                          alt="Blood Stock"
+                          style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
+                      <Table.Cell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            inventory.expiredStatus === 'Expired'
+                              ? 'bg-red-100 text-red-700'
+                              : inventory.expiredStatus === 'Soon'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {inventory.expiredStatus}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="xs"
+                            color="blue"
+                            onClick={() => openEditModal(inventory)}
+                            className="w-16"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="xs"
+                            color="failure"
+                            onClick={() => handleDelete(inventory._id)}
+                            className="w-16"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))
+                ) : (
+                  <Table.Row>
+                    <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
+                      No blood inventory records found for the selected blood type.
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
+            </>
           )}
-           {Manager && (
-          <>
-          <Table.Head>
-            <Table.HeadCell>Hospital Name</Table.HeadCell>
-            <Table.HeadCell>Blood Type</Table.HeadCell>
-            <Table.HeadCell>Stock</Table.HeadCell>
-            <Table.HeadCell>Expiration Date</Table.HeadCell>
-            <Table.HeadCell>Expiry Status</Table.HeadCell>
-          </Table.Head>
-          <Table.Body>
-            {filteredBloodInventory.length > 0 ? (
-              filteredBloodInventory.map((inventory) => (
-                <Table.Row key={inventory._id} className="bg-white">
-                  <Table.Cell>{inventory?.hospitalId?.name || "N/A"}</Table.Cell>
-                  <Table.Cell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
-                    >
-                      {inventory.bloodType}
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
-                    {inventory.availableStocks}
-                    <img
-                      src={bloodIcon}
-                      alt="Blood Stock"
-                      style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
-                    />
-                  </Table.Cell>
-                  <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
-                  <Table.Cell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        inventory.expiredStatus ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {inventory.expiredStatus ? "Expired" : "Not Expired"}
-                    </span>
-                  </Table.Cell>
-                </Table.Row>
-              ))
-            ) : (
-              <Table.Row>
-                <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
-                  No blood inventory records found for the selected blood type.
-                </Table.Cell>
-              </Table.Row>
-            )}
-          </Table.Body>
-          </>
+          {Manager && (
+            <>
+              <Table.Head>
+                <Table.HeadCell>Hospital Name</Table.HeadCell>
+                <Table.HeadCell>Blood Type</Table.HeadCell>
+                <Table.HeadCell>Stock</Table.HeadCell>
+                <Table.HeadCell>Expiration Date</Table.HeadCell>
+                <Table.HeadCell>Expiry Status</Table.HeadCell>
+              </Table.Head>
+              <Table.Body>
+                {filteredBloodInventory.length > 0 ? (
+                  filteredBloodInventory.map((inventory) => (
+                    <Table.Row key={inventory._id} className="bg-white">
+                      <Table.Cell>{inventory?.hospitalId?.name || "N/A"}</Table.Cell>
+                      <Table.Cell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
+                        >
+                          {inventory.bloodType}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
+                        {inventory.availableStocks}
+                        <img
+                          src={bloodIcon}
+                          alt="Blood Stock"
+                          style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
+                      <Table.Cell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            inventory.expiredStatus === 'Expired'
+                              ? 'bg-red-100 text-red-700'
+                              : inventory.expiredStatus === 'Soon'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          {inventory.expiredStatus}
+                        </span>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))
+                ) : (
+                  <Table.Row>
+                    <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
+                      No blood inventory records found for the selected blood type.
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
+            </>
           )}
         </Table>
 

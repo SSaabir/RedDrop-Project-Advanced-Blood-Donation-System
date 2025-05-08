@@ -200,6 +200,29 @@ export const useGenerateReport = () => {
             setLoading(false);
         }
     };
+
+    const generateHospitalAdminReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/hospitalAdmin-report', {
+                params: { userId }
+            });
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Hospital Admin report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating Hospital Admin report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate Hospital Admin report');
+        } finally {
+            setLoading(false);
+        }
+    };
     
 
     return {
@@ -213,6 +236,7 @@ export const useGenerateReport = () => {
         generateSystemAdminReport,
         generateDonorReport,
         generateHospitalReport,
-        generateEmergencyBRReport
+        generateEmergencyBRReport,
+        generateHospitalAdminReport
     };
 };

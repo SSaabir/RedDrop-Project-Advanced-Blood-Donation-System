@@ -25,46 +25,44 @@ const bloodInventorySchema = new mongoose.Schema({
         },
     },
     expiredStatus: {
-        type: Boolean,
-        default: false,
+        type: String,
+        enum: ['Expired', 'Not Expired', 'Soon'],
+        default: 'Not Expired',
     },
 }, { timestamps: true });
 
 bloodInventorySchema.statics.updateExpiredStatus = async function () {
     const currentDateTime = new Date();
-    const expirationThreshold = new Date();
-    expirationThreshold.setDate(currentDateTime.getDate() - 42);
     
     await this.updateMany(
         {
-            createdAt: { $lt: expirationThreshold },
-            expiredStatus: { $ne: true }
+            expirationDate: { $lte: currentDateTime },
+            expiredStatus: { $ne: 'Expired' }
         },
         { 
-            expiredStatus: true,
-            updatedAt: currentDateTime
-        }
-    );
-}
-
-
-bloodInventorySchema.statics.updateExpiringSoonStatus = async function () {
-    const currentDateTime = new Date();
-    const expiringSoonThreshold = new Date();
-    expiringSoonThreshold.setDate(currentDateTime.getDate() - 14);
-    
-    await this.updateMany(
-        {
-            createdAt: { $lt: expiringSoonThreshold },
-            expiringSoon: { $ne: true },
-            expiredStatus: { $ne: true }
-        },
-        { 
-            expiringSoon: true,
+            expiredStatus: 'Expired',
             updatedAt: currentDateTime
         }
     );
 };
+
+bloodInventorySchema.statics.updateExpiringSoonStatus = async function () {
+    const currentDateTime = new Date();
+    const expiringSoonThreshold = new Date();
+    expiringSoonThreshold.setDate(currentDateTime.getDate() + 14);
+    
+    await this.updateMany(
+        {
+            expirationDate: { $gt: currentDateTime, $lte: expiringSoonThreshold },
+            expiredStatus: { $ne: 'Soon' }
+        },
+        { 
+            expiredStatus: 'Soon',
+            updatedAt: currentDateTime
+        }
+    );
+};
+
 const BloodInventory = mongoose.model('BloodInventory', bloodInventorySchema);
 
 export default BloodInventory;

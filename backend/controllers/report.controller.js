@@ -9,7 +9,8 @@ import Manager from '../models/SystemManager.model.js';
 import Donor from '../models/donor.model.js';
 import Hospital from '../models/hospital.model.js';
 import EmergencyBR from '../models/EmergencyBR.model.js'; // Adjust the path to your model
-
+import HospitalAdmin from '../models/HospitalAdmin.model.js';
+import moment from 'moment';
 
 export const generateHealthEvaluationReport = async (req, res) => {
   try {
@@ -1050,6 +1051,136 @@ export const generateEmergencyBRReport = async (req, res) => {
     res.json({ success: true, fileUrl: `/reports/${fileName}` });
   } catch (error) {
     console.error('Error generating emergency blood request report:', error);
+    res.status(500).json({ success: false, message: 'Error generating report' });
+  }
+};
+
+
+export const generateHospitalAdminReport = async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    // Validate hospitalId
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Hospital ID is required' });
+    }
+
+    if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid hospital ID format' });
+    }
+
+    // Fetch hospital admins
+    const admins = await HospitalAdmin.find({ hospitalId:userId })
+      .select('firstName lastName email phoneNumber nic dob activeStatus')
+      .sort({ createdAt: -1 });
+
+    if (!admins.length) {
+      return res.status(404).json({ success: false, message: 'No hospital admins found for this hospital' });
+    }
+
+    // Initialize PDF document
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const fileName = `hospital_admin_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const filePath = `./reports/${fileName}`;
+
+    // Create reports directory if it doesn't exist
+    if (!fs.existsSync('./reports')) {
+      fs.mkdirSync('./reports');
+    }
+
+    // Pipe PDF to file
+    doc.pipe(fs.createWriteStream(filePath));
+
+    const logoPath = '../../frontend/src/assets/logo.svg';
+
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+
+      doc
+        .fontSize(20)
+        .fillColor('#FF2400')
+        .text('Hospital Admin Report', 0, 40, { align: 'center' });
+
+      doc
+        .moveDown()
+        .fontSize(11)
+        .fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+369    };
+
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Name', 'Email', 'Phone', 'NIC', 'DOB', 'Active'];
+      const colWidths = [20, 90, 100, 70, 70, 60, 50];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25)
+        .fill('#FF9280')
+        .stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 4, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [20, 90, 100, 70, 70, 60, 50];
+    const startX = 40;
+    const rowHeight = 30;
+    const pageHeight = doc.page.height - 40;
+
+    generateHeader();
+    let y = 120;
+    y = generateTableHeader(y);
+
+    doc.font('Helvetica').fontSize(9);
+
+    admins.forEach((admin, index) => {
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+        y = 120;
+        y = generateTableHeader(y);
+        
+        doc.font('Helvetica').fontSize(9);
+      }
+
+      const row = [
+        index + 1,
+        `${admin.firstName} ${admin.lastName}` || 'N/A',
+        admin.email || 'N/A',
+        admin.phoneNumber || 'N/A',
+        admin.nic || 'N/A',
+        moment(admin.dob).format('YYYY-MM-DD') || 'N/A',
+        admin.activeStatus ? 'Yes' : 'No',
+      ];
+
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
+
+      let x = startX;
+      row.forEach((data, i) => {
+        doc.fillColor('#000').text(data, x + 4, y + 6, {
+          width: colWidths[i] - 8,
+          align: 'left',
+          height: rowHeight - 10,
+        });
+        x += colWidths[i];
+      });
+
+      y += rowHeight;
+    });
+
+    // Finalize PDF
+    doc.end();
+    res.json({ success: true, fileUrl: `/reports/${fileName}` });
+  } catch (error) {
+    console.error('Error generating hospital admin report:', error);
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
