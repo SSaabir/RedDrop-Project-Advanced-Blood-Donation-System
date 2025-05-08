@@ -40,11 +40,43 @@ export default function SystemManagersD() {
     role: "Junior",
   });
 
+  // State for filters
+  const [filter, setFilter] = useState({
+    name: "",
+    role: "",
+    status: "",
+  });
+  const [filteredManagers, setFilteredManagers] = useState([]);
+
   const roleOptions = ["Master", "Junior"];
+  const statusOptions = ["Active", "Inactive"];
 
   useEffect(() => {
     fetchManagers();
   }, [fetchManagers]);
+
+  // Effect to filter managers based on filter state
+  useEffect(() => {
+    const filtered = managers.filter((manager) => {
+      const nameMatch = filter.name
+        ? `${manager.firstName} ${manager.lastName}`
+            .toLowerCase()
+            .includes(filter.name.toLowerCase())
+        : true;
+      const roleMatch = filter.role ? manager.role === filter.role : true;
+      const statusMatch = filter.status
+        ? (filter.status === "Active" ? manager.activeStatus : !manager.activeStatus)
+        : true;
+      return nameMatch && roleMatch && statusMatch;
+    });
+    setFilteredManagers(filtered);
+  }, [managers, filter]);
+
+  // Handler for filter input changes
+  const handleFilterChange = (e) => {
+    const { id, value } = e.target;
+    setFilter((prev) => ({ ...prev, [id]: value }));
+  };
 
   const validateForm = (data, isCreate = false) => {
     const errors = {};
@@ -67,8 +99,10 @@ export default function SystemManagersD() {
     else if (!/^\d{12}$/.test(data.nic)) errors.nic = "NIC must be exactly 12 digits";
     if (isCreate && !data.password) errors.password = "Password is required";
     else if (data.password && data.password.length < 6) errors.password = "Password must be at least 6 characters";
-    else if (data.password && !/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.password = "Password must contain at least one special character";
-    if (data.image && !["image/jpeg", "image/png"].includes(data.image.type)) errors.image = "Image must be JPG or PNG";
+    else if (data.password && !/[!@#$%^&*(),.?":{}|<>]/.test(data.password))
+      errors.password = "Password must contain at least one special character";
+    if (data.image && !["image/jpeg", "image/png"].includes(data.image.type))
+      errors.image = "Image must be JPG or PNG";
     if (!data.role) errors.role = "Role is required";
     else if (!roleOptions.includes(data.role)) errors.role = "Invalid role selected";
     return errors;
@@ -232,6 +266,44 @@ export default function SystemManagersD() {
           </div>
         </div>
 
+        {/* Filter UI */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Filter Managers</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label value="Name" />
+              <TextInput
+                id="name"
+                value={filter.name}
+                onChange={handleFilterChange}
+                placeholder="Search by name..."
+              />
+            </div>
+            <div>
+              <Label value="Role" />
+              <Select id="role" value={filter.role} onChange={handleFilterChange}>
+                <option value="">All</option>
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label value="Status" />
+              <Select id="status" value={filter.status} onChange={handleFilterChange}>
+                <option value="">All</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </div>
+
         {loading && <Spinner className="mb-4" />}
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -245,8 +317,8 @@ export default function SystemManagersD() {
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
-            {managers.length > 0 ? (
-              managers.map((manager) => (
+            {filteredManagers.length > 0 ? (
+              filteredManagers.map((manager) => (
                 <Table.Row key={manager._id} className="bg-white">
                   <Table.Cell>{`${manager.firstName} ${manager.lastName}`}</Table.Cell>
                   <Table.Cell>{manager.email}</Table.Cell>

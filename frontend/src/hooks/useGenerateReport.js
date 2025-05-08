@@ -29,7 +29,32 @@ export const useGenerateReport = () => {
         }
     };
 
+    
+
     const generateHealthEvaluationReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/healthEvaluation-report', {
+                params: { userId }
+            });
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Health evaluation report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating health evaluation report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate health evaluation report');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const generateHealthEvaluationReport1 = async (userId) => {
         setLoading(true);
         setReportUrl('');
 
@@ -230,6 +255,7 @@ export const useGenerateReport = () => {
         loading,
         generateInventoryReport,
         generateHealthEvaluationReport,
+        generateHealthEvaluationReport1,
         generateFeedbackReport,
         generateInquiryReport,
         generateAppointmentReport,

@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get('/inventory-report', generateInventoryReport);
 router.get('/healthEvaluation-report', generateHealthEvaluationReport);
+router.get('/healthEvaluation-report', generateHealthEvaluationReport1);
 router.get('/feedback-report', generateFeedbackReport);
 router.get('/inquiry-report', generateInquiryReport);
 router.get('/appointment-report', generateAppointmentReport);
