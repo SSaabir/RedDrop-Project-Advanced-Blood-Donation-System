@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { Table, Button, Modal, Textarea, Badge, Spinner } from "flowbite-react";
+import { Table, Button, Modal, Textarea, Badge, Spinner, Label, Select } from "flowbite-react";
 import { useEmergencyBR } from "../hooks/useEmergencyBR";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 const EmergencyBRAdmin = () => {
   const {
@@ -12,9 +13,12 @@ const EmergencyBRAdmin = () => {
     acceptEmergencyRequest,
     declineEmergencyRequest,
     deleteEmergencyRequest,
-    loading,
+    loading: requestsLoading,
     error,
   } = useEmergencyBR();
+
+  const { reportUrl, loading: reportLoading, generateEmergencyBRReport } = useGenerateReport();
+  const { user } = useAuthContext();
 
   const [showValidateModal, setShowValidateModal] = useState(false);
   const [validateId, setValidateId] = useState(null);
@@ -29,8 +33,9 @@ const EmergencyBRAdmin = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [filter, setFilter] = useState({ bloodGroup: "", criticalLevel: "", status: "" });
+  const [filteredRequests, setFilteredRequests] = useState([]);
 
-  const { user } = useAuthContext();
   const userId = user?.userObj?._id;
   const Donor = user?.userObj?.role === "Donor";
   const Hospital = user?.userObj?.role === "Hospital";
@@ -39,6 +44,29 @@ const EmergencyBRAdmin = () => {
   useEffect(() => {
     fetchEmergencyRequests();
   }, [fetchEmergencyRequests]);
+
+  // Effect to filter requests based on filter state
+  useEffect(() => {
+    const filtered = emergencyRequests.filter((request) => {
+      const bloodGroupMatch = filter.bloodGroup
+        ? request.patientBlood === filter.bloodGroup
+        : true;
+      const criticalLevelMatch = filter.criticalLevel
+        ? request.criticalLevel === filter.criticalLevel
+        : true;
+      const statusMatch = filter.status
+        ? request.acceptStatus === filter.status
+        : true;
+      return bloodGroupMatch && criticalLevelMatch && statusMatch;
+    });
+    setFilteredRequests(filtered);
+  }, [emergencyRequests, filter]);
+
+  // Handler for filter input changes
+  const handleFilterChange = (e) => {
+    const { id, value } = e.target;
+    setFilter((prev) => ({ ...prev, [id]: value }));
+  };
 
   // Validation function for decline reason
   const validateDeclineForm = () => {
@@ -54,6 +82,7 @@ const EmergencyBRAdmin = () => {
     try {
       await validateEmergencyRequest(validateId);
       setShowValidateModal(false);
+      await fetchEmergencyRequests(); // Refetch to update activeStatus
     } catch (err) {
       console.error("Error validating request:", err);
     } finally {
@@ -79,6 +108,7 @@ const EmergencyBRAdmin = () => {
       }
       await acceptEmergencyRequest(acceptId, by, type);
       setShowAcceptModal(false);
+      await fetchEmergencyRequests(); // Refetch to update acceptStatus
     } catch (err) {
       console.error("Error accepting request:", err);
     } finally {
@@ -94,6 +124,7 @@ const EmergencyBRAdmin = () => {
       setShowDeclineModal(false);
       setDeclineReason("");
       setDeclineErrors({});
+      await fetchEmergencyRequests(); // Refetch to update acceptStatus
     } catch (err) {
       console.error("Error declining request:", err);
     } finally {
@@ -111,6 +142,7 @@ const EmergencyBRAdmin = () => {
     try {
       await deleteEmergencyRequest(deleteId);
       setShowDeleteModal(false);
+      await fetchEmergencyRequests(); // Refetch to update the list
     } catch (err) {
       console.error("Error deleting request:", err);
     } finally {
@@ -121,6 +153,15 @@ const EmergencyBRAdmin = () => {
   const handleViewDetails = (request) => {
     setSelectedRequest(request);
     setShowDetailsModal(true);
+  };
+
+  const handleGenerateReport = async (e) => {
+    e.preventDefault();
+    try {
+      await generateEmergencyBRReport();
+    } catch (err) {
+      console.error("Error generating report:", err);
+    }
   };
 
   const criticalLevelColors = useMemo(
@@ -143,10 +184,86 @@ const EmergencyBRAdmin = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <DashboardSidebar />
-      <div className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-red-700 mb-4">Emergency Blood Requests</h1>
-        {loading && <Spinner className="mb-4" />}
+  <DashboardSidebar />
+  <div className="flex-1 p-6">
+    <div className="flex justify-between items-center mb-4">
+      <h1 className="text-2xl font-bold text-red-700">Emergency Blood Requests</h1>
+      <Button
+        gradientDuoTone="redToPink"
+        onClick={handleGenerateReport}
+        disabled={reportLoading || actionLoading}
+        className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+      >
+        {reportLoading ? <Spinner size="sm" className="mr-2" /> : null}
+        Generate Report
+      </Button>
+    </div>
+
+        {reportUrl && (
+          <div className="mb-4 p-4 bg-green-100 rounded-lg flex items-center justify-between">
+            <p className="text-green-700 font-semibold">Report generated successfully!</p>
+            <a
+              href={`http://localhost:3020${reportUrl}`}
+              download
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Download Report
+            </a>
+          </div>
+        )}
+
+        {/* Filter UI */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Filter Requests</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label value="Blood Group" />
+              <Select
+                id="bloodGroup"
+                value={filter.bloodGroup}
+                onChange={handleFilterChange}
+              >
+                <option value="">All</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </Select>
+            </div>
+            <div>
+              <Label value="Critical Level" />
+              <Select
+                id="criticalLevel"
+                value={filter.criticalLevel}
+                onChange={handleFilterChange}
+              >
+                <option value="">All</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </Select>
+            </div>
+            <div>
+              <Label value="Status" />
+              <Select
+                id="status"
+                value={filter.status}
+                onChange={handleFilterChange}
+              >
+                <option value="">All</option>
+                <option value="Pending">Pending</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Declined">Declined</option>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {requestsLoading && <Spinner className="mb-4" />}
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <Table hoverable>
           <Table.Head>
@@ -158,10 +275,8 @@ const EmergencyBRAdmin = () => {
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
-            {emergencyRequests.length > 0 ? (
-              emergencyRequests.map((request) => {
-                const isActionDisabled = request.acceptStatus !== "Pending";
-
+            {filteredRequests.length > 0 ? (
+              filteredRequests.map((request) => {
                 return (
                   <Table.Row key={request._id} className="bg-white">
                     <Table.Cell>{request.name || "N/A"}</Table.Cell>
@@ -179,26 +294,43 @@ const EmergencyBRAdmin = () => {
                     </Table.Cell>
                     <Table.Cell className="space-x-2">
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="xs"
-                          color="purple"
-                          onClick={() => {
-                            setValidateId(request._id);
-                            setShowValidateModal(true);
-                          }}
-                          disabled={request.activeStatus === "Active" || actionLoading}
-                        >
-                          Validate
-                        </Button>
-                        <Button
-                          size="xs"
-                          color="gray"
-                          onClick={() => confirmDelete(request._id)}
-                          disabled={actionLoading}
-                        >
-                          Delete
-                        </Button>
-                        {!isActionDisabled && (
+                        {/* Initial state: show Validate, View Details, Decline */}
+                        {request.activeStatus !== "Active" && request.acceptStatus === "Pending" && (
+                          <>
+                            <Button
+                              size="xs"
+                              color="purple"
+                              onClick={() => {
+                                setValidateId(request._id);
+                                setShowValidateModal(true);
+                              }}
+                              disabled={actionLoading}
+                            >
+                              Validate
+                            </Button>
+                            <Button
+                              size="xs"
+                              color="blue"
+                              onClick={() => handleViewDetails(request)}
+                              disabled={actionLoading}
+                            >
+                              Details
+                            </Button>
+                            <Button
+                              size="xs"
+                              color="failure"
+                              onClick={() => {
+                                setDeclineId(request._id);
+                                setShowDeclineModal(true);
+                              }}
+                              disabled={actionLoading}
+                            >
+                              Decline
+                            </Button>
+                          </>
+                        )}
+                        {/* After validation: show Accept, Decline, View Details */}
+                        {request.activeStatus === "Active" && request.acceptStatus === "Pending" && (
                           <>
                             <Button
                               size="xs"
@@ -222,16 +354,27 @@ const EmergencyBRAdmin = () => {
                             >
                               Decline
                             </Button>
+                            <Button
+                              size="xs"
+                              color="blue"
+                              onClick={() => handleViewDetails(request)}
+                              disabled={actionLoading}
+                            >
+                              Details
+                            </Button>
                           </>
                         )}
-                        <Button
-                          size="xs"
-                          color="blue"
-                          onClick={() => handleViewDetails(request)}
-                          disabled={actionLoading}
-                        >
-                          Details
-                        </Button>
+                        {/* After decline: show only Delete */}
+                        {request.acceptStatus === "Declined" && (
+                          <Button
+                            size="xs"
+                            color="gray"
+                            onClick={() => confirmDelete(request._id)}
+                            disabled={actionLoading}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </Table.Cell>
                   </Table.Row>
@@ -376,6 +519,10 @@ const EmergencyBRAdmin = () => {
                     <Badge color={statusColors[selectedRequest.acceptStatus] || "gray"}>
                       {selectedRequest.acceptStatus || "N/A"}
                     </Badge>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 font-semibold">Active Status:</p>
+                    <p>{selectedRequest.activeStatus || "N/A"}</p>
                   </div>
                   {selectedRequest.units && (
                     <div>
