@@ -5,6 +5,8 @@ import { useBloodInventory } from "../hooks/useBloodInventory";
 import { useHospital } from "../hooks/hospital";
 import { useAuthContext } from "../hooks/useAuthContext";
 import { useGenerateReport } from "../hooks/useGenerateReport";
+import bloodIcon from '../assets/blood.png';
+import { useSecondAuth } from "../hooks/useSecondAuth";
 
 export default function BloodInventoryD() {
   const {
@@ -18,12 +20,14 @@ export default function BloodInventoryD() {
   } = useBloodInventory();
   const { fetchHospitals } = useHospital();
   const { user } = useAuthContext();
+  const {secondUser} = useSecondAuth();
   const { reportUrl, generateInventoryReport } = useGenerateReport();
 
   // User and role setup
   const userId = user?.userObj?._id;
   const Hospital = user?.role === "Hospital";
   const Manager = user?.role === "Manager";
+  const HospitalAdmin=secondUser?.role==="HospitalAdmin";
 
   // State for add modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -38,8 +42,7 @@ export default function BloodInventoryD() {
   // State for blood type filter
   const [selectedBloodType, setSelectedBloodType] = useState("all");
 
-  // State for alert modal
-  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  // State for missing blood types
   const [missingBloodTypes, setMissingBloodTypes] = useState([]);
 
   // Loading and error state
@@ -48,6 +51,18 @@ export default function BloodInventoryD() {
 
   // Blood Type Options
   const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+
+  // Color mapping for blood types
+  const bloodTypeColors = {
+    "A+": "bg-red-200 text-red-800",
+    "A-": "bg-pink-200 text-pink-800",
+    "B+": "bg-blue-200 text-blue-800",
+    "B-": "bg-indigo-200 text-indigo-800",
+    "O+": "bg-green-200 text-green-800",
+    "O-": "bg-teal-200 text-teal-800",
+    "AB+": "bg-purple-200 text-purple-800",
+    "AB-": "bg-orange-200 text-orange-800",
+  };
 
   // Fetch inventory based on role and check for missing blood types
   useEffect(() => {
@@ -76,18 +91,29 @@ export default function BloodInventoryD() {
     };
   }, [userId, Hospital, Manager, fetchBloodInventoryByHospital, fetchBloodInventory]);
 
-  // Check for missing blood types only after initial fetch
+  // Check for missing blood types after inventory fetch
   useEffect(() => {
     if (!loading && bloodInventory.length > 0) {
       const presentBloodTypes = new Set(bloodInventory.map((item) => item.bloodType));
       const missingTypes = bloodTypes.filter((type) => !presentBloodTypes.has(type));
       setMissingBloodTypes(missingTypes);
-      setIsAlertModalOpen(missingTypes.length > 0); // Open modal if there are missing types
     } else {
       setMissingBloodTypes([]);
-      setIsAlertModalOpen(false); // No modal when inventory is empty or loading
     }
   }, [bloodInventory, loading]);
+
+  // Calculate total stock levels per blood type
+  const calculateTotalStocks = () => {
+    const stockSummary = bloodTypes.reduce((acc, type) => {
+      const total = bloodInventory
+        .filter((item) => item.bloodType === type)
+        .reduce((sum, item) => sum + Number(item.availableStocks), 0);
+      return { ...acc, [type]: total };
+    }, {});
+    return stockSummary;
+  };
+
+  const stockSummary = calculateTotalStocks();
 
   // Validation functions
   const validateAddForm = () => {
@@ -96,7 +122,7 @@ export default function BloodInventoryD() {
     else if (!bloodTypes.includes(formData.bloodType)) errors.bloodType = "Invalid blood type";
     if (!formData.availableStocks) errors.availableStocks = "Stock is required";
     else if (isNaN(formData.availableStocks) || Number(formData.availableStocks) < 0) errors.availableStocks = "Stock must be a positive number";
-       setAddErrors(errors);
+    setAddErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -123,14 +149,12 @@ export default function BloodInventoryD() {
   const openEditModal = (inventory) => {
     setEditFormData({ ...inventory, expirationDate: inventory.expirationDate.split("T")[0] });
     setEditErrors({});
-    setIsAlertModalOpen(false); // Close alert modal when opening edit modal
     setIsEditModalOpen(true);
   };
 
   // Close Modals
   const closeAddModal = () => setIsAddModalOpen(false);
   const closeEditModal = () => setIsEditModalOpen(false);
-  const closeAlertModal = () => setIsAlertModalOpen(false);
 
   // Handle Input Change for Add
   const handleChange = (e) => {
@@ -211,21 +235,32 @@ export default function BloodInventoryD() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Blood Inventory</h1>
           <div className="flex items-center space-x-2">
-            <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}>
+            <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}
+              className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition">
               Generate Report
             </Button>
             {reportUrl && (
               <div>
                 <p>Report generated successfully!</p>
-                <a href={`http://localhost:3020${reportUrl}`} download>
+                <a href={`http://localhost:3020${reportUrl}`} download
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                   Download Report
                 </a>
               </div>
             )}
-            <Button gradientDuoTone="redToPink" onClick={openAddModal}>
+          </div>
+            
+          {Hospital && HospitalAdmin && (
+          <div>
+            <Button
+              gradientDuoTone="cyanToBlue"
+              onClick={openAddModal}
+              className="text-white rounded-lg shadow-md hover:shadow-lg transition"
+            >
               Add New Inventory
             </Button>
           </div>
+          )}
         </div>
 
         {/* Blood Type Filter */}
@@ -245,9 +280,68 @@ export default function BloodInventoryD() {
           </Select>
         </div>
 
+        {/* Blood Type Stock Summary */}
+        <div className="mb-4">
+          <Label value="Total Stock Levels by Blood Type" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+            {bloodTypes.map((type) => (
+              <div
+                key={type}
+                className={`p-3 rounded-lg ${bloodTypeColors[type]} flex items-center justify-between`}
+              >
+                <span className="font-medium">{type}</span>
+                <span className="flex items-center">
+                  {stockSummary[type] || 0}
+                  <img
+                    src={bloodIcon}
+                    alt="Blood Stock"
+                    className="w-5 h-5 ml-2"
+                  />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+        {Hospital && HospitalAdmin && (
+        <div>
+          {/* Missing Blood Types Warning */}
+          {missingBloodTypes.length > 0 && (
+            <div className="mt-3 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+              <p className="font-semibold">
+                Admin Alert: Missing Blood Types Detected!
+              </p>
+              <p>
+                Blood types{" "}
+                <span className="font-medium">
+                  {missingBloodTypes.map((type, index) => (
+                    <span
+                      key={type}
+                      className={`px-1 rounded ${bloodTypeColors[type] || "bg-gray-200 text-gray-800"}`}
+                    >
+                      {type}
+                      {index < missingBloodTypes.length - 1 && ", "}
+                    </span>
+                  ))}
+                </span>{" "}
+                are not in the inventory. Please{" "}
+                <button
+                  onClick={openAddModal}
+                  className="text-red-800 underline hover:text-red-900"
+                >
+                  add these blood types
+                </button>{" "}
+                immediately to ensure full inventory coverage.
+              </p>
+            </div>
+          )}
+        </div>
+        )}
         <Table hoverable>
+        {Hospital && HospitalAdmin && (
+          <>
           <Table.Head>
-            <Table.HeadCell>Hospital ID</Table.HeadCell>
             <Table.HeadCell>Blood Type</Table.HeadCell>
             <Table.HeadCell>Stock</Table.HeadCell>
             <Table.HeadCell>Expiration Date</Table.HeadCell>
@@ -258,9 +352,21 @@ export default function BloodInventoryD() {
             {filteredBloodInventory.length > 0 ? (
               filteredBloodInventory.map((inventory) => (
                 <Table.Row key={inventory._id} className="bg-white">
-                  <Table.Cell>{inventory.hospitalId || "N/A"}</Table.Cell>
-                  <Table.Cell>{inventory.bloodType}</Table.Cell>
-                  <Table.Cell>{inventory.availableStocks}</Table.Cell>
+                  <Table.Cell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
+                    >
+                      {inventory.bloodType}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
+                    {inventory.availableStocks}
+                    <img
+                      src={bloodIcon}
+                      alt="Blood Stock"
+                      style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
+                    />
+                  </Table.Cell>
                   <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
                   <Table.Cell>
                     <span
@@ -273,17 +379,17 @@ export default function BloodInventoryD() {
                   </Table.Cell>
                   <Table.Cell>
                     <div className="flex space-x-2">
-                      <Button 
-                        size="xs" 
-                        color="blue" 
+                      <Button
+                        size="xs"
+                        color="blue"
                         onClick={() => openEditModal(inventory)}
                         className="w-16"
                       >
                         Edit
                       </Button>
-                      <Button 
-                        size="xs" 
-                        color="failure" 
+                      <Button
+                        size="xs"
+                        color="failure"
                         onClick={() => handleDelete(inventory._id)}
                         className="w-16"
                       >
@@ -301,134 +407,160 @@ export default function BloodInventoryD() {
               </Table.Row>
             )}
           </Table.Body>
+          </>
+          )}
+           {Manager && (
+          <>
+          <Table.Head>
+            <Table.HeadCell>Hospital Name</Table.HeadCell>
+            <Table.HeadCell>Blood Type</Table.HeadCell>
+            <Table.HeadCell>Stock</Table.HeadCell>
+            <Table.HeadCell>Expiration Date</Table.HeadCell>
+            <Table.HeadCell>Expiry Status</Table.HeadCell>
+          </Table.Head>
+          <Table.Body>
+            {filteredBloodInventory.length > 0 ? (
+              filteredBloodInventory.map((inventory) => (
+                <Table.Row key={inventory._id} className="bg-white">
+                  <Table.Cell>{inventory?.hospitalId?.name || "N/A"}</Table.Cell>
+                  <Table.Cell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-sm font-medium ${bloodTypeColors[inventory.bloodType]}`}
+                    >
+                      {inventory.bloodType}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell style={{ display: 'flex', alignItems: 'center' }}>
+                    {inventory.availableStocks}
+                    <img
+                      src={bloodIcon}
+                      alt="Blood Stock"
+                      style={{ width: '25px', height: '25px', marginLeft: '5px', verticalAlign: 'middle' }}
+                    />
+                  </Table.Cell>
+                  <Table.Cell>{new Date(inventory.expirationDate).toLocaleDateString("en-GB")}</Table.Cell>
+                  <Table.Cell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        inventory.expiredStatus ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {inventory.expiredStatus ? "Expired" : "Not Expired"}
+                    </span>
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            ) : (
+              <Table.Row>
+                <Table.Cell colSpan="6" className="text-center py-4 text-gray-500">
+                  No blood inventory records found for the selected blood type.
+                </Table.Cell>
+              </Table.Row>
+            )}
+          </Table.Body>
+          </>
+          )}
         </Table>
-      </div>
 
-      {/* Modal for Add */}
-      <Modal show={isAddModalOpen} onClose={closeAddModal}>
-        <Modal.Header>Add New Inventory</Modal.Header>
-        <Modal.Body>
-          <div className="space-y-4">
-            <div>
-              <Label value="Blood Type" />
-              <Select
-                name="bloodType"
-                value={formData.bloodType}
-                onChange={handleChange}
-                required
-                color={addErrors.bloodType ? "failure" : "gray"}
-              >
-                <option value="" disabled>
-                  Select Blood Type
-                </option>
-                {bloodTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+        {/* Modal for Add */}
+        <Modal show={isAddModalOpen} onClose={closeAddModal}>
+          <Modal.Header>Add New Inventory</Modal.Header>
+          <Modal.Body>
+            <div className="space-y-4">
+              <div>
+                <Label value="Blood Type" />
+                <Select
+                  name="bloodType"
+                  value={formData.bloodType}
+                  onChange={handleChange}
+                  required
+                  color={addErrors.bloodType ? "failure" : "gray"}
+                >
+                  <option value="" disabled>
+                    Select Blood Type
                   </option>
-                ))}
-              </Select>
-              {addErrors.bloodType && (
-                <p className="text-red-600 text-sm mt-1">{addErrors.bloodType}</p>
-              )}
+                  {bloodTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </Select>
+                {addErrors.bloodType && (
+                  <p className="text-red-600 text-sm mt-1">{addErrors.bloodType}</p>
+                )}
+              </div>
+              <div>
+                <Label value="Stock" />
+                <TextInput
+                  type="number"
+                  name="availableStocks"
+                  value={formData.availableStocks}
+                  onChange={handleChange}
+                  required
+                  color={addErrors.availableStocks ? "failure" : "gray"}
+                />
+                {addErrors.availableStocks && (
+                  <p className="text-red-600 text-sm mt-1">{addErrors.availableStocks}</p>
+                )}
+              </div>
             </div>
-            <div>
-              <Label value="Stock" />
-              <TextInput
-                type="number"
-                name="availableStocks"
-                value={formData.availableStocks}
-                onChange={handleChange}
-                required
-                color={addErrors.availableStocks ? "failure" : "gray"}
-              />
-              {addErrors.availableStocks && (
-                <p className="text-red-600 text-sm mt-1">{addErrors.availableStocks}</p>
-              )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              gradientDuoTone="redToPink"
+              onClick={handleCreate}
+              disabled={loading}
+            >
+              {loading ? <Spinner size="sm" className="mr-2" /> : null}
+              {loading ? "Adding..." : "Add"}
+            </Button>
+            <Button color="gray" onClick={closeAddModal} disabled={loading}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Modal for Edit */}
+        <Modal show={isEditModalOpen} onClose={closeEditModal}>
+          <Modal.Header>Edit Inventory</Modal.Header>
+          <Modal.Body>
+            <div className="space-y-4">
+              <div>
+                <Label value="Stock" />
+                <TextInput
+                  type="number"
+                  name="availableStocks"
+                  value={editFormData.availableStocks}
+                  onChange={handleEditChange}
+                  required
+                  color={editErrors.availableStocks ? "failure" : "gray"}
+                />
+                {editErrors.availableStocks && (
+                  <p className="text-red-600 text-sm mt-1">{editErrors.availableStocks}</p>
+                )}
+              </div>
             </div>
-            
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            gradientDuoTone="redToPink"
-            onClick={handleCreate}
-            disabled={loading}
-          >
-            {loading ? <Spinner size="sm" className="mr-2" /> : null}
-            {loading ? "Adding..." : "Add"}
-          </Button>
-          <Button color="gray" onClick={closeAddModal} disabled={loading}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              gradientDuoTone="redToPink"
+              onClick={handleEdit}
+              disabled={loading}
+            >
+              {loading ? <Spinner size="sm" className="mr-2" /> : null}
+              {loading ? "Updating..." : "Update"}
+            </Button>
+            <Button color="gray" onClick={closeEditModal} disabled={loading}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
 
-      {/* Modal for Edit */}
-      <Modal show={isEditModalOpen} onClose={closeEditModal}>
-        <Modal.Header>Edit Inventory</Modal.Header>
-        <Modal.Body>
-          <div className="space-y-4">
-            <div>
-              <Label value="Stock" />
-              <TextInput
-                type="number"
-                name="availableStocks"
-                value={editFormData.availableStocks}
-                onChange={handleEditChange}
-                required
-                color={editErrors.availableStocks ? "failure" : "gray"}
-              />
-              {editErrors.availableStocks && (
-                <p className="text-red-600 text-sm mt-1">{editErrors.availableStocks}</p>
-              )}
-            </div>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            gradientDuoTone="redToPink"
-            onClick={handleEdit}
-            disabled={loading}
-          >
-            {loading ? <Spinner size="sm" className="mr-2" /> : null}
-            {loading ? "Updating..." : "Update"}
-          </Button>
-          <Button color="gray" onClick={closeEditModal} disabled={loading}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal for Missing Blood Types Alert */}
-      <Modal show={isAlertModalOpen} onClose={closeAlertModal} size="md">
-        <Modal.Header>Missing Blood Types</Modal.Header>
-        <Modal.Body>
-          <p className="text-gray-700">
-            The following blood types are not present in the inventory:
-          </p>
-          <ul className="list-disc pl-5 mt-2 text-gray-700">
-            {missingBloodTypes.map((type) => (
-              <li key={type}>{type}</li>
-            ))}
-          </ul>
-          <p className="mt-4 text-gray-700">
-            Please consider adding these blood types to ensure complete inventory coverage.
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button gradientDuoTone="redToPink" onClick={openAddModal}>
-            Add Inventory
-          </Button>
-          <Button color="gray" onClick={closeAlertModal}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Error Message */}
-      {errorMessage && (
-        <div className="text-red-600 text-center mt-4">{errorMessage}</div>
-      )}
+        {/* Error Message */}
+        {errorMessage && (
+          <div className="text-red-600 text-center mt-4">{errorMessage}</div>
+        )}
+      </div>
     </div>
   );
 }
