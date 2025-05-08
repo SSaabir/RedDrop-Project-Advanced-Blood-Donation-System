@@ -241,7 +241,10 @@ export const getBloodDonationAppointmentByDonorId = async (req, res) => {
 export const getBloodDonationAppointmentByHospitalId = async (req, res) => {
     try {
         const { id } = req.params;
-        const appointments = await BloodDonationAppointment.find({ hospitalId: id });
+const appointments = await BloodDonationAppointment.find({ hospitalId: id })
+    .populate('hospitalId', 'name')
+    .populate('donorId', 'firstName lastName')
+    .populate('hospitalAdminId','firstName lastName')
         if (!appointments || appointments.length === 0) return res.status(404).json({ message: "Appointments not found" });
         res.json(appointments);
     } catch (error) {

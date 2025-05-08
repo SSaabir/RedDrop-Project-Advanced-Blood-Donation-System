@@ -16,6 +16,7 @@ export default function HospitalDashboard() {
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
   const { user } = useAuthContext();
   const userId = user?.userObj?._id;
+  const Manager = user?.role === 'Manager';
   const [newHospital, setNewHospital] = useState({
     name: "",
     city: "",
@@ -140,7 +141,6 @@ export default function HospitalDashboard() {
 
   const validateEditForm = (data) => {
     const errors = {};
-    if (!data.name) errors.name = "Name is required";
     if (!data.city) errors.city = "City is required";
     if (!data.phoneNumber) errors.phoneNumber = "Phone number is required";
     else if (!/^\d{10}$/.test(data.phoneNumber)) errors.phoneNumber = "Must be exactly 10 digits";
@@ -237,7 +237,6 @@ export default function HospitalDashboard() {
     setActionLoading(true);
     try {
       await updateHospital(editHospital._id, {
-        name: editHospital.name,
         city: editHospital.city,
         phoneNumber: editHospital.phoneNumber,
         address: editHospital.address,
@@ -378,6 +377,8 @@ export default function HospitalDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
+      {Manager ? (
+        <>
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
@@ -503,24 +504,27 @@ export default function HospitalDashboard() {
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <Button 
-                          size="xs" 
-                          gradientDuoTone="cyanToBlue"
-                          onClick={() => handleEdit(hospital)} 
-                          disabled={actionLoading}
-                          className="rounded-lg"
-                        >
-                          Edit
-                        </Button>
-                        <Button 
-                          size="xs" 
-                          color="failure"
-                          onClick={() => handleDelete(hospital._id)} 
-                          disabled={actionLoading}
-                          className="rounded-lg bg-red-600 hover:bg-red-700"
-                        >
-                          Delete
-                        </Button>
+                        {hospital.activeStatus ? (
+                          <Button 
+                            size="xs" 
+                            gradientDuoTone="cyanToBlue"
+                            onClick={() => handleEdit(hospital)} 
+                            disabled={actionLoading}
+                            className="rounded-lg"
+                          >
+                            Edit
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="xs" 
+                            color="failure"
+                            onClick={() => handleDelete(hospital._id)} 
+                            disabled={actionLoading}
+                            className="rounded-lg bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </Button>
+                        )}
                         <Button
                           size="xs"
                           color={hospital.activeStatus ? "failure" : "success"}
@@ -729,18 +733,6 @@ export default function HospitalDashboard() {
           <Modal.Header>Edit Hospital</Modal.Header>
           <Modal.Body>
             <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <Label htmlFor="editName" value="Hospital Name" />
-                <TextInput
-                  id="editName"
-                  value={editHospital?.name || ""}
-                  onChange={(e) => setEditHospital(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                  color={editErrors.name ? "failure" : "gray"}
-                  className="rounded-lg"
-                />
-                {editErrors.name && <p className="text-red-600 text-sm mt-1">{editErrors.name}</p>}
-              </div>
               <div>
                 <Label htmlFor="editCity" value="City" />
                 <TextInput
@@ -1025,6 +1017,12 @@ export default function HospitalDashboard() {
           </Modal.Body>
         </Modal>
       </div>
+      </>
+    ) : (
+  <div className="flex min-h-screen items-center justify-center">
+    <p className="text-red-600 text-lg">Access Denied: Manager role required</p>
+  </div>
+)}
     </div>
   );
 }
