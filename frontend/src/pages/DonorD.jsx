@@ -1,28 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Button, Table, Modal, TextInput, Label, Spinner, Select } from "flowbite-react";
+import { Button, Table, TextInput, Label, Spinner, Select } from "flowbite-react";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useDonor } from "../hooks/donor";
 import { useGenerateReport } from "../hooks/useGenerateReport";
 import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function DonorDashboard() {
-  const { donors, loading, error, fetchDonors, updateDonor, deleteDonor, activateDeactivateDonor } = useDonor();
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [selectedDonor, setSelectedDonor] = useState(null);
-  const [editLoading, setEditLoading] = useState(false);
+  const { donors, loading, error, fetchDonors, activateDeactivateDonor } = useDonor();
   const { user } = useAuthContext();
   const Manager = user?.role === 'Manager';
   const { reportUrl, generateDonorReport } = useGenerateReport();
-  const initialDonorData = {
-    firstName: "",
-    lastName: "",
-    phoneNumber: "",
-    city: ""
-  };
-
-  const [donorData, setDonorData] = useState(initialDonorData);
-  const [editErrors, setEditErrors] = useState({});
   const [filter, setFilter] = useState({
     name: "",
     bloodType: "",
@@ -56,78 +43,6 @@ export default function DonorDashboard() {
   const handleFilterChange = (e) => {
     const { id, value } = e.target;
     setFilter(prev => ({ ...prev, [id]: value }));
-    setEditErrors((prev) => ({ ...prev, [id]: "" }));
-  };
-
-  const validateEditForm = () => {
-    const errors = {};
-    if (!donorData.firstName.trim()) errors.firstName = "First name is required";
-    if (!donorData.lastName.trim()) errors.lastName = "Last name is required";
-    if (!donorData.phoneNumber) {
-      errors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{10}$/.test(donorData.phoneNumber)) {
-      errors.phoneNumber = "Phone number must be exactly 10 digits";
-    }
-    if (!donorData.city.trim()) errors.city = "City is required";
-    setEditErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    if (id === "phoneNumber") {
-      if (/^\d*$/.test(value) && value.length <= 10) {
-        setDonorData((prev) => ({ ...prev, [id]: value }));
-      }
-    } else {
-      setDonorData((prev) => ({ ...prev, [id]: value }));
-    }
-    setEditErrors((prev) => ({ ...prev, [id]: "" }));
-  };
-
-  const handleEdit = (donor) => {
-    if (!donor || !donor._id) return;
-    setSelectedDonor(donor);
-    setDonorData({
-      firstName: donor.firstName || "",
-      lastName: donor.lastName || "",
-      phoneNumber: donor.phoneNumber || "",
-      city: donor.city || ""
-    });
-    setEditErrors({});
-    setOpenEditModal(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!validateEditForm()) return;
-    if (!selectedDonor || !selectedDonor._id) return;
-    setEditLoading(true);
-    try {
-      await updateDonor(selectedDonor._id, donorData);
-      setOpenEditModal(false);
-      loadDonors();
-    } catch (err) {
-      console.error("Error updating donor:", err);
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  const handleDelete = (donor) => {
-    if (!donor || !donor._id) return;
-    setSelectedDonor(donor);
-    setOpenDeleteModal(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!selectedDonor || !selectedDonor._id) return;
-    try {
-      await deleteDonor(selectedDonor._id);
-      setOpenDeleteModal(false);
-      loadDonors();
-    } catch (err) {
-      console.error("Error deleting donor:", err);
-    }
   };
 
   const handleToggleStatus = async (donor) => {
@@ -147,267 +62,165 @@ export default function DonorDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-       {Manager ? (
+      {Manager ? (
         <>
-      <DashboardSidebar />
-      <div className="flex-1 p-6">
-        <h1 className="text-2xl font-bold text-red-700 mb-4">Donor Dashboard</h1>
+          <DashboardSidebar />
+          <div className="flex-1 p-6">
+            <h1 className="text-2xl font-bold text-red-700 mb-4">Donor Dashboard</h1>
 
-        {/* Report Generation Section */}
-        <div className="mb-6 p-4 bg-white rounded-lg sombra-md">
-          <h2 className="text-lg font-semibold mb-4">Generate Donor Report</h2>
-          {reportUrl && (
-            <p className="text-green-600 mt-2">Report generated successfully!</p>
-          )}
-          <br />
-          <div className="flex items-center space-x-60">
-            <Button 
-              gradientDuoTone="redToPink" 
-              onClick={handleGenerateReport} 
-              disabled={loading}
-              className="mb-0 bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
-            >
-              {loading ? <Spinner size="sm" className="mr-2" /> : null}
-              {loading ? "Generating..." : "Generate Report"}
-            </Button>
-            
-            {reportUrl && (
-              <a 
-                href={`http://localhost:3020${reportUrl}`} 
-                download
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Download Report
-              </a>
-            )}
-          </div>
-        </div>
-        
-        {/* Filter Section */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-4">Filter Donors</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label value="Name" />
-              <TextInput
-                id="name"
-                value={filter.name}
-                onChange={handleFilterChange}
-                placeholder="Search by name"
-                className="rounded-lg"
-              />
-            </div>
-            <div>
-              <Label value="Blood Type" />
-              <Select id="bloodType" value={filter.bloodType} onChange={handleFilterChange} className="rounded-lg">
-                <option value="">All</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </Select>
-            </div>
-            <div>
-              <Label value="Gender" />
-              <Select id="gender" value={filter.gender} onChange={handleFilterChange} className="rounded-lg">
-                <option value="">All</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </Select>
-            </div>
-            <div>
-              <Label value="Status" />
-              <Select id="status" value={filter.status} onChange={handleFilterChange} className="rounded-lg">
-                <option value="">All</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {loading && <Spinner className="mb-4" />}
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <Table hoverable className="w-full">
-            <Table.Head className="bg-red-50 text-red-800">
-              <Table.HeadCell className="px-6 py-4 font-semibold">Name</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Gender</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Email</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Phone</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Blood Type</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">City</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">NIC</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Status</Table.HeadCell>
-              <Table.HeadCell className="px-6 py-4 font-semibold">Actions</Table.HeadCell>
-            </Table.Head>
-            <Table.Body className="divide-y divide-gray-200">
-              {filteredDonors.length > 0 ? (
-                filteredDonors.map((donor) => (
-                  <Table.Row 
-                    key={donor._id} 
-                    className="bg-white hover:bg-red-50 transition-colors duration-150"
-                  >
-                    <Table.Cell className="px-6 py-4 text-gray-900 font-medium">
-                      {`${donor.firstName} ${donor.lastName}`}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4">{donor.gender || "N/A"}</Table.Cell>
-                    <Table.Cell className="px-6 py-4">{donor.email}</Table.Cell>
-                    <Table.Cell className="px-6 py-4">{donor.phoneNumber || "N/A"}</Table.Cell>
-                    <Table.Cell className="px-6 py-4 font-semibold text-red-600">
-                      {donor.bloodType || "N/A"}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4">{donor.city || "N/A"}</Table.Cell>
-                    <Table.Cell className="px-6 py-4">{donor.nic || "N/A"}</Table.Cell>
-                    <Table.Cell 
-                      className={`px-6 py-4 font-medium ${
-                        donor.activeStatus ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {donor.activeStatus ? "Active" : "Deactive"}
-                    </Table.Cell>
-                    <Table.Cell className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <Button
-                          size="xs"
-                          color={donor.activeStatus ? "failure" : "success"}
-                          onClick={() => handleToggleStatus(donor)}
-                          className={`rounded-lg ${donor.activeStatus ? "bg-red-300 hover:bg-red-400" : "bg-green-600 hover:bg-green-700"}`}
-                        >
-                          {donor.activeStatus ? "Deactivate" : "Activate"}
-                        </Button>
-                      </div>
-                    </Table.Cell>
-                  </Table.Row>
-                ))
-              ) : (
-                <Table.Row>
-                  <Table.Cell 
-                    colSpan="9" 
-                    className="text-center py-6 text-gray-500 font-medium"
-                  >
-                    No donors found
-                  </Table.Cell>
-                </Table.Row>
+            {/* Report Generation Section */}
+            <div className="mb-6 p-4 bg-white rounded-lg sombra-md">
+              <h2 className="text-lg font-semibold mb-4">Generate Donor Report</h2>
+              {reportUrl && (
+                <p className="text-green-600 mt-2">Report generated successfully!</p>
               )}
-            </Table.Body>
-          </Table>
-        </div>
-
-        {/* Edit Modal - Only shows editable fields */}
-        <Modal show={openEditModal} onClose={() => setOpenEditModal(false)}>
-          <Modal.Header>Edit Donor Information</Modal.Header>
-          <Modal.Body>
-            <div className="space-y-4">
-              <div>
-                <Label value="First Name" />
-                <TextInput
-                  id="firstName"
-                  value={donorData.firstName}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.firstName ? "failure" : "gray"}
-                  className="rounded-lg"
-                />
-                {editErrors.firstName && <p className="text-red-600 text-sm mt-1">{editErrors.firstName}</p>}
-              </div>
-              <div>
-                <Label value="Last Name" />
-                <TextInput
-                  id="lastName"
-                  value={donorData.lastName}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.lastName ? "failure" : "gray"}
-                  className="rounded-lg"
-                />
-                {editErrors.lastName && <p className="text-red-600 text-sm mt-1">{editErrors.lastName}</p>}
-              </div>
-              <div>
-                <Label value="Phone Number" />
-                <TextInput
-                  id="phoneNumber"
-                  value={donorData.phoneNumber}
-                  onChange={handleChange}
-                  required
-                  maxLength={10}
-                  color={editErrors.phoneNumber ? "failure" : "gray"}
-                  placeholder="10 digits only"
-                  className="rounded-lg"
-                />
-                {editErrors.phoneNumber && <p className="text-red-600 text-sm mt-1">{editErrors.phoneNumber}</p>}
-              </div>
-              <div>
-                <Label value="City" />
-                <TextInput
-                  id="city"
-                  value={donorData.city}
-                  onChange={handleChange}
-                  required
-                  color={editErrors.city ? "failure" : "gray"}
-                  className="rounded-lg"
-                />
-                {editErrors.city && <p className="text-red-600 text-sm mt-1">{editErrors.city}</p>}
+              <br />
+              <div className="flex items-center space-x-60">
+                <Button 
+                  gradientDuoTone="redToPink" 
+                  onClick={handleGenerateReport} 
+                  disabled={loading}
+                  className="mb-0 bg-red-500 text-white rounded-lg hover:bg-red-700 transition" 
+                >
+                  {loading ? <Spinner size="sm" className="mr-2" /> : null}
+                  {loading ? "Generating..." : "Generate Report"}
+                </Button>
+                
+                {reportUrl && (
+                  <a 
+                    href={`http://localhost:3020${reportUrl}`} 
+                    download
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Download Report
+                  </a>
+                )}
               </div>
             </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              gradientDuoTone="redToPink"
-              onClick={handleUpdate}
-              disabled={editLoading}
-              className="rounded-lg"
-            >
-              {editLoading ? <Spinner size="sm" className="mr-2" /> : null}
-              {editLoading ? "Updating..." : "Update"}
-            </Button>
-            <Button 
-              color="gray" 
-              onClick={() => setOpenEditModal(false)} 
-              disabled={editLoading}
-              className="rounded-lg"
-            >
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </Modal>
+            
+            {/* Filter Section */}
+            <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+              <h2 className="text-lg font-semibold mb-4">Filter Donors</h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label value="Name" />
+                  <TextInput
+                    id="name"
+                    value={filter.name}
+                    onChange={handleFilterChange}
+                    placeholder="Search by name"
+                    className="rounded-lg"
+                  />
+                </div>
+                <div>
+                  <Label value="Blood Type" />
+                  <Select id="bloodType" value={filter.bloodType} onChange={handleFilterChange} className="rounded-lg">
+                    <option value="">All</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label value="Gender" />
+                  <Select id="gender" value={filter.gender} onChange={handleFilterChange} className="rounded-lg">
+                    <option value="">All</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label value="Status" />
+                  <Select id="status" value={filter.status} onChange={handleFilterChange} className="rounded-lg">
+                    <option value="">All</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
-        {/* Delete Modal */}
-        <Modal show={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
-          <Modal.Header>Confirm Delete</Modal.Header>
-          <Modal.Body>
-            <p>Are you sure you want to delete {selectedDonor?.firstName} {selectedDonor?.lastName}?</p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button 
-              gradientDuoTone="redToPink" 
-              onClick={handleConfirmDelete}
-              className="rounded-lg"
-            >
-              Delete
-            </Button>
-            <Button 
-              color="gray" 
-              onClick={() => setOpenDeleteModal(false)}
-              className="rounded-lg"
-            >
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </Modal>
-      </div>
-      </>
-    ) : (
-  <div className="flex min-h-screen items-center justify-center">
-    <p className="text-red-600 text-lg">Access Denied: Manager role required</p>
-  </div>
-)}
+            {loading && <Spinner className="mb-4" />}
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <Table hoverable className="w-full">
+                <Table.Head className="bg-red-50 text-red-800">
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Name</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Gender</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Email</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Phone</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Blood Type</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">City</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">NIC</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Status</Table.HeadCell>
+                  <Table.HeadCell className="px-6 py-4 font-semibold">Actions</Table.HeadCell>
+                </Table.Head>
+                <Table.Body className="divide-y divide-gray-200">
+                  {filteredDonors.length > 0 ? (
+                    filteredDonors.map((donor) => (
+                      <Table.Row 
+                        key={donor._id} 
+                        className="bg-white hover:bg-red-50 transition-colors duration-150"
+                      >
+                        <Table.Cell className="px-6 py-4 text-gray-900 font-medium">
+                          {`${donor.firstName} ${donor.lastName}`}
+                        </Table.Cell>
+                        <Table.Cell className="px-6 py-4">{donor.gender || "N/A"}</Table.Cell>
+                        <Table.Cell className="px-6 py-4">{donor.email}</Table.Cell>
+                        <Table.Cell className="px-6 py-4">{donor.phoneNumber || "N/A"}</Table.Cell>
+                        <Table.Cell className="px-6 py-4 font-semibold text-red-600">
+                          {donor.bloodType || "N/A"}
+                        </Table.Cell>
+                        <Table.Cell className="px-6 py-4">{donor.city || "N/A"}</Table.Cell>
+                        <Table.Cell className="px-6 py-4">{donor.nic || "N/A"}</Table.Cell>
+                        <Table.Cell 
+                          className={`px-6 py-4 font-medium ${
+                            donor.activeStatus ? "text-green-600" : "text-red-600"
+                          }`}
+                        >
+                          {donor.activeStatus ? "Active" : "Deactive"}
+                        </Table.Cell>
+                        <Table.Cell className="px-6 py-4">
+                          <div className="flex space-x-2">
+                            <Button
+                              size="xs"
+                              color={donor.activeStatus ? "failure" : "success"}
+                              onClick={() => handleToggleStatus(donor)}
+                              className={`rounded-lg ${donor.activeStatus ? "bg-red-300 hover:bg-red-400" : "bg-green-600 hover:bg-green-700"}`}
+                            >
+                              {donor.activeStatus ? "Deactivate" : "Activate"}
+                            </Button>
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))
+                  ) : (
+                    <Table.Row>
+                      <Table.Cell 
+                        colSpan="9" 
+                        className="text-center py-6 text-gray-500 font-medium"
+                      >
+                        No donors found
+                      </Table.Cell>
+                    </Table.Row>
+                  )}
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-red-600 text-lg">Access Denied: Manager role required</p>
+        </div>
+      )}
     </div>
   );
 }
