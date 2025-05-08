@@ -231,7 +231,6 @@ export default function DonorDashboard() {
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <Table hoverable className="w-full">
             <Table.Head className="bg-red-50 text-red-800">
-              <Table.HeadCell className="px-6 py-4 font-semibold">ID</Table.HeadCell>
               <Table.HeadCell className="px-6 py-4 font-semibold">Name</Table.HeadCell>
               <Table.HeadCell className="px-6 py-4 font-semibold">Gender</Table.HeadCell>
               <Table.HeadCell className="px-6 py-4 font-semibold">Email</Table.HeadCell>
@@ -249,7 +248,6 @@ export default function DonorDashboard() {
                     key={donor._id} 
                     className="bg-white hover:bg-red-50 transition-colors duration-150"
                   >
-                    <Table.Cell className="px-6 py-4 text-gray-900 font-medium">{donor._id}</Table.Cell>
                     <Table.Cell className="px-6 py-4 text-gray-900 font-medium">
                       {`${donor.firstName} ${donor.lastName}`}
                     </Table.Cell>
@@ -301,7 +299,7 @@ export default function DonorDashboard() {
               ) : (
                 <Table.Row>
                   <Table.Cell 
-                    colSpan="10" 
+                    colSpan="9" 
                     className="text-center py-6 text-gray-500 font-medium"
                   >
                     No donors found
