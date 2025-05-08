@@ -116,18 +116,28 @@ export default function InquiryDashboard() {
       <div className="flex-1 p-6">
         <h2 className="text-2xl font-bold text-red-700 mb-4">Inquiry Dashboard</h2>
 
-        <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
-                                              Generate Report
-                                            </Button>
+        <div className="mb-2">
+         <Button
+    gradientDuoTone="redToPink"
+    onClick={handleGenerateReport}
+    disabled={loading}
+    className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+  >
+    Generate Report
+  </Button>
 
-                                            {reportUrl && (
+
+       {reportUrl && (
                 <div>
                     <p>Report generated successfully!</p>
-                    <a href={`http://localhost:3020${reportUrl}`} download>
+                    <a href={`http://localhost:3020${reportUrl}`} download
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                         Download Report
                     </a>
                 </div>
-                    )}                          
+                    )}          
+
+                    </div>                
 
         {/* Search & Filter Controls */}
         <div className="flex gap-4 mb-4">

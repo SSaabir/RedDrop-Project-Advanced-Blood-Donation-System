@@ -3,7 +3,7 @@ import BloodInventory from "../models/BloodInventory.model.js";
 // Get all blood inventory records
 export const getBloodInventory = async (req, res) => {
     try {
-        const inventory = await BloodInventory.find();
+        const inventory = await BloodInventory.find().populate('hospitalId', 'name');
         res.json(inventory);
     } catch (error) {
         res.status(500).json({ message: "Error fetching blood inventory" });
@@ -13,7 +13,7 @@ export const getBloodInventory = async (req, res) => {
 // Get all blood inventory records by Hospital ID
 export const getBloodInventoryByHospital = async (req, res) => {
     try {
-        const inventory = await BloodInventory.find({ hospitalId: req.params.id });
+        const inventory = await BloodInventory.find({ hospitalId: req.params.id }).populate('hospitalId', 'name');
         res.json(inventory);
     } catch (error) {
         res.status(500).json({ message: "Error fetching blood inventory" });

@@ -47,6 +47,24 @@ bloodInventorySchema.statics.updateExpiredStatus = async function () {
     );
 }
 
+
+bloodInventorySchema.statics.updateExpiringSoonStatus = async function () {
+    const currentDateTime = new Date();
+    const expiringSoonThreshold = new Date();
+    expiringSoonThreshold.setDate(currentDateTime.getDate() - 14);
+    
+    await this.updateMany(
+        {
+            createdAt: { $lt: expiringSoonThreshold },
+            expiringSoon: { $ne: true },
+            expiredStatus: { $ne: true }
+        },
+        { 
+            expiringSoon: true,
+            updatedAt: currentDateTime
+        }
+    );
+};
 const BloodInventory = mongoose.model('BloodInventory', bloodInventorySchema);
 
 export default BloodInventory;

@@ -106,67 +106,146 @@ export const generateHealthEvaluationReport = async (req, res) => {
 };
 
 export const generateInventoryReport = async (req, res) => {
-    try {
-        const { userId } = req.query; // Using query as per frontend
+  try {
+    const { userId } = req.query;
 
-        console.log('User ID:', userId);
+    // Update expired flags first
+    await BloodInventory.updateExpiredStatus();
 
-        // Update expired status before generating report
-        await BloodInventory.updateExpiredStatus();
+    const inventoryItems = await BloodInventory.find({ hospitalId: userId })
+      .populate('hospitalId', 'name')
+      .select('bloodType availableStocks expirationDate expiredStatus createdAt updatedAt');
 
-        // Query all inventory for this hospital
-        const inventoryItems = await BloodInventory.find({
-            hospitalId: userId
-        }).select('bloodType availableStocks expirationDate expiredStatus createdAt updatedAt');
-
-        if (!inventoryItems.length) {
-            return res.status(404).json({ success: false, message: 'No inventory found for this hospital' });
-        }
-
-        // Generate PDF
-        const doc = new PDFDocument();
-        const fileName = `inventory_report_${new Date().toISOString().split('T')[0]}.pdf`;
-        const filePath = `./reports/${fileName}`;
-        
-        if (!fs.existsSync('./reports')) {
-            fs.mkdirSync('./reports');
-        }
-
-        doc.pipe(fs.createWriteStream(filePath));
-        doc.fontSize(16).text('Blood Inventory Report', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).text(`Hospital ID: ${userId}`);
-        doc.text(`Generated: ${new Date().toDateString()}`);
-        
-        doc.moveDown();
-        doc.text('Inventory Details:', { underline: true });
-        inventoryItems.forEach((item, index) => {
-            doc.moveDown(0.5);
-            doc.text(`${index + 1}. Blood Type: ${item.bloodType}`);
-            doc.text(`   Stocks: ${item.availableStocks}`);
-            doc.text(`   Expiration: ${item.expirationDate ? item.expirationDate.toDateString() : 'N/A'}`);
-            doc.text(`   Expired: ${item.expiredStatus ? 'Yes' : 'No'}`);
-            doc.text(`   Created: ${item.createdAt ? item.createdAt.toDateString() : 'N/A'}`);
-            doc.text(`   Updated: ${item.updatedAt ? item.updatedAt.toDateString() : 'N/A'}`);
-        });
-
-        doc.end();
-
-        res.json({ success: true, fileUrl: `/reports/${fileName}` });
-    } catch (error) {
-        console.error('Error generating report:', error);
-        res.status(500).json({ success: false, message: 'Error generating report' });
+    if (!inventoryItems.length) {
+      return res.status(404).json({ success: false, message: 'No inventory found for this hospital' });
     }
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const fileName = `inventory_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const filePath = `./reports/${fileName}`;
+
+    if (!fs.existsSync('./reports')) {
+      fs.mkdirSync('./reports');
+    }
+
+    doc.pipe(fs.createWriteStream(filePath));
+
+    const hospitalName = inventoryItems[0]?.hospitalId?.name || 'Hospital';
+
+    // Title section
+    doc
+      .fontSize(18)
+      .fillColor('#FF2400')
+      .text('Blood Inventory Report', { align: 'center' });
+
+    doc
+      .moveDown(0.5)
+      .fontSize(12)
+      .fillColor('#000')
+      .text(`Hospital: ${hospitalName}`, { align: 'center' });
+
+    doc
+      .fontSize(10)
+      .fillColor('#666')
+      .text(`Generated: ${new Date().toDateString()}`, { align: 'center' });
+
+    doc.moveDown();
+
+    // Table headers
+    const tableTop = 150;
+    const rowHeight = 25;
+    const colWidths = [50, 80, 80, 90, 60, 90, 90];
+    const headers = ['#', 'Blood Type', 'Stocks', 'Expiration', 'Expired', 'Created', 'Updated'];
+    let startX = 40;
+    let y = tableTop;
+
+    const renderTableHeader = () => {
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#FF9280').stroke();
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 5, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+      y += rowHeight;
+    };
+
+    renderTableHeader();
+
+    // Data rows
+    doc.font('Helvetica').fillColor('#000').fontSize(9);
+
+    let expiredCount = 0;
+
+    inventoryItems.forEach((item, index) => {
+      let x = startX;
+
+      if (y + rowHeight > doc.page.height - 50) {
+        doc.addPage();
+        y = 50;
+        renderTableHeader();
+      }
+
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f7f7f7';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
+
+      const row = [
+        index + 1,
+        item.bloodType,
+        item.availableStocks,
+        item.expirationDate ? item.expirationDate.toDateString() : 'N/A',
+        item.expiredStatus ? 'Yes' : 'No',
+        item.createdAt ? item.createdAt.toDateString() : 'N/A',
+        item.updatedAt ? item.updatedAt.toDateString() : 'N/A',
+      ];
+
+      if (item.expiredStatus) expiredCount++;
+
+      row.forEach((data, i) => {
+        doc.fillColor('#000').text(data, x + 5, y + 6, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      y += rowHeight;
+    });
+
+    // Summary
+    if (y + 70 > doc.page.height - 40) {
+      doc.addPage();
+      y = 60;
+    }
+
+    doc.moveTo(startX, y + 10).lineTo(startX + 500, y + 10).stroke();
+
+    doc
+      .fontSize(12)
+      .fillColor('#FF2400')
+      .text('Summary', startX, y + 20);
+
+    doc
+      .fontSize(10)
+      .fillColor('#333')
+      .text(`Total Blood Types Listed: ${inventoryItems.length}`, startX, y + 40);
+
+    doc
+      .text(`Expired Entries: ${expiredCount}`, startX, y + 60);
+
+    doc.end();
+
+    res.json({ success: true, fileUrl: `/reports/${fileName}` });
+  } catch (error) {
+    console.error('Error generating inventory report:', error);
+    res.status(500).json({ success: false, message: 'Error generating report' });
+  }
 };
+
 
 export const generateFeedbackReport = async (req, res) => {
   try {
-    // Fetch feedback for the user (donorId or systemManagerId)
     const feedbackItems = await Feedback.find()
       .select('subject comments feedbackType starRating sessionModel createdAt')
       .sort({ createdAt: -1 });
 
-    // Generate PDF
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     const fileName = `feedback_report_${new Date().toISOString().split('T')[0]}.pdf`;
     const filePath = `./reports/${fileName}`;
@@ -177,64 +256,84 @@ export const generateFeedbackReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('Feedback Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+      doc
+        .fontSize(20)
+        .fillColor('#FF2400')
+        .text('User Feedback Summary', 0, 40, { align: 'center' });
 
-    // Table headers
-    const tableTop = 130;
-    const rowHeight = 25;
-    const colWidths = [30, 100, 100, 80, 50, 80, 80];
+      doc
+        .moveDown()
+        .fontSize(11)
+        .fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
+
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Subject', 'Comments', 'Type', 'Rate', 'Session', 'Date'];
+      const colWidths = [30, 100, 160, 70, 40, 60, 70];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25)
+        .fill('#FF9280')
+        .stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 4, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [30, 100, 160, 70, 40, 60, 70];
     const startX = 40;
+    const rowHeight = 60;
+    const pageHeight = doc.page.height - 40; // account for bottom margin
 
-    const headers = ['No', 'Subject', 'Comments', 'Type', 'Rating', 'Session', 'Created'];
+    generateHeader();
+    let y = 120;
+    y = generateTableHeader(y);
 
-    let y = tableTop;
-
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
-
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    doc.font('Helvetica').fontSize(9);
 
     feedbackItems.forEach((item, index) => {
-      x = startX;
+      // If exceeding page, add new page
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+         y = 120;
+        y = generateTableHeader(y);
+        doc.font('Helvetica').fontSize(9);
+      }
+
       const row = [
         index + 1,
         item.subject || 'N/A',
-        item.comments ? item.comments.substring(0, 20) + (item.comments.length > 20 ? '...' : '') : 'N/A',
+        item.comments ? item.comments.slice(0, 100) + (item.comments.length > 100 ? '...' : '') : 'N/A',
         item.feedbackType || 'N/A',
-        item.starRating || 'N/A',
+        item.starRating || '-',
         item.sessionModel || 'N/A',
         item.createdAt ? item.createdAt.toDateString() : 'N/A',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#fefefe' : '#f7f7f7';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 4, y + 6, {
+          width: colWidths[i] - 8,
+          align: 'left',
+          height: rowHeight - 10,
+        });
         x += colWidths[i];
       });
 
@@ -249,14 +348,14 @@ export const generateFeedbackReport = async (req, res) => {
   }
 };
 
+
+
 export const generateInquiryReport = async (req, res) => {
   try {
-    // Fetch inquiries
     const inquiries = await Inquiry.find()
       .select('email subject message category attentiveStatus createdAt')
       .sort({ createdAt: -1 });
 
-    // Generate PDF
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     const fileName = `inquiry_report_${new Date().toISOString().split('T')[0]}.pdf`;
     const filePath = `./reports/${fileName}`;
@@ -267,64 +366,84 @@ export const generateInquiryReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('Inquiry Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+      doc
+        .fontSize(20)
+        .fillColor('#FF2400')
+        .text('User Inquiry Summary', 0, 40, { align: 'center' });
 
-    // Table headers
-    const tableTop = 130;
-    const rowHeight = 25;
-    const colWidths = [30, 100, 100, 80, 80, 80, 80];
+      doc
+        .moveDown()
+        .fontSize(11)
+        .fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
+
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Email', 'Subject', 'Message', 'Category', 'Status', 'Date'];
+      const colWidths = [25, 100, 90, 130, 70, 60, 60];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25)
+        .fill('#FF9280')
+        .stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 4, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [25, 100, 90, 130, 70, 60, 60];
     const startX = 40;
+    const rowHeight = 50;
+    const pageHeight = doc.page.height - 40;
 
-    const headers = ['No', 'Email', 'Subject', 'Message', 'Category', 'Status', 'Created'];
+    generateHeader();
+    let y = 120;
+    y = generateTableHeader(y);
 
-    let y = tableTop;
-
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
-
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    doc.font('Helvetica').fontSize(9);
 
     inquiries.forEach((item, index) => {
-      x = startX;
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+        y = 120;
+        y = generateTableHeader(y);
+
+        doc.font('Helvetica').fontSize(9);
+      }
+
       const row = [
         index + 1,
         item.email || 'N/A',
         item.subject || 'N/A',
-        item.message ? item.message.substring(0, 20) + (item.message.length > 20 ? '...' : '') : 'N/A',
+        item.message ? item.message.slice(0, 100) + (item.message.length > 100 ? '...' : '') : 'N/A',
         item.category || 'N/A',
         item.attentiveStatus || 'N/A',
         item.createdAt ? item.createdAt.toDateString() : 'N/A',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 4, y + 6, {
+          width: colWidths[i] - 8,
+          align: 'left',
+          height: rowHeight - 10,
+        });
         x += colWidths[i];
       });
 
@@ -339,6 +458,7 @@ export const generateInquiryReport = async (req, res) => {
   }
 };
 
+
 export const generateAppointmentReport = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -349,8 +469,10 @@ export const generateAppointmentReport = async (req, res) => {
       .sort({ appointmentDate: -1 });
 
     if (!appointments.length) {
-      return res.status(404).json({ success: false, message: 'No appointments found for this donor' });
+      return res.status(404).json({ success: false, message: 'No appointments found for this hospital' });
     }
+
+    const hospitalName = appointments[0]?.hospitalId?.name || 'Hospital';
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     const fileName = `appointment_report_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -360,81 +482,130 @@ export const generateAppointmentReport = async (req, res) => {
       fs.mkdirSync('./reports');
     }
 
-    doc.pipe(fs.createWriteStream(filePath));
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('Blood Donation Appointment Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
-
-    // Table headers
-    const tableTop = 130;
+    const colWidths = [25, 90, 80, 60, 45, 60, 45, 60];
     const rowHeight = 25;
-    const colWidths = [25, 90, 80, 60, 45, 50, 65, 60];
     const startX = 40;
+    const pageHeight = doc.page.height - 60;
 
-    const headers = ['No', 'Donor', 'Hospital', 'Date', 'Time', 'Progress', 'Active', 'Feedback'];
+    let page = 1;
 
-    let y = tableTop;
+    const renderHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+      doc.fontSize(16).fillColor('#FF2400').text(`${hospitalName} - Appointment Report`, 0, 40, { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(10).fillColor('#666').text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
 
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
+    const renderFooter = () => {
+      doc.fontSize(9).fillColor('#999').text(`Page ${page}`, 0, doc.page.height - 30, {
+        align: 'center',
+      });
+      page++;
+    };
 
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
+    const renderTableHeader = (y) => {
+      const headers = ['#', 'Donor', 'Hospital', 'Date', 'Time', 'Progress', 'Active', 'Feedback'];
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#FF9280').stroke();
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
 
-    y += rowHeight;
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 3, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
 
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+      return y + rowHeight;
+    };
+
+    renderHeader();
+    let y = 130;
+    y = renderTableHeader(y);
+    doc.font('Helvetica').fontSize(9);
+
+    // Summary trackers
+    let total = 0;
+    let active = 0;
+    let feedbackGiven = 0;
 
     appointments.forEach((item, index) => {
-      x = startX;
-      const donorName = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`;
+      if (y + rowHeight > pageHeight) {
+        renderFooter();
+        doc.addPage();
+        renderHeader();
+        y = 130;
+        y = renderTableHeader(y);
+      }
+
+      total++;
+      if (item.activeStatus) active++;
+      if (item.feedbackStatus) feedbackGiven++;
+
+      const donorName = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`.trim() || 'N/A';
+      const formattedDate = item.appointmentDate
+        ? new Date(item.appointmentDate).toLocaleDateString()
+        : 'N/A';
+
       const row = [
         index + 1,
         donorName,
         item.hospitalId?.name || 'N/A',
-        item.appointmentDate || 'N/A',
+        formattedDate,
         item.appointmentTime || 'N/A',
-        item.progressStatus,
-        item.activeStatus,
+        item.progressStatus || 'Pending',
+        item.activeStatus ? 'Yes' : 'No',
         item.feedbackStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 3, y + 6, {
+          width: colWidths[i] - 6,
+          align: 'left',
+        });
         x += colWidths[i];
       });
 
       y += rowHeight;
     });
 
+    // Summary Section
+    if (y + 80 > pageHeight) {
+      renderFooter();
+      doc.addPage();
+      renderHeader();
+      y = 130;
+    }
+
+    doc.moveTo(40, y + 15).lineTo(555, y + 15).stroke();
+    doc.fontSize(12).fillColor('#000').text('Summary', 40, y + 25);
+    doc.fontSize(10).fillColor('#333');
+    doc.text(`Total Appointments: ${total}`, 40, y + 45);
+    doc.text(`Active Appointments: ${active}`, 40, y + 65);
+    doc.text(`Feedback Given: ${feedbackGiven}`, 40, y + 85);
+
+    renderFooter();
     doc.end();
-    res.json({ success: true, fileUrl: `/reports/${fileName}` });
+
+    stream.on('finish', () => {
+      res.json({ success: true, fileUrl: `/reports/${fileName}` });
+    });
+
   } catch (error) {
     console.error('Error generating appointment report:', error);
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
+
 
 export const generateSystemAdminReport = async (req, res) => {
   try {
@@ -456,43 +627,56 @@ export const generateSystemAdminReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('System Admin Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+      doc.fontSize(18).fillColor('#FF2400').text('System Admin Report', 0, 40, { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(11).fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
 
-    // Table headers
-    const tableTop = 130;
-    const rowHeight = 25;
-    const colWidths = [25, 80, 80, 60, 60, 70, 60, 40, 40];
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Name', 'Email', 'Phone', 'NIC', 'Address', 'DOB', 'Role', 'Active'];
+      const colWidths = [20, 70, 100, 60, 70, 90, 60, 40, 40];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25).fill('#FF9280').stroke();
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 3, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [20, 70, 100, 60, 70, 90, 60, 40, 40];
     const startX = 40;
+    const rowHeight = 35;
+    const pageHeight = doc.page.height - 60;
 
-    const headers = ['No', 'Name', 'Email', 'Phone', 'NIC', 'Address', 'DOB', 'Role', 'Active'];
+    generateHeader();
+    let y = 130;
+    y = generateTableHeader(y);
 
-    let y = tableTop;
-
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
-
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    doc.font('Helvetica').fontSize(9);
 
     managers.forEach((item, index) => {
-      x = startX;
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+        y = 130;
+        y = generateTableHeader(y);
+
+        doc.font('Helvetica').fontSize(9);
+      }
+
       const managerName = `${item.firstName} ${item.lastName}`;
       const row = [
         index + 1,
@@ -506,17 +690,15 @@ export const generateSystemAdminReport = async (req, res) => {
         item.activeStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 3, y + 6, {
+          width: colWidths[i] - 6,
+          align: 'left',
+        });
         x += colWidths[i];
       });
 
@@ -531,10 +713,11 @@ export const generateSystemAdminReport = async (req, res) => {
   }
 };
 
+
 export const generateDonorReport = async (req, res) => {
   try {
     const donors = await Donor.find({})
-      .select('firstName lastName email phoneNumber bloodType city dob activeStatus')
+      .select('firstName lastName email phoneNumber bloodType city dob activeStatus createdAt')
       .sort({ createdAt: -1 });
 
     if (!donors.length) {
@@ -551,43 +734,64 @@ export const generateDonorReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('Donor Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
+      doc
+        .fontSize(20)
+        .fillColor('#FF2400')
+        .text('Donor List Report', 0, 40, { align: 'center' });
 
-    // Table headers
-    const tableTop = 130;
-    const rowHeight = 25;
-    const colWidths = [25, 80, 80, 60, 50, 60, 60, 40];
+      doc
+        .moveDown()
+        .fontSize(11)
+        .fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
+
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Name', 'Email', 'Phone', 'Blood', 'City', 'DOB', 'Active'];
+      const colWidths = [25, 80, 120, 80, 45, 60, 60, 40];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25)
+        .fill('#FF9280')
+        .stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 4, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [25, 80, 120, 80, 45, 60, 60, 40];
     const startX = 40;
+    const rowHeight = 30;
+    const pageHeight = doc.page.height - 40;
 
-    const headers = ['No', 'Name', 'Email', 'Phone', 'Blood Type', 'City', 'DOB', 'Active'];
+    generateHeader();
+    let y = 120;
+    y = generateTableHeader(y);
 
-    let y = tableTop;
-
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
-
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    doc.font('Helvetica').fontSize(9);
 
     donors.forEach((item, index) => {
-      x = startX;
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+        y = 120;
+        y = generateTableHeader(y);
+
+        doc.font('Helvetica').fontSize(9);
+      }
+
       const donorName = `${item.firstName} ${item.lastName}`;
       const row = [
         index + 1,
@@ -600,17 +804,16 @@ export const generateDonorReport = async (req, res) => {
         item.activeStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 4, y + 6, {
+          width: colWidths[i] - 8,
+          align: 'left',
+          height: rowHeight - 10,
+        });
         x += colWidths[i];
       });
 
@@ -625,10 +828,11 @@ export const generateDonorReport = async (req, res) => {
   }
 };
 
+
 export const generateHospitalReport = async (req, res) => {
   try {
     const hospitals = await Hospital.find({})
-      .select('name email phoneNumber city address startTime endTime activeStatus')
+      .select('name email phoneNumber city address startTime endTime activeStatus createdAt')
       .sort({ createdAt: -1 });
 
     if (!hospitals.length) {
@@ -645,43 +849,65 @@ export const generateHospitalReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
     const logoPath = '../../frontend/src/assets/logo.svg';
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
-    }
 
-    doc.fontSize(18).text('Hospital Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const generateHeader = () => {
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      }
 
-    // Table headers
-    const tableTop = 130;
-    const rowHeight = 25;
-    const colWidths = [25, 80, 80, 60, 60, 70, 50, 50, 40];
+      doc
+        .fontSize(20)
+        .fillColor('#FF2400')
+        .text('Hospital Report', 0, 40, { align: 'center' });
+
+      doc
+        .moveDown()
+        .fontSize(11)
+        .fillColor('#555')
+        .text(`Generated on: ${new Date().toDateString()}`, { align: 'right' });
+    };
+
+    const generateTableHeader = (y) => {
+      const headers = ['#', 'Name', 'Email', 'Phone', 'City', 'Address', 'Start', 'End', 'Active'];
+      const colWidths = [20, 70, 90, 70, 60, 100, 40, 40, 40];
+      const startX = 40;
+
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), 25)
+        .fill('#FF9280')
+        .stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 4, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+
+      return y + 25;
+    };
+
+    const colWidths = [20, 70, 90, 70, 60, 100, 40, 40, 40];
     const startX = 40;
+    const rowHeight = 30;
+    const pageHeight = doc.page.height - 40;
 
-    const headers = ['No', 'Name', 'Email', 'Phone', 'City', 'Address', 'Start Time', 'End Time', 'Active'];
+    generateHeader();
+    let y = 120;
+    y = generateTableHeader(y);
 
-    let y = tableTop;
-
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
-
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    doc.font('Helvetica').fontSize(9);
 
     hospitals.forEach((item, index) => {
-      x = startX;
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        generateHeader();
+        y = 120;
+        y = generateTableHeader(y);
+        
+        doc.font('Helvetica').fontSize(9);
+      }
+
       const row = [
         index + 1,
         item.name || 'N/A',
@@ -694,17 +920,16 @@ export const generateHospitalReport = async (req, res) => {
         item.activeStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
 
-      // Draw text for each column
-      x = startX;
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 4, y + 6, {
+          width: colWidths[i] - 8,
+          align: 'left',
+          height: rowHeight - 10,
+        });
         x += colWidths[i];
       });
 

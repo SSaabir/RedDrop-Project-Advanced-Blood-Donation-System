@@ -292,7 +292,7 @@ export default function HospitalAdminsD() {
           <Button
             gradientDuoTone="redToPink"
             onClick={() => setOpenCreateModal(true)}
-          >
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
             Add New Admin
           </Button>
         </div>
@@ -340,7 +340,6 @@ export default function HospitalAdminsD() {
 
         <Table hoverable>
           <Table.Head>
-            <Table.HeadCell>ID</Table.HeadCell>
             <Table.HeadCell>Name</Table.HeadCell>
             <Table.HeadCell>Email</Table.HeadCell>
             <Table.HeadCell>Phone</Table.HeadCell>
@@ -351,7 +350,6 @@ export default function HospitalAdminsD() {
             {filteredAdmins.length > 0 ? (
               filteredAdmins.map((admin) => (
                 <Table.Row key={admin._id} className="bg-white">
-                  <Table.Cell>{admin._id}</Table.Cell>
                   <Table.Cell>{`${admin.firstName} ${admin.lastName}`}</Table.Cell>
                   <Table.Cell>{admin.email}</Table.Cell>
                   <Table.Cell>{admin.phoneNumber || "N/A"}</Table.Cell>
@@ -366,38 +364,40 @@ export default function HospitalAdminsD() {
                       {admin.activeStatus ? "Active" : "Inactive"}
                     </span>
                   </Table.Cell>
-                  <Table.Cell className="space-x-2">
-                    <Button
-                      size="xs"
-                      color={admin.activeStatus ? "failure" : "success"}
-                      onClick={() => handleToggleStatus(admin._id)}
-                      disabled={toggleLoading}
-                    >
-                      {admin.activeStatus ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button
-                      size="xs"
-                      color="blue"
-                      onClick={() => handleEdit(admin)}
-                      disabled={updateLoading}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="xs"
-                      color="failure"
-                      onClick={() => handleDelete(admin)}
-                      disabled={deleteLoading}
-                    >
-                      Delete
-                    </Button>
+                  <Table.Cell>
+                    <div className="flex flex-row gap-2">
+                      <Button
+                        size="xs"
+                        color={admin.activeStatus ? "failure" : "success"}
+                        onClick={() => handleToggleStatus(admin._id)}
+                        disabled={toggleLoading}
+                      >
+                        {admin.activeStatus ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="blue"
+                        onClick={() => handleEdit(admin)}
+                        disabled={updateLoading}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="failure"
+                        onClick={() => handleDelete(admin)}
+                        disabled={deleteLoading}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </Table.Cell>
                 </Table.Row>
               ))
             ) : (
               <Table.Row>
                 <Table.Cell
-                  colSpan="6"
+                  colSpan="5"
                   className="text-center py-4 text-gray-500"
                 >
                   No hospital admins found

@@ -25,6 +25,7 @@ export default function HealthEvaluationD() {
   const { createFeedback } = useFeedback();
   const { user } = useAuthContext();
   const { secondUser } = useSecondAuth();
+  const { reportUrl, generateAppointmentReport } = useGenerateReport();
 
   // User and role setup
   const userId = user?.userObj?._id;
@@ -54,10 +55,13 @@ export default function HealthEvaluationD() {
   const [starRating, setStarRating] = useState("");
   const [feedbackErrors, setFeedbackErrors] = useState({});
 
+  // State for filters
+  const [filterDate, setFilterDate] = useState("");
+  const [filterProgressStatus, setFilterProgressStatus] = useState("");
+
   // Loading and error state
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { reportUrl, generateAppointmentReport } = useGenerateReport();
 
   // Fetch appointments based on role
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function HealthEvaluationD() {
     }
   }, [userId, Donor, Hospital, fetchAppointments, fetchBloodDonationAppointmentByDonorId, fetchBloodDonationAppointmentByHospitalId]);
 
-  // Validation functions
+  // Validation functions (unchanged)
   const validateRescheduleForm = () => {
     const errors = {};
     if (!newDate) errors.newDate = "Date is required";
@@ -99,7 +103,7 @@ export default function HealthEvaluationD() {
     return Object.keys(errors).length === 0;
   };
 
-  // Reschedule handlers
+  // Handlers for modals (unchanged)
   const handleRescheduleClick = (appointment) => {
     setSelectedAppointment(appointment);
     setNewDate(appointment.appointmentDate || "");
@@ -123,7 +127,6 @@ export default function HealthEvaluationD() {
     }
   };
 
-  // Arrived handlers
   const handleArrivedClick = (appointment) => {
     setSelectedAppointment(appointment);
     setReceiptNumber(appointment.receiptNumber || "");
@@ -146,7 +149,6 @@ export default function HealthEvaluationD() {
     }
   };
 
-  // Feedback handlers
   const handleFeedbackClick = (appointment) => {
     setSelectedAppointment(appointment);
     setSubject("");
@@ -184,7 +186,21 @@ export default function HealthEvaluationD() {
   const handleGenerateReport = (e) => {
     e.preventDefault();
     generateAppointmentReport(user.userObj._id);
-};
+  };
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setFilterDate("");
+    setFilterProgressStatus("");
+  };
+
+  // Filter appointments
+  const filteredAppointments = appointments.filter((appointment) => {
+    const appointmentDate = new Date(appointment.appointmentDate).toISOString().split("T")[0];
+    const matchesDate = filterDate ? appointmentDate === filterDate : true;
+    const matchesStatus = filterProgressStatus ? appointment.progressStatus === filterProgressStatus : true;
+    return matchesDate && matchesStatus;
+  });
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -192,21 +208,53 @@ export default function HealthEvaluationD() {
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Appointments</h1>
-          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}> 
-           Generate Report
-           </Button>
-
-           {reportUrl && (
-                <div>
-                    <p>Report generated successfully!</p>
-                    <a href={`http://localhost:3020${reportUrl}`} download>
-                        Download Report
-                    </a>
-                </div>
-                    )}
-
-
+          <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}
+          className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition">
+            Generate Report
+          </Button>
         </div>
+
+        {reportUrl && (
+          <div className="mb-4">
+            <p>Report generated successfully!</p>
+            <a href={`http://localhost:3020${reportUrl}`} download
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              Download Report
+            </a>
+          </div>
+        )}
+
+        {/* Filter Controls */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Label value="Filter by Date" />
+            <TextInput
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+            />
+          </div>
+          <div className="flex-1">
+            <Label value="Filter by Progress Status" />
+            <Select
+              value={filterProgressStatus}
+              onChange={(e) => setFilterProgressStatus(e.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button color="gray" onClick={handleResetFilters}>
+              Reset Filters
+            </Button>
+          </div>
+        </div>
+
+        
 
         <Table hoverable>
           <Table.Head>
@@ -220,8 +268,8 @@ export default function HealthEvaluationD() {
             <Table.HeadCell>Actions</Table.HeadCell>
           </Table.Head>
           <Table.Body>
-            {appointments.length > 0 ? (
-              appointments.map((appointment) => (
+            {filteredAppointments.length > 0 ? (
+              filteredAppointments.map((appointment) => (
                 <Table.Row key={appointment._id} className="bg-white">
                   <Table.Cell>{appointment.receiptNumber || "N/A"}</Table.Cell>
                   <Table.Cell>{new Date(appointment.appointmentDate).toLocaleDateString()}</Table.Cell>
@@ -240,8 +288,8 @@ export default function HealthEvaluationD() {
                     </span>
                   </Table.Cell>
                   <Table.Cell>{appointment.hospitalId?.name || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment?.donorId?.firstName + " " +  appointment?.donorId?.lastName || "N/A"}</Table.Cell>
-                  <Table.Cell>{appointment?.hospitalAdminId?.firstName + " " +  appointment?.hospitalAdminId?.lastName || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment.donorId?.firstName + " " + appointment.donorId?.lastName || "N/A"}</Table.Cell>
+                  <Table.Cell>{appointment?.hospitalAdminId?.firstName + " " + appointment?.hospitalAdminId?.lastName || "N/A"}</Table.Cell>
                   <Table.Cell className="space-x-2">
                     <div className="flex flex-row gap-2">
                       {Hospital && HospitalAdmin && (
@@ -335,7 +383,7 @@ export default function HealthEvaluationD() {
                                 Accept
                               </Button>
                             )}
-                          {appointment.activeStatus !== "Cancelled" && (
+                          {appointment.activeStatus === "Completed" && (
                             <Button
                               size="xs"
                               color="gray"
@@ -361,7 +409,7 @@ export default function HealthEvaluationD() {
         </Table>
       </div>
 
-      {/* Reschedule Modal */}
+      {/* Reschedule Modal (unchanged) */}
       <Modal show={openRescheduleModal} onClose={() => setOpenRescheduleModal(false)}>
         <Modal.Header>Reschedule Appointment</Modal.Header>
         <Modal.Body>
@@ -409,7 +457,7 @@ export default function HealthEvaluationD() {
         </Modal.Footer>
       </Modal>
 
-      {/* Arrived Modal */}
+      {/* Arrived Modal (unchanged) */}
       <Modal show={openArrivedModal} onClose={() => setOpenArrivedModal(false)}>
         <Modal.Header>Confirm Arrival</Modal.Header>
         <Modal.Body>
@@ -441,7 +489,7 @@ export default function HealthEvaluationD() {
         </Modal.Footer>
       </Modal>
 
-      {/* Feedback Modal */}
+      {/* Feedback Modal (unchanged) */}
       <Modal show={openFeedbackModal} onClose={() => setOpenFeedbackModal(false)}>
         <Modal.Header>Submit Feedback</Modal.Header>
         <Modal.Body>
