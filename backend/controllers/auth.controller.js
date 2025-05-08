@@ -13,6 +13,9 @@ export const signinHD = async (req, res) => {
 
     try {
         const user = await HospitalAdmin.signin(email, password, userId);
+        if (!user.activeStatus) {
+            return res.status(403).json({ message: 'Your account has been deactivated' });
+        }
         const role = 'HospitalAdmin';
 
         const token = createToken(user._id);
@@ -34,6 +37,9 @@ export const signinD = async (req, res) => {
 
     try {
         const user = await Donor.signin(email, password);
+        if (!user.activeStatus) {
+            return res.status(403).json({ message: 'Your account has been deactivated' });
+        }
         const role = 'Donor';
 
         const token = createToken(user._id);
@@ -55,6 +61,9 @@ export const signinH = async (req, res) => {
 
     try {
         const user = await Hospital.signin(email, password);
+        if (!user.activeStatus) {
+            return res.status(403).json({ message: 'Your account has been deactivated' });
+        }
         const role = 'Hospital';
 
         const token = createToken(user._id);
@@ -76,6 +85,9 @@ export const signinA = async (req, res) => {
 
     try {
         const user = await Manager.signin(email, password);
+        if (!user.activeStatus) {
+            return res.status(403).json({ message: 'Your account has been deactivated' });
+        }
         const role = 'Manager';
 
         const token = createToken(user._id);

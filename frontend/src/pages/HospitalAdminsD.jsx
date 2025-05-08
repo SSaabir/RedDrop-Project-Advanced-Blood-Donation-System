@@ -3,6 +3,7 @@ import { Button, Table, Modal, TextInput, Label, Spinner, FileInput, Select } fr
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useHospitalAdmin } from "../hooks/useHospitalAdmin";
 import { useAuthContext } from "../hooks/useAuthContext";
+import { useGenerateReport } from "../hooks/useGenerateReport";
 
 export default function HospitalAdminsD() {
   const {
@@ -28,6 +29,7 @@ export default function HospitalAdminsD() {
   const [editErrors, setEditErrors] = useState({});
   const [apiError, setApiError] = useState(null);
   const { user } = useAuthContext();
+  const { reportUrl, generateHospitalAdminReport } = useGenerateReport();
 
   const [adminData, setAdminData] = useState({
     email: "",
@@ -283,18 +285,41 @@ export default function HospitalAdminsD() {
     .toISOString()
     .split("T")[0];
 
+    const handleGenerateReport = (e) => {
+      e.preventDefault();
+      generateHospitalAdminReport(user.userObj._id);
+    };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <DashboardSidebar />
       <div className="flex-1 p-6 overflow-x-auto">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-red-700">Hospital Admins</h1>
-          <Button
+          <div className="flex items-center space-x-4">
+                      <Button gradientDuoTone="redToPink" onClick={handleGenerateReport} disabled={loading}>
+                        Generate Report
+                      </Button>
+                      {reportUrl && (
+                        <div className="flex flex-col items-center">
+                          <p className="text-green-600 mb-2">Report generated!</p>
+                          <a
+                            href={`http://localhost:3020${reportUrl}`}
+                            download
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      )}
+                       <Button
             gradientDuoTone="redToPink"
             onClick={() => setOpenCreateModal(true)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
             Add New Admin
           </Button>
+                    </div>
+         
         </div>
 
         <div className="mb-6 p-4 bg-white rounded-lg shadow-md">

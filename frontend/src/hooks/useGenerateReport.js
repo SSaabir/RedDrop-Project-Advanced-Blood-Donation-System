@@ -29,7 +29,26 @@ export const useGenerateReport = () => {
         }
     };
 
-    
+    const generateInventoryReportByManager = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/inventory-report-Manager');
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Inventory report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating inventory report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate inventory report');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const generateHealthEvaluationReport = async (userId) => {
         setLoading(true);
@@ -54,12 +73,12 @@ export const useGenerateReport = () => {
         }
     };
 
-    const generateHealthEvaluationReport1 = async (userId) => {
+    const generateHealthEvaluationReportByHospital = async (userId) => {
         setLoading(true);
         setReportUrl('');
 
         try {
-            const response = await axios.get('/api/reports/healthEvaluation-report', {
+            const response = await axios.get('/api/reports/healthEvaluation-report-Hospital', {
                 params: { userId }
             });
 
@@ -225,6 +244,29 @@ export const useGenerateReport = () => {
             setLoading(false);
         }
     };
+
+    const generateHospitalAdminReport = async (userId) => {
+        setLoading(true);
+        setReportUrl('');
+
+        try {
+            const response = await axios.get('/api/reports/hospitalAdmin-report', {
+                params: { userId }
+            });
+
+            if (response.data.success) {
+                setReportUrl(response.data.fileUrl);
+                toast.success('Hospital Admin report generated successfully!');
+            } else {
+                throw new Error(response.data.message || 'Failed to generate report');
+            }
+        } catch (err) {
+            console.error('Error generating Hospital Admin report:', err);
+            toast.error(err?.response?.data?.message || 'Failed to generate Hospital Admin report');
+        } finally {
+            setLoading(false);
+        }
+    };
     
 
     return {
@@ -232,13 +274,15 @@ export const useGenerateReport = () => {
         loading,
         generateInventoryReport,
         generateHealthEvaluationReport,
-        generateHealthEvaluationReport1,
+        generateHealthEvaluationReportByHospital,
         generateFeedbackReport,
         generateInquiryReport,
         generateAppointmentReport,
         generateSystemAdminReport,
         generateDonorReport,
         generateHospitalReport,
-        generateEmergencyBRReport
+        generateEmergencyBRReport,
+        generateHospitalAdminReport,
+        generateInventoryReportByManager
     };
 };

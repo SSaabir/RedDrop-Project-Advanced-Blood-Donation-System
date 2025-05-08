@@ -99,7 +99,7 @@ export const toggleExpired = async (req, res) => {
     try {
         const inventory = await BloodInventory.findByIdAndUpdate(
             req.params.id,
-            { expiredStatus: true },
+            { expiredStatus: 'Expired' },
             { new: true }
         );
 
