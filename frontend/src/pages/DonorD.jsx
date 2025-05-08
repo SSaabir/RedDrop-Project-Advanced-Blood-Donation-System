@@ -3,6 +3,7 @@ import { Button, Table, Modal, TextInput, Label, Spinner, Select } from "flowbit
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { useDonor } from "../hooks/donor";
 import { useGenerateReport } from "../hooks/useGenerateReport";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 export default function DonorDashboard() {
   const { donors, loading, error, fetchDonors, updateDonor, deleteDonor, activateDeactivateDonor } = useDonor();
@@ -10,6 +11,8 @@ export default function DonorDashboard() {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+  const { user } = useAuthContext();
+  const Manager = user?.role === 'Manager';
   const { reportUrl, generateDonorReport } = useGenerateReport();
   const initialDonorData = {
     firstName: "",
@@ -53,6 +56,7 @@ export default function DonorDashboard() {
   const handleFilterChange = (e) => {
     const { id, value } = e.target;
     setFilter(prev => ({ ...prev, [id]: value }));
+    setEditErrors((prev) => ({ ...prev, [id]: "" }));
   };
 
   const validateEditForm = () => {
@@ -143,12 +147,14 @@ export default function DonorDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
+       {Manager ? (
+        <>
       <DashboardSidebar />
       <div className="flex-1 p-6">
         <h1 className="text-2xl font-bold text-red-700 mb-4">Donor Dashboard</h1>
 
         {/* Report Generation Section */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+        <div className="mb-6 p-4 bg-white rounded-lg sombra-md">
           <h2 className="text-lg font-semibold mb-4">Generate Donor Report</h2>
           {reportUrl && (
             <p className="text-green-600 mt-2">Report generated successfully!</p>
@@ -268,22 +274,6 @@ export default function DonorDashboard() {
                     </Table.Cell>
                     <Table.Cell className="px-6 py-4">
                       <div className="flex space-x-2">
-                        <Button 
-                          size="xs" 
-                          gradientDuoTone="cyanToBlue"
-                          onClick={() => handleEdit(donor)}
-                          className="rounded-lg"
-                        >
-                          Edit
-                        </Button>
-                        <Button 
-                          size="xs" 
-                          color="failure"
-                          onClick={() => handleDelete(donor)}
-                          className="rounded-lg bg-red-600 hover:bg-red-700"
-                        >
-                          Delete
-                        </Button>
                         <Button
                           size="xs"
                           color={donor.activeStatus ? "failure" : "success"}
@@ -412,6 +402,12 @@ export default function DonorDashboard() {
           </Modal.Footer>
         </Modal>
       </div>
+      </>
+    ) : (
+  <div className="flex min-h-screen items-center justify-center">
+    <p className="text-red-600 text-lg">Access Denied: Manager role required</p>
+  </div>
+)}
     </div>
   );
 }
