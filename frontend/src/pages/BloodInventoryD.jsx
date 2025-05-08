@@ -21,7 +21,7 @@ export default function BloodInventoryD() {
   const { fetchHospitals } = useHospital();
   const { user } = useAuthContext();
   const { secondUser } = useSecondAuth();
-  const { reportUrl, generateInventoryReport } = useGenerateReport();
+  const { reportUrl, generateInventoryReport, generateInventoryReportByManager } = useGenerateReport();
 
   // User and role setup
   const userId = user?.userObj?._id;
@@ -220,7 +220,8 @@ export default function BloodInventoryD() {
 
   const handleGenerateReport = (e) => {
     e.preventDefault();
-    generateInventoryReport(user.userObj._id);
+    if(Hospital) generateInventoryReport(user.userObj._id);
+    else if (Manager) generateInventoryReportByManager();
   };
 
   // Filter blood inventory based on selected blood type

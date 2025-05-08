@@ -74,6 +74,45 @@ bloodDonationAppointmentSchema.statics.cancelExpiredAppointments = async functio
     }
 }
 
+bloodDonationAppointmentSchema.statics.updateAppointmentStatusAfter56Days = async function () {
+    const currentDate = new Date();
+    const fiftySixDaysAgo = new Date(currentDate);
+    fiftySixDaysAgo.setDate(currentDate.getDate() - 56);
+
+    // Get all donor IDs with appointments
+    const donorsWithAppointments = await this.distinct('donorId');
+
+    for (const donorId of donorsWithAppointments) {
+        try {
+            // Find the most recent appointment for the donor
+            const latestAppointment = await this.findOne({ donorId })
+                .sort({ appointmentDate: -1, appointmentTime: -1 })
+                .exec();
+
+            // Skip if no appointment exists
+            if (!latestAppointment) {
+                continue;
+            }
+
+            // Combine appointment date and time
+            const appointmentDateTime = new Date(latestAppointment.appointmentDate);
+            const [hours, minutes, seconds] = latestAppointment.appointmentTime.split(':');
+            appointmentDateTime.setHours(hours, minutes, seconds || 0);
+
+            // Check if the latest appointment is older than 56 days
+            if (appointmentDateTime < fiftySixDaysAgo) {
+                // Update appointmentStatus only if it's not already false
+                await this.updateMany(
+                    { donorId, appointmentStatus: { $ne: false } },
+                    { $set: { appointmentStatus: false } }
+                );
+            }
+        } catch (error) {
+            // Silent error handling
+        }
+    }
+};
+
 
 const BloodDonationAppointment = mongoose.model('BloodDonationAppointment', bloodDonationAppointmentSchema);
 

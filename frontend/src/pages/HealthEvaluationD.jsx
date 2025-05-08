@@ -25,7 +25,7 @@ export default function AppointmentD() {
   const { createFeedback } = useFeedback();
   const { user } = useAuthContext();
   const { secondUser } = useSecondAuth();
-  const { reportUrl, generateHealthEvaluationReport,generateHealthEvaluationReport1 } = useGenerateReport();
+  const { reportUrl, generateHealthEvaluationReport, generateHealthEvaluationReportByHospital } = useGenerateReport();
   
 
   const userId = user?.userObj?._id;
@@ -233,8 +233,8 @@ export default function AppointmentD() {
 
   const handleGenerateReport = (e) => {
     e.preventDefault();
-    generateHealthEvaluationReport(user.userObj._id);
-    generateHealthEvaluationReport1(user.userObj._id);
+    if(Donor) generateHealthEvaluationReport(user.userObj._id);
+    else if (Hospital) generateHealthEvaluationReportByHospital(user.userObj._id);
   };
 
   const today = new Date().toISOString().split("T")[0];

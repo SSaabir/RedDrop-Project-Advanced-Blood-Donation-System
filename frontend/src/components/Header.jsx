@@ -227,7 +227,7 @@ export default function Header() {
             <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
           </Dropdown>
         )}
-        {Hospital && (
+        {Hospital && !HospitalAdmin && (
           <Dropdown
             arrowIcon={false}
             inline
@@ -240,7 +240,7 @@ export default function Header() {
             <Dropdown.Item onClick={handleClick}>Logout</Dropdown.Item>
           </Dropdown>
         )}
-        {HospitalAdmin && (
+        {Hospital && HospitalAdmin && (
           <Dropdown
             arrowIcon={false}
             inline
@@ -251,7 +251,10 @@ export default function Header() {
               <span className="block text-sm text-gray-500 truncate">{secondUser.userObj.email}</span>
             </Dropdown.Header>
             <Dropdown.Item>
-              <Link to="/profile">Profile</Link>
+              <Link to="/profile">Hospital Profile</Link>
+            </Dropdown.Item>
+            <Dropdown.Item>
+              <Link to="/adminProfile">Admin Profile</Link>
             </Dropdown.Item>
             <Dropdown.Item>
               <Link to="/dashboard">Dashboard</Link>

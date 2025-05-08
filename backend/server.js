@@ -146,6 +146,7 @@ cron.schedule("* * * * *", async () => {
   await Appointment.cancelExpiredAppointments();
   await HealthEvaluation.updateHealthStatusAfter56Days();
   await BloodInventory.updateExpiringSoonStatus();
+  await Appointment.updateAppointmentStatusAfter56Days();
   // Add your scheduled task logic here
 });
 
