@@ -8,6 +8,8 @@ import Appointment from '../models/BloodDonationAppointment.model.js';
 import Manager from '../models/SystemManager.model.js';
 import Donor from '../models/donor.model.js';
 import Hospital from '../models/hospital.model.js';
+import EmergencyBR from '../models/EmergencyBR.model.js'; // Adjust the path to your model
+
 
 export const generateHealthEvaluationReport = async (req, res) => {
   try {
@@ -940,6 +942,114 @@ export const generateHospitalReport = async (req, res) => {
     res.json({ success: true, fileUrl: `/reports/${fileName}` });
   } catch (error) {
     console.error('Error generating hospital report:', error);
+    res.status(500).json({ success: false, message: 'Error generating report' });
+  }
+};
+
+export const generateEmergencyBRReport = async (req, res) => {
+  try {
+    const requests = await EmergencyBR.find({})
+      .select('name phoneNumber patientBlood units criticalLevel hospitalName withinDate acceptStatus activeStatus createdAt')
+      .sort({ createdAt: -1 });
+
+    if (!requests.length) {
+      return res.status(404).json({ success: false, message: 'No emergency blood requests found' });
+    }
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const fileName = `emergency_br_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const filePath = `./reports/${fileName}`;
+
+    if (!fs.existsSync('./reports')) {
+      fs.mkdirSync('./reports', { recursive: true });
+    }
+
+    doc.pipe(fs.createWriteStream(filePath));
+
+    // Add logo
+    const logoPath = '../../frontend/src/assets/logo.svg';
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, 40, 30, { width: 80 });
+    }
+
+    // Header
+    doc.fontSize(18).fillColor('#000').text('Emergency Blood Request Report', 0, 50, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+
+    // Table setup
+    const tableTop = 130;
+    const rowHeight = 25;
+    const colWidths = [25, 80, 60, 50, 50, 60, 80, 60, 60, 60];
+    const startX = 40;
+    const headers = ['No', 'Name', 'Phone', 'Blood Type', 'Units', 'Critical Level', 'Hospital', 'Due Date', 'Accept Status', 'Active'];
+
+    let y = tableTop;
+
+    // Draw header background
+    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
+    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
+
+    let x = startX;
+    headers.forEach((header, i) => {
+      doc.text(header, x + 2, y + 7, { width: colWidths[i] - 4, align: 'left' });
+      x += colWidths[i];
+    });
+
+    y += rowHeight;
+
+    // Draw rows
+    doc.font('Helvetica').fontSize(9);
+    const pageHeight = doc.page.height - 40;
+
+    requests.forEach((item, index) => {
+      if (y + rowHeight > pageHeight) {
+        doc.addPage();
+        y = 100;
+        // Redraw header on new page
+        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
+        doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
+        x = startX;
+        headers.forEach((header, i) => {
+          doc.text(header, x + 2, y + 7, { width: colWidths[i] - 4, align: 'left' });
+          x += colWidths[i];
+        });
+        y += rowHeight;
+        doc.font('Helvetica').fontSize(9);
+      }
+
+      x = startX;
+      const row = [
+        index + 1,
+        item.name || 'N/A',
+        item.phoneNumber || 'N/A',
+        item.patientBlood || 'N/A',
+        item.units || 'N/A',
+        item.criticalLevel || 'N/A',
+        item.hospitalName || 'N/A',
+        item.withinDate ? new Date(item.withinDate).toLocaleDateString() : 'N/A',
+        item.acceptStatus || 'N/A',
+        item.activeStatus ? 'Yes' : 'No',
+      ];
+
+      // Row background alternating color
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
+
+      // Draw text for each column
+      x = startX;
+      row.forEach((data, i) => {
+        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i] - 4, align: 'left', height: rowHeight - 10 });
+        x += colWidths[i];
+      });
+
+      y += rowHeight;
+    });
+
+    doc.end();
+    res.json({ success: true, fileUrl: `/reports/${fileName}` });
+  } catch (error) {
+    console.error('Error generating emergency blood request report:', error);
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
