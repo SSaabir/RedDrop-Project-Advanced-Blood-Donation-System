@@ -177,17 +177,34 @@ emergencyBRSchema.statics.handleEmergencyBloodRequest = async function(ebr) {
   
   // Existing cancelExpiredRequests
   emergencyBRSchema.statics.cancelExpiredRequests = async function () {
-    const currentDate = new Date();
+    const currentDateTime = new Date();
+
+    // Find the requests where the withinDate has passed
     const requests = await this.find({
-      withinDate: { $lt: currentDate }
+        withinDate: { $lt: currentDateTime.toISOString().split('T')[0] }
     });
-  
+
     for (const request of requests) {
-      request.acceptStatus = 'Declined';
-      request.activeStatus = 'Inactive';
-      await request.save();
+        // Convert withinDate to ISO Date if it is a string
+        let requestDate = new Date(request.withinDate);
+
+        // If withinDate is stored as a string, convert it into ISO Date format
+        if (typeof request.withinDate === 'string') {
+            requestDate = new Date(request.withinDate);
+        }
+
+        // Compare with the current date
+        if (requestDate < currentDateTime) {
+            // Update request status to 'Declined' and 'Inactive' if expired
+            request.acceptStatus = 'Declined';
+            request.activeStatus = 'Inactive';
+            
+            // Save the updated request
+            await request.save();
+        }
     }
-  };
+};
+
 const EmergencyBR = mongoose.model('EmergencyBR', emergencyBRSchema);
 
 export default EmergencyBR;

@@ -5,7 +5,8 @@ import { toast } from "react-toastify";
 export const useHealthEvaluation = () => {
     const [evaluations, setEvaluations] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    const [fileUrl, setFileUrl] = useState("");
+    
     const fetchEvaluations = useCallback(async () => {
         setLoading(true);
         try {

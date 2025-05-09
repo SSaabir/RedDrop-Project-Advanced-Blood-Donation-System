@@ -32,11 +32,24 @@ const bloodInventorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 bloodInventorySchema.statics.updateExpiredStatus = async function () {
-    const currentDateTime = new Date();
+    const currentDateTime = new Date(); // Current date and time
     
+    console.log("Current Date and Time: ", currentDateTime); // Debugging log
+
     await this.updateMany(
         {
-            expirationDate: { $lte: currentDateTime },
+            $expr: {
+                $lte: [
+                    { 
+                        $cond: [
+                            { $gt: [{ $type: "$expirationDate" }, "date"] }, // Check if it's already an ISODate
+                            "$expirationDate",
+                            { $toDate: "$expirationDate" } // Convert string to Date if needed
+                        ]
+                    },
+                    currentDateTime // Compare with currentDateTime which includes date and time
+                ]
+            },
             expiredStatus: { $ne: 'Expired' }
         },
         { 
@@ -47,21 +60,46 @@ bloodInventorySchema.statics.updateExpiredStatus = async function () {
 };
 
 bloodInventorySchema.statics.updateExpiringSoonStatus = async function () {
-    const currentDateTime = new Date();
-    const expiringSoonThreshold = new Date();
-    expiringSoonThreshold.setDate(currentDateTime.getDate() + 14);
-    
-    await this.updateMany(
-        {
-            expirationDate: { $gt: currentDateTime, $lte: expiringSoonThreshold },
-            expiredStatus: { $ne: 'Soon' }
-        },
-        { 
-            expiredStatus: 'Soon',
-            updatedAt: currentDateTime
+    const now = new Date();
+    const threshold = new Date();
+    threshold.setDate(now.getDate() + 14);
+
+    // Fetch candidates (all not-yet-expired + Soon not already set)
+    const candidates = await this.find({
+        expiredStatus: { $ne: 'Soon' }
+    });
+
+    const updates = [];
+
+    for (const item of candidates) {
+        let expDate = item.expirationDate;
+
+        // If it's a string, try converting it to a Date
+        if (typeof expDate === 'string') {
+            expDate = new Date(expDate);
+            if (isNaN(expDate.getTime())) continue; // Skip invalid date
         }
-    );
+
+        // If valid and in the 'soon' range, prepare for update
+        if (expDate > now && expDate <= threshold) {
+            updates.push(item._id);
+        }
+    }
+
+    if (updates.length > 0) {
+        await this.updateMany(
+            { _id: { $in: updates } },
+            {
+                expiredStatus: 'Soon',
+                updatedAt: now
+            }
+        );
+        console.log(`Marked ${updates.length} items as 'Soon'`);
+    } else {
+        console.log('No expiring soon items found');
+    }
 };
+
 
 const BloodInventory = mongoose.model('BloodInventory', bloodInventorySchema);
 
