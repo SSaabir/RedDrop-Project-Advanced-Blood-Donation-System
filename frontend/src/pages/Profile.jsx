@@ -31,13 +31,21 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [profileData, setProfileData] = useState(null); // Initialize as null
-  const [fetchError, setFetchError] = useState(null); // Track fetch errors
+  const [profileData, setProfileData] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
 
   const userId = user?.userObj?._id || null;
   const userRole = user?.role || null;
 
-  // Fetch user data from backend
+  // Calculate max date for DOB based on role (18 for Donor, 20 for Hospital/Manager)
+  const getMaxDob = () => {
+    const today = moment();
+    if (userRole === "Donor") {
+      return today.subtract(18, "years").format("YYYY-MM-DD");
+    }
+    return today.subtract(20, "years").format("YYYY-MM-DD");
+  };
+
   const fetchUserData = useCallback(async (id, role) => {
     try {
       setLoading(true);
@@ -59,12 +67,10 @@ export default function Profile() {
       const response = await axios.get(endpoint);
       const data = response.data;
 
-      // Validate data before setting profileData
       if (!data || typeof data !== "object") {
         throw new Error("Invalid response data");
       }
 
-      // Format data for profile
       let newProfileData;
       if (role === "Hospital") {
         newProfileData = {
@@ -108,15 +114,14 @@ export default function Profile() {
       }
 
       setProfileData(newProfileData);
-      // Update localStorage and auth context
       dispatch({ type: "UPDATE_USER", payload: { ...user, userObj: data } });
       localStorage.setItem("user", JSON.stringify({ ...user, userObj: data }));
-      console.log("Fetched profileData:", newProfileData); // Debug
+      console.log("Fetched profileData:", newProfileData);
       return data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Error fetching profile data";
       setFetchError(errorMessage);
-      setProfileData(null); // Reset profileData on error
+      setProfileData(null);
       toast.error(errorMessage);
       console.error("Fetch error:", err);
       throw err;
@@ -127,10 +132,8 @@ export default function Profile() {
 
   useEffect(() => {
     if (userId && userRole) {
-      console.log("Fetching data for user:", { userId, userRole }); // Debug
-      fetchUserData(userId, userRole).catch(() => {
-        // Error handled in fetchUserData
-      });
+      console.log("Fetching data for user:", { userId, userRole });
+      fetchUserData(userId, userRole).catch(() => {});
       if (userRole === "Hospital") {
         fetchHospitals();
       }
@@ -149,25 +152,34 @@ export default function Profile() {
       if (!profileData.email) newErrors.email = "Email is required";
       else if (!validator.isEmail(profileData.email)) newErrors.email = "Invalid email format";
       if (!profileData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
-      else if (!/^\d{10}$/.test(profileData.phoneNumber)) newErrors.phoneNumber = "Must be a 10-digit number";
+      else if (!/^\d{10}$/.test(profileData.phoneNumber)) newErrors.phoneNumber = "Must be exactly 10 digits";
       if (!profileData.city) newErrors.city = "City is required";
       if (!profileData.address) newErrors.address = "Address is required";
       if (!profileData.startTime || !moment(profileData.startTime, "HH:mm", true).isValid())
         newErrors.startTime = "Valid start time (HH:mm) is required";
       if (!profileData.endTime || !moment(profileData.endTime, "HH:mm", true).isValid())
         newErrors.endTime = "Valid end time (HH:mm) is required";
+      if (!profileData.identificationNumber) newErrors.identificationNumber = "Identification number is required";
+      else if (!/^\d{12}$/.test(profileData.identificationNumber))
+        newErrors.identificationNumber = "Must be exactly 12 digits";
     } else if (userRole === "Donor" || userRole === "Manager") {
       if (!profileData.firstName) newErrors.firstName = "First name is required";
       if (!profileData.lastName) newErrors.lastName = "Last name is required";
       if (!profileData.email) newErrors.email = "Email is required";
       else if (!validator.isEmail(profileData.email)) newErrors.email = "Invalid email format";
       if (!profileData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
-      else if (!/^\d{10}$/.test(profileData.phoneNumber)) newErrors.phoneNumber = "Must be a 10-digit number";
+      else if (!/^\d{10}$/.test(profileData.phoneNumber)) newErrors.phoneNumber = "Must be exactly 10 digits";
       if (!profileData.address && userRole === "Manager") newErrors.address = "Address is required";
       if (!profileData.city && userRole === "Donor") newErrors.city = "City is required";
       if (!profileData.dob) newErrors.dob = "Date of birth is required";
-      else if (moment().diff(moment(profileData.dob), "years") < 18) newErrors.dob = "Must be at least 18 years old";
+      else {
+        const age = moment().diff(moment(profileData.dob), "years");
+        if (userRole === "Donor" && age < 18) newErrors.dob = "Must be at least 18 years old";
+        else if ((userRole === "Hospital" || userRole === "Manager") && age < 20)
+          newErrors.dob = "Must be at least 20 years old";
+      }
       if (!profileData.nic) newErrors.nic = "NIC is required";
+      else if (!/^\d{12}$/.test(profileData.nic)) newErrors.nic = "Must be exactly 12 digits";
       if (userRole === "Donor" && !profileData.bloodType) newErrors.bloodType = "Blood type is required";
       if (userRole === "Manager" && !profileData.role) newErrors.role = "Role is required";
     }
@@ -177,31 +189,38 @@ export default function Profile() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Restrict phoneNumber and nic/identificationNumber to digits only
+    if (name === "phoneNumber" || name === "nic" || name === "identificationNumber") {
+      if (/^\d*$/.test(value)) {
+        setProfileData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      }
+    } else {
+      setProfileData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleSave = async () => {
     if (!profileData || !validateForm()) {
-      console.log("Validation failed:", errors); // Debug
+      console.log("Validation failed:", errors);
       return;
     }
     setLoading(true);
     try {
       let updatedData;
-      console.log("Saving profileData:", profileData); // Debug
+      console.log("Saving profileData:", profileData);
       if (userRole === "Hospital") {
         updatedData = await updateHospital(userId, profileData);
-        console.log("updateHospital response:", updatedData); // Debug
+        console.log("updateHospital response:", updatedData);
       } else if (userRole === "Donor") {
         updatedData = await updateDonor(userId, profileData);
-        console.log("updateDonor response:", updatedData); // Debug
+        console.log("updateDonor response:", updatedData);
       } else if (userRole === "Manager") {
         updatedData = await updateManager(userId, profileData);
-        console.log("updateManager response:", updatedData); // Debug
+        console.log("updateManager response:", updatedData);
       }
 
-      // Update profileData with fallback to current values
       const newProfileData =
         userRole === "Hospital"
           ? {
@@ -243,15 +262,14 @@ export default function Profile() {
             };
 
       setProfileData(newProfileData);
-      console.log("Updated profileData:", newProfileData); // Debug
-      // Update localStorage and auth context
+      console.log("Updated profileData:", newProfileData);
       dispatch({ type: "UPDATE_USER", payload: { ...user, userObj: updatedData || profileData } });
       localStorage.setItem("user", JSON.stringify({ ...user, userObj: updatedData || profileData }));
       setIsEditing(false);
       toast.success("Profile updated successfully");
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Error updating profile";
-      console.error("Update error:", err); // Debug
+      console.error("Update error:", err);
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -386,6 +404,9 @@ export default function Profile() {
                         color={errors.phoneNumber ? "failure" : "gray"}
                         aria-label="Phone number"
                         disabled={loading || !isEditing}
+                        maxLength={10}
+                        type="text"
+                        pattern="\d*"
                       />
                       {errors.phoneNumber && <p className="text-red-600 text-sm">{errors.phoneNumber}</p>}
                     </>
@@ -427,6 +448,7 @@ export default function Profile() {
                         color={errors.dob ? "failure" : "gray"}
                         aria-label="Date of birth"
                         disabled={loading || !isEditing}
+                        max={getMaxDob()}
                       />
                       {errors.dob && <p className="text-red-600 text-sm">{errors.dob}</p>}
                     </>
@@ -447,6 +469,9 @@ export default function Profile() {
                         color={errors.nic ? "failure" : "gray"}
                         aria-label="NIC"
                         disabled={loading || !isEditing}
+                        maxLength={12}
+                        type="text"
+                        pattern="\d*"
                       />
                       {errors.nic && <p className="text-red-600 text-sm">{errors.nic}</p>}
                     </>
@@ -582,6 +607,9 @@ export default function Profile() {
                         color={errors.phoneNumber ? "failure" : "gray"}
                         aria-label="Phone number"
                         disabled={loading || !isEditing}
+                        maxLength={10}
+                        type="text"
+                        pattern="\d*"
                       />
                       {errors.phoneNumber && <p className="text-red-600 text-sm">{errors.phoneNumber}</p>}
                     </>
@@ -670,7 +698,27 @@ export default function Profile() {
                   )}
                 </div>
                 <div className="flex items-center gap-3">
-                  <span>Identification Number: {profileData.identificationNumber || "N/A"}</span>
+                  <FaIdCard className="text-red-700" />
+                  {isEditing ? (
+                    <>
+                      <TextInput
+                        name="identificationNumber"
+                        value={profileData.identificationNumber || ""}
+                        onChange={handleChange}
+                        className="w-full"
+                        required
+                        color={errors.identificationNumber ? "failure" : "gray"}
+                        aria-label="Identification Number"
+                        disabled={loading || !isEditing}
+                        maxLength={12}
+                        type="text"
+                        pattern="\d*"
+                      />
+                      {errors.identificationNumber && <p className="text-red-600 text-sm">{errors.identificationNumber}</p>}
+                    </>
+                  ) : (
+                    <span>{profileData.identificationNumber || "N/A"}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span>System Manager ID: {profileData.systemManagerId || "N/A"}</span>
@@ -781,6 +829,9 @@ export default function Profile() {
                         color={errors.phoneNumber ? "failure" : "gray"}
                         aria-label="Phone number"
                         disabled={loading || !isEditing}
+                        maxLength={10}
+                        type="text"
+                        pattern="\d*"
                       />
                       {errors.phoneNumber && <p className="text-red-600 text-sm">{errors.phoneNumber}</p>}
                     </>
@@ -822,6 +873,7 @@ export default function Profile() {
                         color={errors.dob ? "failure" : "gray"}
                         aria-label="Date of birth"
                         disabled={loading || !isEditing}
+                        max={getMaxDob()}
                       />
                       {errors.dob && <p className="text-red-600 text-sm">{errors.dob}</p>}
                     </>
@@ -842,6 +894,9 @@ export default function Profile() {
                         color={errors.nic ? "failure" : "gray"}
                         aria-label="NIC"
                         disabled={loading || !isEditing}
+                        maxLength={12}
+                        type="text"
+                        pattern="\d*"
                       />
                       {errors.nic && <p className="text-red-600 text-sm">{errors.nic}</p>}
                     </>
