@@ -139,14 +139,15 @@ app.use((req, res, next) => {
 });
 
 cron.schedule("* * * * *", async () => {
-  console.log("Running a task every minute");
-  await HealthEvaluation.cancelExpiredEvaluations();
-  await EmergencyBR.cancelExpiredRequests();
   await BloodInventory.updateExpiredStatus();
-  await Appointment.cancelExpiredAppointments();
-  await HealthEvaluation.updateHealthStatusAfter56Days();
   await BloodInventory.updateExpiringSoonStatus();
+  await HealthEvaluation.cancelExpiredEvaluations();
+  await HealthEvaluation.updateHealthStatusAfter56Days();
+  await EmergencyBR.cancelExpiredRequests();
+  await Appointment.cancelExpiredAppointments();
   await Appointment.updateAppointmentStatusAfter56Days();
+  console.log("Running a task every minute");
+  
   // Add your scheduled task logic here
 });
 

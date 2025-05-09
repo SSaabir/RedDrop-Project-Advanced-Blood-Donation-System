@@ -383,7 +383,7 @@ export default function HealthEvaluationD() {
                                 Accept
                               </Button>
                             )}
-                          {appointment.activeStatus === "Completed" && (
+                          {appointment.activeStatus === "Accepted" && (
                             <Button
                               size="xs"
                               color="gray"

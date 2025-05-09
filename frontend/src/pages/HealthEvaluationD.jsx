@@ -71,7 +71,7 @@ export default function AppointmentD() {
 
   useEffect(() => {
     const filtered = evaluations.filter((evaluation) => {
-      if (evaluation.progressStatus === "Completed" || evaluation.activeStatus === "Cancelled") return false;
+      if (evaluation.activeStatus === "Cancelled") return false;
       const dateMatch = filter.date
         ? new Date(evaluation.evaluationDate).toISOString().split("T")[0] === filter.date
         : true;
