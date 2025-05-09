@@ -1043,7 +1043,10 @@ export const generateSystemAdminReport = async (req, res) => {
 
 export const generateDonorReport = async (req, res) => {
   try {
-    const donors = await Donor.find({})
+    const { bloodType } = req.query; // Get bloodType from query parameters
+    const query = bloodType ? { bloodType } : {};
+    
+    const donors = await Donor.find(query)
       .select('firstName lastName email phoneNumber bloodType city dob activeStatus createdAt')
       .sort({ createdAt: -1 });
 
@@ -1052,7 +1055,7 @@ export const generateDonorReport = async (req, res) => {
     }
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
-    const fileName = `donor_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    const fileName = `donor_report_${bloodType || 'all'}_${new Date().toISOString().split('T')[0]}.pdf`;
     const filePath = `./reports/${fileName}`;
 
     if (!fs.existsSync('./reports')) {
@@ -1070,7 +1073,7 @@ export const generateDonorReport = async (req, res) => {
       doc
         .fontSize(20)
         .fillColor('#FF2400')
-        .text('Donor List Report', 0, 40, { align: 'center' });
+        .text(`Donor List Report${bloodType ? ` - ${bloodType}` : ''}`, 0, 40, { align: 'center' });
 
       doc
         .moveDown()
@@ -1154,7 +1157,6 @@ export const generateDonorReport = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
-
 
 export const generateHospitalReport = async (req, res) => {
   try {
@@ -1273,7 +1275,15 @@ export const generateHospitalReport = async (req, res) => {
 
 export const generateEmergencyBRReport = async (req, res) => {
   try {
-    const requests = await EmergencyBR.find({})
+    const { bloodGroup, criticalLevel, status } = req.query; // Get filter parameters from query
+
+    // Build query object based on provided filters
+    const query = {};
+    if (bloodGroup) query.patientBlood = bloodGroup;
+    if (criticalLevel) query.criticalLevel = criticalLevel;
+    if (status) query.acceptStatus = status;
+
+    const requests = await EmergencyBR.find(query)
       .select('name phoneNumber patientBlood units criticalLevel hospitalName withinDate acceptStatus activeStatus createdAt')
       .sort({ createdAt: -1 });
 
@@ -1282,7 +1292,13 @@ export const generateEmergencyBRReport = async (req, res) => {
     }
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
-    const fileName = `emergency_br_report_${new Date().toISOString().split('T')[0]}.pdf`;
+    // Include filters in the filename for clarity
+    const filterString = [
+      bloodGroup ? `blood_${bloodGroup.replace(/\+|-/, '')}` : '',
+      criticalLevel ? `critical_${criticalLevel.toLowerCase()}` : '',
+      status ? `status_${status.toLowerCase()}` : ''
+    ].filter(Boolean).join('_');
+    const fileName = `emergency_br_report${filterString ? `_${filterString}` : ''}_${new Date().toISOString().split('T')[0]}.pdf`;
     const filePath = `./reports/${fileName}`;
 
     if (!fs.existsSync('./reports')) {
@@ -1298,7 +1314,16 @@ export const generateEmergencyBRReport = async (req, res) => {
     }
 
     // Header
-    doc.fontSize(18).fillColor('#000').text('Emergency Blood Request Report', 0, 50, { align: 'center' });
+    let headerText = 'Emergency Blood Request Report';
+    if (bloodGroup || criticalLevel || status) {
+      headerText += ' (Filtered)';
+      const filters = [];
+      if (bloodGroup) filters.push(`Blood Group: ${bloodGroup}`);
+      if (criticalLevel) filters.push(`Critical Level: ${criticalLevel}`);
+      if (status) filters.push(`Status: ${status}`);
+      headerText += ` - ${filters.join(', ')}`;
+    }
+    doc.fontSize(18).fillColor('#000').text(headerText, 0, 50, { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
 
@@ -1378,7 +1403,6 @@ export const generateEmergencyBRReport = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
-
 
 export const generateHospitalAdminReport = async (req, res) => {
   try {

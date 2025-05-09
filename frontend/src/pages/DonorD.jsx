@@ -57,7 +57,8 @@ export default function DonorDashboard() {
 
   const handleGenerateReport = (e) => {
     e.preventDefault();
-    generateDonorReport();
+    // Pass the selected bloodType to the report generation
+    generateDonorReport(filter.bloodType);
   };
 
   return (
@@ -69,7 +70,7 @@ export default function DonorDashboard() {
             <h1 className="text-2xl font-bold text-red-700 mb-4">Donor Dashboard</h1>
 
             {/* Report Generation Section */}
-            <div className="mb-6 p-4 bg-white rounded-lg sombra-md">
+            <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
               <h2 className="text-lg font-semibold mb-4">Generate Donor Report</h2>
               {reportUrl && (
                 <p className="text-green-600 mt-2">Report generated successfully!</p>

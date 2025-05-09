@@ -182,12 +182,14 @@ export const useGenerateReport = () => {
         }
     };
 
-    const generateDonorReport = async () => {
+    const generateDonorReport = async (bloodType) => {
         setLoading(true);
         setReportUrl('');
 
         try {
-            const response = await axios.get('/api/reports/donor-report');
+            const response = await axios.get('/api/reports/donor-report', {
+                params: { bloodType }
+            });
 
             if (response.data.success) {
                 setReportUrl(response.data.fileUrl);
@@ -196,13 +198,13 @@ export const useGenerateReport = () => {
                 throw new Error(response.data.message || 'Failed to generate report');
             }
         } catch (err) {
-            console.error('Error generating Donor report:', err);
-            toast.error(err?.response?.data?.message || 'Failed to generate Donor report');
+            const errorMessage = err.response?.data?.message || 'Failed to generate donor report';
+
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
     };
-
     const generateHospitalReport = async () => {
         setLoading(true);
         setReportUrl('');
@@ -223,28 +225,28 @@ export const useGenerateReport = () => {
             setLoading(false);
         }
     };
+const generateEmergencyBRReport = async ({ bloodGroup, criticalLevel, status } = {}) => {
+    setLoading(true);
+    setReportUrl('');
 
-    const generateEmergencyBRReport = async () => {
-        setLoading(true);
-        setReportUrl('');
-    
-        try {
-            const response = await axios.get('/api/reports/emergency-br-report', {});
-    
-            if (response.data.success) {
-                setReportUrl(response.data.fileUrl);
-                toast.success('Emergency Blood Request report generated successfully!');
-            } else {
-                throw new Error(response.data.message || 'Failed to generate report');
-            }
-        } catch (err) {
-            console.error('Error generating Emergency Blood Request report:', err);
-            toast.error(err?.response?.data?.message || 'Failed to generate Emergency Blood Request report');
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      const response = await axios.get('/api/reports/emergency-br-report', {
+        params: { bloodGroup, criticalLevel, status }
+      });
 
+      if (response.data.success) {
+        setReportUrl(response.data.fileUrl);
+        toast.success('Emergency Blood Request report generated successfully!');
+      } else {
+        throw new Error(response.data.message || 'Failed to generate report');
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to generate Emergency Blood Request report';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
     const generateHospitalAdminReport = async (userId) => {
         setLoading(true);
         setReportUrl('');

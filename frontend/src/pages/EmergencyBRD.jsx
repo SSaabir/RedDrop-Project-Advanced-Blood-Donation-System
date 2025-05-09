@@ -17,7 +17,7 @@ const EmergencyBRAdmin = () => {
     error,
   } = useEmergencyBR();
 
-  const { reportUrl, loading: reportLoading, generateEmergencyBRReport } = useGenerateReport();
+  const { reportUrl, loading: reportLoading, error: reportError, generateEmergencyBRReport } = useGenerateReport();
   const { user } = useAuthContext();
 
   const [showValidateModal, setShowValidateModal] = useState(false);
@@ -158,7 +158,12 @@ const EmergencyBRAdmin = () => {
   const handleGenerateReport = async (e) => {
     e.preventDefault();
     try {
-      await generateEmergencyBRReport();
+      // Pass filter values to generateEmergencyBRReport
+      await generateEmergencyBRReport({
+        bloodGroup: filter.bloodGroup,
+        criticalLevel: filter.criticalLevel,
+        status: filter.status
+      });
     } catch (err) {
       console.error("Error generating report:", err);
     }
@@ -184,20 +189,20 @@ const EmergencyBRAdmin = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-  <DashboardSidebar />
-  <div className="flex-1 p-6">
-    <div className="flex justify-between items-center mb-4">
-      <h1 className="text-2xl font-bold text-red-700">Emergency Blood Requests</h1>
-      <Button
-        gradientDuoTone="redToPink"
-        onClick={handleGenerateReport}
-        disabled={reportLoading || actionLoading}
-        className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
-      >
-        {reportLoading ? <Spinner size="sm" className="mr-2" /> : null}
-        Generate Report
-      </Button>
-    </div>
+      <DashboardSidebar />
+      <div className="flex-1 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-red-700">Emergency Blood Requests</h1>
+          <Button
+            gradientDuoTone="redToPink"
+            onClick={handleGenerateReport}
+            disabled={reportLoading || actionLoading}
+            className="bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            {reportLoading ? <Spinner size="sm" className="mr-2" /> : null}
+            Generate Report
+          </Button>
+        </div>
 
         {reportUrl && (
           <div className="mb-4 p-4 bg-green-100 rounded-lg flex items-center justify-between">
@@ -210,6 +215,10 @@ const EmergencyBRAdmin = () => {
               Download Report
             </a>
           </div>
+        )}
+
+        {reportError && (
+          <p className="text-red-500 mb-4">{reportError}</p>
         )}
 
         {/* Filter UI */}
