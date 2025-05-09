@@ -1272,7 +1272,6 @@ export const generateHospitalReport = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
-
 export const generateEmergencyBRReport = async (req, res) => {
   try {
     const { bloodGroup, criticalLevel, status } = req.query; // Get filter parameters from query
@@ -1284,7 +1283,7 @@ export const generateEmergencyBRReport = async (req, res) => {
     if (status) query.acceptStatus = status;
 
     const requests = await EmergencyBR.find(query)
-      .select('name phoneNumber patientBlood units criticalLevel hospitalName withinDate acceptStatus activeStatus createdAt')
+      .select('name patientBlood criticalLevel hospitalName acceptStatus')
       .sort({ createdAt: -1 });
 
     if (!requests.length) {
@@ -1330,15 +1329,15 @@ export const generateEmergencyBRReport = async (req, res) => {
     // Table setup
     const tableTop = 130;
     const rowHeight = 25;
-    const colWidths = [25, 80, 60, 50, 50, 60, 80, 60, 60, 60];
+    const colWidths = [100, 150, 80, 100, 100]; // Adjusted for 5 columns
     const startX = 40;
-    const headers = ['No', 'Name', 'Phone', 'Blood Type', 'Units', 'Critical Level', 'Hospital', 'Due Date', 'Accept Status', 'Active'];
+    const headers = ['Patient Name', 'Hospital', 'Blood Group', 'Critical Level', 'Status'];
 
     let y = tableTop;
 
     // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
+    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#FF9280').stroke(); // Consistent with other reports
+    doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
 
     let x = startX;
     headers.forEach((header, i) => {
@@ -1357,8 +1356,8 @@ export const generateEmergencyBRReport = async (req, res) => {
         doc.addPage();
         y = 100;
         // Redraw header on new page
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
-        doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
+        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#FF9280').stroke();
+        doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
         x = startX;
         headers.forEach((header, i) => {
           doc.text(header, x + 2, y + 7, { width: colWidths[i] - 4, align: 'left' });
@@ -1370,16 +1369,11 @@ export const generateEmergencyBRReport = async (req, res) => {
 
       x = startX;
       const row = [
-        index + 1,
         item.name || 'N/A',
-        item.phoneNumber || 'N/A',
-        item.patientBlood || 'N/A',
-        item.units || 'N/A',
-        item.criticalLevel || 'N/A',
         item.hospitalName || 'N/A',
-        item.withinDate ? new Date(item.withinDate).toLocaleDateString() : 'N/A',
-        item.acceptStatus || 'N/A',
-        item.activeStatus ? 'Yes' : 'No',
+        item.patientBlood || 'N/A',
+        item.criticalLevel || 'N/A',
+        item.acceptStatus || 'N/A'
       ];
 
       // Row background alternating color
