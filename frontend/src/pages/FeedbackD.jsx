@@ -181,19 +181,6 @@ export default function FeedbackDashboard() {
                     <Table.Cell>{feedback.comments || "N/A"}</Table.Cell>
                     <Table.Cell>{feedback.feedbackType || "N/A"}</Table.Cell>
                     <Table.Cell>{feedback.starRating ? `${feedback.starRating} ⭐` : "N/A"}</Table.Cell>
-                    <Table.Cell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          feedback.attentiveStatus === "Reviewed" || feedback.attentiveStatus === "Closed"
-                            ? "bg-green-100 text-green-700"
-                            : feedback.attentiveStatus === "In Progress"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {feedback.attentiveStatus || "Pending"}
-                      </span>
-                    </Table.Cell>
                     <Table.Cell className="space-x-2">
                       <Button
                         size="xs"
