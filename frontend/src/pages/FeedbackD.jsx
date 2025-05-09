@@ -197,14 +197,6 @@ export default function FeedbackDashboard() {
                     <Table.Cell className="space-x-2">
                       <Button
                         size="xs"
-                        color="blue"
-                        onClick={() => handleOpenStatusModal(feedback)}
-                        disabled={actionLoading}
-                      >
-                        Update Status
-                      </Button>
-                      <Button
-                        size="xs"
                         color="failure"
                         onClick={() => handleDeleteFeedback(feedback._id)}
                         disabled={actionLoading}
