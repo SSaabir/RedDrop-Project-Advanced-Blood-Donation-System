@@ -34,73 +34,110 @@ export const generateHealthEvaluationReport = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
+    // Optional logo
     const logoPath = '../../frontend/src/assets/logo.svg';
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, 30, { width: 80 });
     }
 
-    doc.fontSize(18).text('Health Evaluation Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    const donorName = `${evaluations[0]?.donorId?.firstName || ''} ${evaluations[0]?.donorId?.lastName || ''}`;
+    const donorEmail = evaluations[0]?.donorId?.email || '';
 
-    // Table headers
-    const tableTop = 130;
+    // Title
+    doc
+      .fontSize(18)
+      .fillColor('#FF2400')
+      .text('Health Evaluation Report', { align: 'center' });
+
+    doc
+      .moveDown(0.3)
+      .fontSize(12)
+      .fillColor('#333')
+      .text(`Donor: ${donorName}`, { align: 'center' });
+
+    doc
+      .fontSize(10)
+      .fillColor('#666')
+      .text(`Email: ${donorEmail}`, { align: 'center' });
+
+    doc
+      .fontSize(10)
+      .text(`Generated on: ${new Date().toDateString()}`, { align: 'center' });
+
+    doc.moveDown(1);
+
+    // Table layout
+    const tableTop = 160;
     const rowHeight = 25;
-    const colWidths = [25, 90, 60, 45, 50, 70, 65, 60];
+    const colWidths = [25, 90, 70, 50, 45, 80, 60, 65];
     const startX = 40;
 
     const headers = ['No', 'Donor', 'Date', 'Time', 'Pass', 'Progress', 'Active', 'Feedback'];
 
     let y = tableTop;
 
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
+    const totalWidth = colWidths.reduce((a, b) => a + b, 0);
 
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
+    // Table header row
+    doc.rect(startX, y, totalWidth, rowHeight).fill('#FF9280').stroke();
+    doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+
     let x = startX;
     headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+      doc.text(header, x + 5, y + 7, { width: colWidths[i], align: 'left' });
       x += colWidths[i];
     });
 
     y += rowHeight;
 
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    // Table rows
+    doc.font('Helvetica').fontSize(9);
 
     evaluations.forEach((item, index) => {
-      x = startX;
-      const donorName = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`;
+      const bgColor = index % 2 === 0 ? '#ffffff' : '#f6f6f6';
+      doc.rect(startX, y, totalWidth, rowHeight).fill(bgColor).stroke();
+
+      const donor = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`;
       const row = [
         index + 1,
-        donorName,
+        donor,
         item.evaluationDate?.toDateString() || 'N/A',
         item.evaluationTime || 'N/A',
-        item.passStatus,
-        item.progressStatus,
-        item.activeStatus,
+        item.passStatus || 'N/A',
+        item.progressStatus || 'N/A',
+        item.activeStatus || 'N/A',
         item.feedbackStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color (optional)
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
-
-      // Draw text for each column
       x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').text(data, x + 5, y + 6, { width: colWidths[i], align: 'left' });
         x += colWidths[i];
       });
 
       y += rowHeight;
+
+      // Page break
+      if (y + rowHeight > doc.page.height - 40) {
+        doc.addPage();
+        y = 60;
+
+        // Redraw table header on new page
+        doc.rect(startX, y, totalWidth, rowHeight).fill('#FF9280').stroke();
+        doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+        x = startX;
+        headers.forEach((header, i) => {
+          doc.text(header, x + 5, y + 7, { width: colWidths[i], align: 'left' });
+          x += colWidths[i];
+        });
+
+        y += rowHeight;
+        doc.font('Helvetica').fillColor('#000').fontSize(9);
+      }
     });
 
     doc.end();
+
     res.json({ success: true, fileUrl: `/reports/${fileName}` });
   } catch (error) {
     console.error('Error generating health evaluation report:', error);
@@ -115,10 +152,11 @@ export const generateHealthEvaluationReportByHospital = async (req, res) => {
 
     const evaluations = await HealthEvaluation.find({ hospitalId: userId })
       .populate('hospitalId', 'name')
+      .populate('donorId', 'firstName lastName')
       .sort({ evaluationDate: -1 });
 
     if (!evaluations.length) {
-      return res.status(404).json({ success: false, message: 'No evaluations found for this donor' });
+      return res.status(404).json({ success: false, message: 'No evaluations found for this hospital' });
     }
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
@@ -131,47 +169,63 @@ export const generateHealthEvaluationReportByHospital = async (req, res) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Add logo
-    const logoPath = '../../frontend/src/assets/logo.svg';
+    const hospitalName = evaluations[0]?.hospitalId?.name || 'Hospital';
+
+    // Add logo (optional)
+    const logoPath = './assets/logo.svg'; // Adjust as per actual backend path
     if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, 40, 30, { width: 80 });
+      try {
+        doc.image(logoPath, 40, 30, { width: 60 });
+      } catch (err) {
+        console.warn('Logo failed to load:', err.message);
+      }
     }
 
-    doc.fontSize(18).text('Health Evaluation Report', 0, 50, { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Generated: ${new Date().toDateString()}`, { align: 'right' });
+    // Report Title
+    doc.fontSize(18).fillColor('#FF2400').text('Health Evaluation Report', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(12).fillColor('#333').text(`Hospital: ${hospitalName}`, { align: 'center' });
+    doc.fontSize(10).fillColor('#666').text(`Generated: ${new Date().toDateString()}`, { align: 'center' });
 
-    // Table headers
-    const tableTop = 130;
+    doc.moveDown(1);
+
+    // Table setup
+    const tableTop = 160;
     const rowHeight = 25;
-    const colWidths = [25, 90, 60, 45, 50, 70, 65, 60];
+    const colWidths = [30, 90, 70, 50, 45, 70, 55, 65];
     const startX = 40;
 
-    const headers = ['No', 'Donor', 'Date', 'Time', 'Pass', 'Progress', 'Active', 'Feedback'];
+    const headers = ['#', 'Donor', 'Date', 'Time', 'Pass', 'Progress', 'Active', 'Feedback'];
 
     let y = tableTop;
 
-    // Draw header background
-    doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f0f0f0').stroke();
+    const drawHeader = () => {
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#FF9280').stroke();
+      doc.font('Helvetica-Bold').fillColor('#fff').fontSize(10);
+      let x = startX;
+      headers.forEach((header, i) => {
+        doc.text(header, x + 5, y + 7, { width: colWidths[i], align: 'left' });
+        x += colWidths[i];
+      });
+      y += rowHeight;
+    };
 
-    doc.font('Helvetica-Bold').fillColor('#000').fontSize(10);
-    let x = startX;
-    headers.forEach((header, i) => {
-      doc.text(header, x + 2, y + 7, { width: colWidths[i], align: 'left' });
-      x += colWidths[i];
-    });
+    drawHeader();
 
-    y += rowHeight;
-
-    // Draw rows
-    doc.font('Helvetica').fillColor('#000');
+    // Initialize counters for summary
+    let passCount = 0, activeCount = 0, feedbackCount = 0;
 
     evaluations.forEach((item, index) => {
-      x = startX;
-      const donorName = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`;
+      if (y + rowHeight > doc.page.height - 60) {
+        doc.addPage();
+        y = 50;
+        drawHeader();
+      }
+
+      const donorName = `${item.donorId?.firstName || ''} ${item.donorId?.lastName || ''}`.trim();
       const row = [
         index + 1,
-        donorName,
+        donorName || 'N/A',
         item.evaluationDate?.toDateString() || 'N/A',
         item.evaluationTime || 'N/A',
         item.passStatus,
@@ -180,30 +234,46 @@ export const generateHealthEvaluationReportByHospital = async (req, res) => {
         item.feedbackStatus ? 'Yes' : 'No',
       ];
 
-      // Row background alternating color (optional)
-      if (index % 2 === 0) {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#ffffff').stroke();
-      } else {
-        doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill('#f9f9f9').stroke();
-      }
+      if (item.passStatus === 'Pass') passCount++;
+      if (item.activeStatus === 'Active') activeCount++;
+      if (item.feedbackStatus) feedbackCount++;
 
-      // Draw text for each column
-      x = startX;
+      const bgColor = index % 2 === 0 ? '#fff' : '#f7f7f7';
+      doc.rect(startX, y, colWidths.reduce((a, b) => a + b), rowHeight).fill(bgColor).stroke();
+
+      let x = startX;
       row.forEach((data, i) => {
-        doc.fillColor('#000').text(data, x + 2, y + 7, { width: colWidths[i], align: 'left' });
+        doc.fillColor('#000').font('Helvetica').fontSize(9).text(data, x + 5, y + 6, { width: colWidths[i], align: 'left' });
         x += colWidths[i];
       });
 
       y += rowHeight;
     });
 
+    // Summary
+    if (y + 80 > doc.page.height - 40) {
+      doc.addPage();
+      y = 60;
+    }
+
+    doc.moveTo(startX, y + 10).lineTo(startX + 500, y + 10).stroke();
+
+    doc.fontSize(12).fillColor('#FF2400').text('Summary', startX, y + 20);
+
+    doc.fontSize(10).fillColor('#333').text(`Total Evaluations: ${evaluations.length}`, startX, y + 40);
+    doc.text(`Passed: ${passCount}`, startX, y + 55);
+    doc.text(`Active Donors: ${activeCount}`, startX, y + 70);
+    doc.text(`With Feedback: ${feedbackCount}`, startX, y + 85);
+
     doc.end();
+
     res.json({ success: true, fileUrl: `/reports/${fileName}` });
   } catch (error) {
     console.error('Error generating health evaluation report:', error);
     res.status(500).json({ success: false, message: 'Error generating report' });
   }
 };
+
 
 export const generateInventoryReport = async (req, res) => {
   try {
@@ -387,7 +457,7 @@ export const generateInventoryReportByManager = async (req, res) => {
     // Table headers
     const tableTop = 150;
     const rowHeight = 25;
-    const colWidths = [50, 120, 80, 80, 90, 60, 90]; // Adjusted for hospital column
+    const colWidths = [20, 120, 70, 70, 90, 60, 90]; // Adjusted for hospital column
     const headers = ['#', 'Hospital', 'Blood Type', 'Stocks', 'Expiration', 'Expired', 'Created'];
     let startX = 40;
     let y = tableTop;
@@ -418,8 +488,10 @@ export const generateInventoryReportByManager = async (req, res) => {
       // Handle page overflow
       if (y + rowHeight > doc.page.height - 50) {
         doc.addPage();
+        doc.font('Helvetica').fillColor('#000').fontSize(9);
         y = 50;
         renderTableHeader();
+        
       }
 
       // Add hospital separator if new hospital
