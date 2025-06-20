@@ -144,6 +144,12 @@ Use the following credentials for testing:
 | Hospital       | [test@health.gov.lk](mailto:test@health.gov.lk)             | admin123 |
 | Manager        | [admin1@bloodbank.lk](mailto:admin1@bloodbank.lk)           | admin123 |
 
+--
+
+> ⚠️ **Note:**  
+> A **Manager account** is required to create a new **Hospital** and assign the first **Hospital Admin** to it.  
+>  
+> Once the hospital and its initial admin are created, **any existing Hospital Admin** of that hospital can create additional admins for their hospital.
 
 ---
 
